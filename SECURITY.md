@@ -6,7 +6,7 @@ If you discover a security vulnerability, please report it responsibly.
 
 **Do NOT open a public issue.**
 
-Instead, email: **security@michelutke.dev**
+Instead, email: **security@michelutke.com**
 
 Include:
 - Description of the vulnerability
