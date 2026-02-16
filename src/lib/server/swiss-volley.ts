@@ -66,6 +66,16 @@ async function apiFetch<T>(path: string): Promise<T> {
 	return data as T;
 }
 
+export interface SwissVolleyClub {
+	id: string;
+	name: string;
+}
+
+export async function searchClubs(query: string): Promise<SwissVolleyClub[]> {
+	const clubs = await apiFetch<SwissVolleyClub[]>(`/clubs?search=${encodeURIComponent(query)}`);
+	return clubs;
+}
+
 export async function getTeams(clubId: string): Promise<SwissVolleyTeam[]> {
 	return apiFetch<SwissVolleyTeam[]>(`/clubs/${clubId}/teams`);
 }

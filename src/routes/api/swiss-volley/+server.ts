@@ -1,11 +1,12 @@
 import { json } from '@sveltejs/kit';
-import { getTeams, getUpcomingMatches } from '$lib/server/swiss-volley.js';
+import { getTeams, getUpcomingMatches, searchClubs } from '$lib/server/swiss-volley.js';
 import type { RequestHandler } from './$types.js';
 
 export const GET: RequestHandler = async ({ url }) => {
 	const action = url.searchParams.get('action');
 	const clubId = url.searchParams.get('clubId');
 	const teamId = url.searchParams.get('teamId');
+	const query = url.searchParams.get('query');
 
 	try {
 		switch (action) {
@@ -18,6 +19,11 @@ export const GET: RequestHandler = async ({ url }) => {
 				if (!teamId) return json({ error: 'Missing teamId' }, { status: 400 });
 				const matches = await getUpcomingMatches(teamId);
 				return json(matches);
+			}
+			case 'searchClubs': {
+				if (!query) return json({ error: 'Missing query' }, { status: 400 });
+				const clubs = await searchClubs(query);
+				return json(clubs);
 			}
 			default:
 				return json({ error: 'Unknown action' }, { status: 400 });

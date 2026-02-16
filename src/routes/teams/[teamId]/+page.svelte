@@ -12,6 +12,26 @@
 	let league = $state('');
 	let creating = $state(false);
 	let activating = $state<number | null>(null);
+	let aborting = $state<number | null>(null);
+
+	const defaultLeague = $derived(data.matches.find((m) => m.league)?.league ?? '');
+	const defaultVenue = $derived(data.matches.find((m) => m.venue)?.venue ?? '');
+
+	$effect(() => {
+		if (showCreate) {
+			homeTeamName = data.team.name;
+			guestTeamName = '';
+			league = defaultLeague;
+			venue = defaultVenue;
+			scheduledAt = '';
+		}
+	});
+
+	function swapTeams() {
+		const tmp = homeTeamName;
+		homeTeamName = guestTeamName;
+		guestTeamName = tmp;
+	}
 
 	const upcomingMatches = $derived(
 		data.matches
@@ -58,6 +78,19 @@
 			}
 		} finally {
 			activating = null;
+		}
+	}
+
+	async function abortMatch(matchId: number) {
+		if (!confirm('Spiel wirklich abbrechen?')) return;
+		aborting = matchId;
+		try {
+			const res = await fetch(`/api/matches/${matchId}/abort`, { method: 'POST' });
+			if (res.ok) {
+				window.location.reload();
+			}
+		} finally {
+			aborting = null;
 		}
 	}
 
@@ -148,6 +181,13 @@
 							<a href="/matches/{match.id}/control" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg">
 								Control
 							</a>
+							<button
+								onclick={() => abortMatch(match.id)}
+								disabled={aborting === match.id}
+								class="text-xs bg-red-900/50 hover:bg-red-800/50 disabled:opacity-50 text-red-300 px-3 py-1.5 rounded-lg"
+							>
+								{aborting === match.id ? '...' : 'Abbrechen'}
+							</button>
 						{/if}
 						<button
 							onclick={() => copyOverlayLink(match.id)}
@@ -169,8 +209,9 @@
 		<div class="mt-4">
 			{#if showCreate}
 				<form onsubmit={(e) => { e.preventDefault(); createMatch(); }} class="bg-[#151929] rounded-xl p-4 space-y-3">
-					<div class="grid grid-cols-2 gap-2">
+					<div class="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
 						<input type="text" bind:value={homeTeamName} placeholder="Heim" class="bg-[#0b0e1a] border border-gray-700 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+						<button type="button" onclick={swapTeams} class="text-gray-400 hover:text-white text-lg px-1" title="Teams tauschen">&hArr;</button>
 						<input type="text" bind:value={guestTeamName} placeholder="Gast" class="bg-[#0b0e1a] border border-gray-700 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500" />
 					</div>
 					<input type="datetime-local" bind:value={scheduledAt} class="w-full bg-[#0b0e1a] border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500" />
