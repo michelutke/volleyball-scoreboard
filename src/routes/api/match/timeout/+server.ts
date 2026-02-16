@@ -43,3 +43,46 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	return json({ ok: true, timeoutsUsed: usedTimeouts.length + 1 });
 };
+
+export const DELETE: RequestHandler = async ({ request }) => {
+	const { matchId, team } = await request.json();
+
+	const match = await db.query.matches.findFirst({
+		where: eq(matches.id, matchId)
+	});
+	if (!match) return json({ error: 'Match not found' }, { status: 404 });
+
+	const currentScore = await db.query.scores.findFirst({
+		where: eq(scores.matchId, matchId),
+		orderBy: desc(scores.createdAt)
+	});
+	if (!currentScore) return json({ error: 'Score not found' }, { status: 404 });
+
+	// Find most recent timeout for this team in current set
+	const lastTimeout = await db.query.timeouts.findFirst({
+		where: and(
+			eq(timeouts.matchId, matchId),
+			eq(timeouts.team, team),
+			eq(timeouts.set, currentScore.currentSet)
+		),
+		orderBy: desc(timeouts.createdAt)
+	});
+
+	if (!lastTimeout) return json({ error: 'No timeout to cancel' }, { status: 404 });
+
+	await db.delete(timeouts).where(eq(timeouts.id, lastTimeout.id));
+
+	const teamName = team === 'home' ? match.homeTeamName : match.guestTeamName;
+	sseEmitter.emit({ type: 'timeout', data: { team, teamName, active: false } });
+
+	// Count remaining timeouts
+	const remaining = await db.query.timeouts.findMany({
+		where: and(
+			eq(timeouts.matchId, matchId),
+			eq(timeouts.team, team),
+			eq(timeouts.set, currentScore.currentSet)
+		)
+	});
+
+	return json({ ok: true, timeoutsUsed: remaining.length });
+};

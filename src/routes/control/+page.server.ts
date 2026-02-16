@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db/index.js';
 import { matches, scores, timeouts } from '$lib/server/db/schema.js';
 import { toMatchState } from '$lib/server/match-state.js';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, asc, and } from 'drizzle-orm';
 import type { MatchState } from '$lib/types.js';
 import type { PageServerLoad } from './$types.js';
 
@@ -46,9 +46,25 @@ export const load: PageServerLoad = async () => {
 		}
 	}
 
+	const scoreHistory = liveMatch
+		? await db.query.scores.findMany({
+				where: eq(scores.matchId, liveMatch.id),
+				orderBy: asc(scores.createdAt)
+			})
+		: [];
+
+	const timeoutHistory = liveMatch
+		? await db.query.timeouts.findMany({
+				where: eq(timeouts.matchId, liveMatch.id),
+				orderBy: asc(timeouts.createdAt)
+			})
+		: [];
+
 	return {
 		matches: allMatches,
 		activeMatch,
-		timeouts: matchTimeouts
+		timeouts: matchTimeouts,
+		scoreHistory,
+		timeoutHistory
 	};
 };

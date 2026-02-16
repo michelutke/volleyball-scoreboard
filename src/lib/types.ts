@@ -25,6 +25,19 @@ export interface MatchState {
 	status: MatchStatus;
 }
 
+export interface TimelineEvent {
+	type: 'point' | 'timeout';
+	team: Team;
+	homePoints: number;
+	guestPoints: number;
+}
+
+export interface SetTimeline {
+	set: number;
+	events: TimelineEvent[];
+	finalScore: SetScore | null;
+}
+
 export type SSEEvent =
 	| { type: 'score'; data: MatchState }
 	| { type: 'timeout'; data: { team: Team; teamName: string; active: boolean } }
