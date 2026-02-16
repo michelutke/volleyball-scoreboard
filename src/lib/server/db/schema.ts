@@ -1,7 +1,20 @@
 import { pgTable, serial, text, integer, boolean, timestamp, jsonb } from 'drizzle-orm/pg-core';
 
+export const settings = pgTable('settings', {
+	key: text('key').primaryKey(),
+	value: text('value').notNull()
+});
+
+export const teams = pgTable('teams', {
+	id: serial('id').primaryKey(),
+	name: text('name').notNull(),
+	swissVolleyTeamId: text('swiss_volley_team_id'),
+	createdAt: timestamp('created_at').notNull().defaultNow()
+});
+
 export const matches = pgTable('matches', {
 	id: serial('id').primaryKey(),
+	teamId: integer('team_id').references(() => teams.id, { onDelete: 'set null' }),
 	homeTeamName: text('home_team_name').notNull().default('Heim'),
 	guestTeamName: text('guest_team_name').notNull().default('Gast'),
 	homeJerseyColor: text('home_jersey_color').notNull().default('#1e40af'),
@@ -10,6 +23,9 @@ export const matches = pgTable('matches', {
 	showSetScores: boolean('show_set_scores').notNull().default(false),
 	status: text('status', { enum: ['upcoming', 'live', 'finished'] }).notNull().default('upcoming'),
 	swissVolleyMatchId: text('swiss_volley_match_id'),
+	scheduledAt: timestamp('scheduled_at'),
+	venue: text('venue'),
+	league: text('league'),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 	updatedAt: timestamp('updated_at').notNull().defaultNow()
 });

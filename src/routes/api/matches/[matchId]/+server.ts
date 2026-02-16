@@ -8,62 +8,28 @@ import { eq, desc } from 'drizzle-orm';
 import type { MatchState } from '$lib/types.js';
 import type { RequestHandler } from './$types.js';
 
-export const GET: RequestHandler = async ({ url }) => {
-	const matchId = url.searchParams.get('id');
+export const GET: RequestHandler = async ({ params }) => {
+	const matchId = parseInt(params.matchId);
 
-	if (matchId) {
-		const match = await db.query.matches.findFirst({
-			where: eq(matches.id, parseInt(matchId))
-		});
-		if (!match) return json({ error: 'Match not found' }, { status: 404 });
-
-		const score = await db.query.scores.findFirst({
-			where: eq(scores.matchId, match.id),
-			orderBy: desc(scores.createdAt)
-		});
-		if (!score) return json({ error: 'Score not found' }, { status: 404 });
-
-		return json(toMatchState(match, score));
-	}
-
-	const allMatches = await db.query.matches.findMany({
-		orderBy: desc(matches.createdAt)
+	const match = await db.query.matches.findFirst({
+		where: eq(matches.id, matchId)
 	});
-	return json(allMatches);
+	if (!match) return json({ error: 'Match not found' }, { status: 404 });
+
+	const score = await db.query.scores.findFirst({
+		where: eq(scores.matchId, matchId),
+		orderBy: desc(scores.createdAt)
+	});
+	if (!score) return json({ error: 'Score not found' }, { status: 404 });
+
+	return json(toMatchState(match, score));
 };
 
-export const POST: RequestHandler = async ({ request }) => {
+export const PUT: RequestHandler = async ({ params, request }) => {
+	const matchId = parseInt(params.matchId);
 	const body = await request.json();
-
-	const [match] = await db
-		.insert(matches)
-		.values({
-			homeTeamName: body.homeTeamName ?? 'Heim',
-			guestTeamName: body.guestTeamName ?? 'Gast',
-			homeJerseyColor: body.homeJerseyColor ?? '#1e40af',
-			guestJerseyColor: body.guestJerseyColor ?? '#dc2626',
-			showJerseyColors: body.showJerseyColors ?? true,
-			status: 'live'
-		})
-		.returning();
-
-	const [score] = await db
-		.insert(scores)
-		.values({ matchId: match.id })
-		.returning();
-
-	const state = toMatchState(match, score);
-	emitAll(match.id, { type: 'match', data: state });
-
-	return json(state, { status: 201 });
-};
-
-export const PUT: RequestHandler = async ({ request }) => {
-	const body = await request.json();
-	const matchId = body.matchId as number;
 
 	if (body.action) {
-		// Score actions
 		const currentScore = await db.query.scores.findFirst({
 			where: eq(scores.matchId, matchId),
 			orderBy: desc(scores.createdAt)
@@ -102,7 +68,6 @@ export const PUT: RequestHandler = async ({ request }) => {
 				else if (body.team === 'guest' && state.guestSets > 0) newState.guestSets--;
 				break;
 			case 'undo': {
-				// Get all score records for this match
 				const allScores = await db.query.scores.findMany({
 					where: eq(scores.matchId, matchId),
 					orderBy: desc(scores.createdAt)
@@ -110,12 +75,9 @@ export const PUT: RequestHandler = async ({ request }) => {
 				if (allScores.length <= 1) {
 					return json({ error: 'Nothing to undo' }, { status: 400 });
 				}
-				// Delete the latest record
 				await db.delete(scores).where(eq(scores.id, allScores[0].id));
-				// Reconstruct state from previous record
 				const previousScore = allScores[1];
 				const undoState = toMatchState(match, previousScore);
-				// Update match status if needed (e.g. finished -> live)
 				const correctStatus = isMatchOver(undoState.homeSets, undoState.guestSets) ? 'finished' : 'live';
 				if (correctStatus !== match.status) {
 					await db.update(matches).set({ status: correctStatus, updatedAt: new Date() }).where(eq(matches.id, matchId));
@@ -128,12 +90,10 @@ export const PUT: RequestHandler = async ({ request }) => {
 				return json({ error: 'Unknown action' }, { status: 400 });
 		}
 
-		// Update match status
 		if (newState.status !== match.status) {
 			await db.update(matches).set({ status: newState.status, updatedAt: new Date() }).where(eq(matches.id, matchId));
 		}
 
-		// Insert new score record
 		await db.insert(scores).values({
 			matchId,
 			homePoints: newState.homePoints,
@@ -149,7 +109,7 @@ export const PUT: RequestHandler = async ({ request }) => {
 		return json(newState);
 	}
 
-	// Update match settings (team names, colors)
+	// Settings update
 	const settingsFields = ['homeTeamName', 'guestTeamName', 'homeJerseyColor', 'guestJerseyColor', 'showJerseyColors', 'showSetScores'] as const;
 	const updateData: Record<string, unknown> = { updatedAt: new Date() };
 	for (const field of settingsFields) {
@@ -169,12 +129,4 @@ export const PUT: RequestHandler = async ({ request }) => {
 	const state = toMatchState(match, score);
 	emitAll(matchId, { type: 'match', data: state });
 	return json(state);
-};
-
-export const DELETE: RequestHandler = async ({ url }) => {
-	const matchId = url.searchParams.get('id');
-	if (!matchId) return json({ error: 'Missing id' }, { status: 400 });
-
-	await db.delete(matches).where(eq(matches.id, parseInt(matchId)));
-	return json({ ok: true });
 };

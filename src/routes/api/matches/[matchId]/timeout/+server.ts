@@ -5,8 +5,9 @@ import { emitAll } from '$lib/server/sse.js';
 import { eq, and, desc } from 'drizzle-orm';
 import type { RequestHandler } from './$types.js';
 
-export const POST: RequestHandler = async ({ request }) => {
-	const { matchId, team } = await request.json();
+export const POST: RequestHandler = async ({ params, request }) => {
+	const matchId = parseInt(params.matchId);
+	const { team } = await request.json();
 
 	const match = await db.query.matches.findFirst({
 		where: eq(matches.id, matchId)
@@ -19,7 +20,6 @@ export const POST: RequestHandler = async ({ request }) => {
 	});
 	if (!currentScore) return json({ error: 'Score not found' }, { status: 404 });
 
-	// Count timeouts for this team in current set
 	const usedTimeouts = await db.query.timeouts.findMany({
 		where: and(
 			eq(timeouts.matchId, matchId),
@@ -44,8 +44,9 @@ export const POST: RequestHandler = async ({ request }) => {
 	return json({ ok: true, timeoutsUsed: usedTimeouts.length + 1 });
 };
 
-export const DELETE: RequestHandler = async ({ request }) => {
-	const { matchId, team } = await request.json();
+export const DELETE: RequestHandler = async ({ params, request }) => {
+	const matchId = parseInt(params.matchId);
+	const { team } = await request.json();
 
 	const match = await db.query.matches.findFirst({
 		where: eq(matches.id, matchId)
@@ -58,7 +59,6 @@ export const DELETE: RequestHandler = async ({ request }) => {
 	});
 	if (!currentScore) return json({ error: 'Score not found' }, { status: 404 });
 
-	// Find most recent timeout for this team in current set
 	const lastTimeout = await db.query.timeouts.findFirst({
 		where: and(
 			eq(timeouts.matchId, matchId),
@@ -75,7 +75,6 @@ export const DELETE: RequestHandler = async ({ request }) => {
 	const teamName = team === 'home' ? match.homeTeamName : match.guestTeamName;
 	emitAll(matchId, { type: 'timeout', data: { team, teamName, active: false } });
 
-	// Count remaining timeouts
 	const remaining = await db.query.timeouts.findMany({
 		where: and(
 			eq(timeouts.matchId, matchId),

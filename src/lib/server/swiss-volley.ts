@@ -37,6 +37,10 @@ export interface SwissVolleyMatch {
 	date: string;
 	venue: string;
 	league: string;
+	wonSetsHome: number | null;
+	wonSetsGuest: number | null;
+	hallName: string | null;
+	hallCity: string | null;
 }
 
 async function apiFetch<T>(path: string): Promise<T> {
@@ -68,4 +72,12 @@ export async function getTeams(clubId: string): Promise<SwissVolleyTeam[]> {
 
 export async function getUpcomingMatches(teamId: string): Promise<SwissVolleyMatch[]> {
 	return apiFetch<SwissVolleyMatch[]>(`/teams/${teamId}/matches?status=upcoming`);
+}
+
+export async function getMatches(teamId: string): Promise<SwissVolleyMatch[]> {
+	const [upcoming, played] = await Promise.all([
+		apiFetch<SwissVolleyMatch[]>(`/teams/${teamId}/matches?status=upcoming`).catch(() => []),
+		apiFetch<SwissVolleyMatch[]>(`/teams/${teamId}/matches?status=played`).catch(() => [])
+	]);
+	return [...upcoming, ...played];
 }
