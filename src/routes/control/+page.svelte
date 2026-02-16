@@ -6,6 +6,8 @@
 	let match = $state<MatchState | null>(null);
 	let matchTimeouts = $state({ home: 0, guest: 0 });
 	let loading = $state(false);
+	let activeTimeout = $state<{ team: Team; teamName: string; secondsLeft: number } | null>(null);
+	let timeoutInterval: ReturnType<typeof setInterval> | null = null;
 
 	$effect(() => {
 		match = data.activeMatch;
@@ -58,8 +60,13 @@
 		api({ matchId: match.matchId, action: 'reset' });
 	}
 
-	async function callTimeout(team: Team) {
+	function undo() {
 		if (!match) return;
+		api({ matchId: match.matchId, action: 'undo' });
+	}
+
+	async function callTimeout(team: Team) {
+		if (!match || activeTimeout) return;
 		const res = await fetch('/api/match/timeout', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -70,6 +77,18 @@
 				...matchTimeouts,
 				[team]: matchTimeouts[team] + 1
 			};
+			const teamName = team === 'home' ? match.homeTeamName : match.guestTeamName;
+			activeTimeout = { team, teamName, secondsLeft: 30 };
+			if (timeoutInterval) clearInterval(timeoutInterval);
+			timeoutInterval = setInterval(() => {
+				if (!activeTimeout) return;
+				activeTimeout = { ...activeTimeout, secondsLeft: activeTimeout.secondsLeft - 1 };
+				if (activeTimeout.secondsLeft <= 0) {
+					if (timeoutInterval) clearInterval(timeoutInterval);
+					timeoutInterval = null;
+					activeTimeout = null;
+				}
+			}, 1000);
 		}
 	}
 
@@ -145,6 +164,17 @@
 				<div class="card-header">
 					<span class="card-icon">&#9878;</span>
 					<h2>Spielstand-Übersicht</h2>
+					<label class="toggle-label">
+						Satzresultate
+						<button
+							class="toggle"
+							class:active={match.showSetScores}
+							onclick={() => updateSettings('showSetScores', !match?.showSetScores)}
+							aria-label="Satzresultate anzeigen"
+						>
+							<span class="toggle-knob"></span>
+						</button>
+					</label>
 				</div>
 				<div class="card-body flex items-center justify-center">
 					<div class="scoreboard-preview">
@@ -153,7 +183,12 @@
 							{#if match.showJerseyColors}
 								<div class="preview-jersey" style:background-color={match.homeJerseyColor}></div>
 							{/if}
-							<div class="preview-name preview-name-dark">{match.homeTeamName.toUpperCase()}</div>
+							<div class="preview-name preview-name-dark">
+								{#if match.serviceTeam === 'home'}
+									<img src="/vbcthun-ball.svg" alt="" class="preview-service" />
+								{/if}
+								{match.homeTeamName.toUpperCase()}
+							</div>
 							<div class="preview-sets">{match.homeSets}</div>
 							<div class="preview-points" style:background-color={match.homeJerseyColor}>{match.homePoints}</div>
 						</div>
@@ -164,7 +199,7 @@
 							{/if}
 							<div class="preview-name">
 								{#if match.serviceTeam === 'guest'}
-									<img src="/volleyball.svg" alt="" class="preview-service" />
+									<img src="/vbcthun-ball.svg" alt="" class="preview-service" />
 								{/if}
 								{match.guestTeamName.toUpperCase()}
 							</div>
@@ -296,30 +331,49 @@
 					</div>
 				</div>
 
+				{#if activeTimeout}
+					<div class="timeout-banner">
+						Auszeit {activeTimeout.teamName} — {activeTimeout.secondsLeft}s
+					</div>
+				{/if}
+
 				<!-- Bottom Actions -->
 				<div class="scoring-actions">
-					<button onclick={switchService} class="btn-icon" title="Aufschlag wechseln">
-						&#9898;
+					<button
+						onclick={() => { if (match?.serviceTeam !== 'home') switchService(); }}
+						class="btn-service"
+						class:btn-service-active={match?.serviceTeam === 'home'}
+						disabled={match?.serviceTeam === 'home'}
+					>
+						&#127952; {match?.homeTeamName}
 					</button>
 					<button
 						onclick={() => callTimeout('home')}
-						disabled={matchTimeouts.home >= 2}
+						disabled={matchTimeouts.home >= 2 || !!activeTimeout}
 						class="btn-action"
 					>
 						&#9201; Auszeit
+					</button>
+					<button onclick={undo} disabled={loading} class="btn-action">
+						&#8617; Zurueck
 					</button>
 					<button onclick={resetMatch} class="btn-action btn-action-danger">
 						&#8635; Reset
 					</button>
 					<button
 						onclick={() => callTimeout('guest')}
-						disabled={matchTimeouts.guest >= 2}
+						disabled={matchTimeouts.guest >= 2 || !!activeTimeout}
 						class="btn-action"
 					>
 						&#9201; Auszeit
 					</button>
-					<button onclick={switchService} class="btn-icon" title="Aufschlag wechseln">
-						&#9898;
+					<button
+						onclick={() => { if (match?.serviceTeam !== 'guest') switchService(); }}
+						class="btn-service"
+						class:btn-service-active={match?.serviceTeam === 'guest'}
+						disabled={match?.serviceTeam === 'guest'}
+					>
+						&#127952; {match?.guestTeamName}
 					</button>
 				</div>
 			</div>
@@ -342,7 +396,7 @@
 		background: #0b0e1a;
 		color: #e2e8f0;
 		padding: 20px;
-		font-family: system-ui, -apple-system, sans-serif;
+		font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
 	}
 
 	.start-screen {
@@ -553,8 +607,7 @@
 	.preview-service {
 		width: 20px;
 		height: 20px;
-		opacity: 0.7;
-		filter: invert(1);
+		opacity: 0.85;
 	}
 
 	.preview-sets {
@@ -687,6 +740,17 @@
 		font-size: 22px;
 	}
 
+	.timeout-banner {
+		background: rgba(234, 179, 8, 0.15);
+		border: 1px solid rgba(234, 179, 8, 0.5);
+		color: #eab308;
+		text-align: center;
+		padding: 10px 20px;
+		font-weight: 700;
+		font-size: 16px;
+		font-variant-numeric: tabular-nums;
+	}
+
 	/* Bottom Actions */
 	.scoring-actions {
 		display: flex;
@@ -697,24 +761,28 @@
 		border-top: 1px solid #1e293b;
 	}
 
-	.btn-icon {
-		width: 40px;
-		height: 40px;
+	.btn-service {
+		padding: 10px 16px;
 		border: 1px solid #334155;
-		background: transparent;
-		color: #64748b;
-		border-radius: 50%;
+		background: #0c1929;
+		color: #94a3b8;
+		border-radius: 8px;
+		font-size: 13px;
+		font-weight: 600;
 		cursor: pointer;
-		font-size: 16px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: border-color 0.2s;
+		transition: all 0.2s;
 	}
 
-	.btn-icon:hover {
+	.btn-service:hover:not(:disabled) {
 		border-color: #38bdf8;
 		color: #38bdf8;
+	}
+
+	.btn-service-active {
+		background: linear-gradient(135deg, #0c4a6e, #0369a1);
+		border-color: #0ea5e9;
+		color: white;
+		cursor: default;
 	}
 
 	.btn-action {

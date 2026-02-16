@@ -3,7 +3,7 @@ import { db } from '$lib/server/db/index.js';
 import { matches, scores } from '$lib/server/db/schema.js';
 import { sseEmitter } from '$lib/server/sse.js';
 import { toMatchState } from '$lib/server/match-state.js';
-import { addPoint, removePoint, resetMatch } from '$lib/volleyball.js';
+import { addPoint, removePoint, resetMatch, isMatchOver } from '$lib/volleyball.js';
 import { eq, desc } from 'drizzle-orm';
 import type { MatchState } from '$lib/types.js';
 import type { RequestHandler } from './$types.js';
@@ -101,6 +101,29 @@ export const PUT: RequestHandler = async ({ request }) => {
 				if (body.team === 'home' && state.homeSets > 0) newState.homeSets--;
 				else if (body.team === 'guest' && state.guestSets > 0) newState.guestSets--;
 				break;
+			case 'undo': {
+				// Get all score records for this match
+				const allScores = await db.query.scores.findMany({
+					where: eq(scores.matchId, matchId),
+					orderBy: desc(scores.createdAt)
+				});
+				if (allScores.length <= 1) {
+					return json({ error: 'Nothing to undo' }, { status: 400 });
+				}
+				// Delete the latest record
+				await db.delete(scores).where(eq(scores.id, allScores[0].id));
+				// Reconstruct state from previous record
+				const previousScore = allScores[1];
+				const undoState = toMatchState(match, previousScore);
+				// Update match status if needed (e.g. finished -> live)
+				const correctStatus = isMatchOver(undoState.homeSets, undoState.guestSets) ? 'finished' : 'live';
+				if (correctStatus !== match.status) {
+					await db.update(matches).set({ status: correctStatus, updatedAt: new Date() }).where(eq(matches.id, matchId));
+					undoState.status = correctStatus;
+				}
+				sseEmitter.emit({ type: 'score', data: undoState });
+				return json(undoState);
+			}
 			default:
 				return json({ error: 'Unknown action' }, { status: 400 });
 		}
@@ -127,7 +150,7 @@ export const PUT: RequestHandler = async ({ request }) => {
 	}
 
 	// Update match settings (team names, colors)
-	const settingsFields = ['homeTeamName', 'guestTeamName', 'homeJerseyColor', 'guestJerseyColor', 'showJerseyColors'] as const;
+	const settingsFields = ['homeTeamName', 'guestTeamName', 'homeJerseyColor', 'guestJerseyColor', 'showJerseyColors', 'showSetScores'] as const;
 	const updateData: Record<string, unknown> = { updatedAt: new Date() };
 	for (const field of settingsFields) {
 		if (body[field] !== undefined) updateData[field] = body[field];

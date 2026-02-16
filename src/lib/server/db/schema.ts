@@ -7,6 +7,7 @@ export const matches = pgTable('matches', {
 	homeJerseyColor: text('home_jersey_color').notNull().default('#1e40af'),
 	guestJerseyColor: text('guest_jersey_color').notNull().default('#dc2626'),
 	showJerseyColors: boolean('show_jersey_colors').notNull().default(true),
+	showSetScores: boolean('show_set_scores').notNull().default(false),
 	status: text('status', { enum: ['upcoming', 'live', 'finished'] }).notNull().default('upcoming'),
 	swissVolleyMatchId: text('swiss_volley_match_id'),
 	createdAt: timestamp('created_at').notNull().defaultNow(),

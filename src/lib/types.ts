@@ -21,10 +21,11 @@ export interface MatchState {
 	currentSet: number;
 	setScores: SetScore[];
 	serviceTeam: Team;
+	showSetScores: boolean;
 	status: MatchStatus;
 }
 
 export type SSEEvent =
 	| { type: 'score'; data: MatchState }
-	| { type: 'timeout'; data: { team: Team; active: boolean } }
+	| { type: 'timeout'; data: { team: Team; teamName: string; active: boolean } }
 	| { type: 'match'; data: MatchState };

@@ -1,0 +1,1 @@
+ALTER TABLE "matches" ADD COLUMN "show_set_scores" boolean DEFAULT false NOT NULL;

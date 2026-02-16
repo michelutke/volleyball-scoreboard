@@ -117,6 +117,7 @@ export function createInitialState(matchId: number): MatchState {
 		currentSet: 1,
 		setScores: [],
 		serviceTeam: 'home',
+		showSetScores: false,
 		status: 'live'
 	};
 }

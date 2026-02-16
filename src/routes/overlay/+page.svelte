@@ -8,8 +8,18 @@
 	$effect(() => {
 		if (data.match) match = data.match;
 	});
-	let timeoutActive = $state<string | null>(null);
+	let timeoutTeam = $state<string | null>(null);
+	let timeoutTimer = $state<ReturnType<typeof setTimeout> | null>(null);
 	let scoreChanged = $state(false);
+
+	function startTimeout(team: string) {
+		if (timeoutTimer) clearTimeout(timeoutTimer);
+		timeoutTeam = team;
+		timeoutTimer = setTimeout(() => {
+			timeoutTeam = null;
+			timeoutTimer = null;
+		}, 30000);
+	}
 
 	onMount(() => {
 		const es = new EventSource('/api/scores/stream');
@@ -24,12 +34,14 @@
 			}
 
 			if (parsed.type === 'timeout') {
-				timeoutActive = parsed.data.team;
-				setTimeout(() => (timeoutActive = null), 5000);
+				startTimeout(parsed.data.team);
 			}
 		};
 
-		return () => es.close();
+		return () => {
+			es.close();
+			if (timeoutTimer) clearTimeout(timeoutTimer);
+		};
 	});
 </script>
 
@@ -54,14 +66,24 @@
 				{/if}
 				<div class="team-name">
 					{#if match.serviceTeam === 'home'}
-						<img src="/volleyball.svg" alt="Service" class="service-icon" />
+						<img src="/vbcthun-ball.svg" alt="Service" class="service-icon" />
 					{/if}
 					<span>{match.homeTeamName.toUpperCase()}</span>
 				</div>
 				<div class="sets">{match.homeSets}</div>
-				<div class="points" style:background-color={match.homeJerseyColor}>
-					{match.homePoints}
-				</div>
+				{#if match.showSetScores}
+					{#each match.setScores as s}
+						<div class="set-score-cell">{s.home}</div>
+					{/each}
+					<div class="set-score-cell set-score-current">{match.homePoints}</div>
+				{:else}
+					<div class="points" style:background-color={match.homeJerseyColor}>
+						{match.homePoints}
+					</div>
+				{/if}
+				{#if timeoutTeam === 'home'}
+					<div class="timeout">TIME OUT</div>
+				{/if}
 			</div>
 
 			<!-- Guest Team Row -->
@@ -71,22 +93,26 @@
 				{/if}
 				<div class="team-name">
 					{#if match.serviceTeam === 'guest'}
-						<img src="/volleyball.svg" alt="Service" class="service-icon" />
+						<img src="/vbcthun-ball.svg" alt="Service" class="service-icon" />
 					{/if}
 					<span>{match.guestTeamName.toUpperCase()}</span>
 				</div>
 				<div class="sets">{match.guestSets}</div>
-				<div class="points" style:background-color={match.guestJerseyColor}>
-					{match.guestPoints}
-				</div>
+				{#if match.showSetScores}
+					{#each match.setScores as s}
+						<div class="set-score-cell">{s.guest}</div>
+					{/each}
+					<div class="set-score-cell set-score-current">{match.guestPoints}</div>
+				{:else}
+					<div class="points" style:background-color={match.guestJerseyColor}>
+						{match.guestPoints}
+					</div>
+				{/if}
+				{#if timeoutTeam === 'guest'}
+					<div class="timeout">TIME OUT</div>
+				{/if}
 			</div>
 		</div>
-
-		{#if timeoutActive}
-			<div class="timeout">
-				TIME OUT — {timeoutActive === 'home' ? match.homeTeamName : match.guestTeamName}
-			</div>
-		{/if}
 	</div>
 {/if}
 
@@ -95,7 +121,7 @@
 		position: fixed;
 		top: 30px;
 		left: 30px;
-		font-family: 'Arial', 'Helvetica Neue', sans-serif;
+		font-family: 'Montserrat', 'Arial', sans-serif;
 		z-index: 9999;
 	}
 
@@ -147,8 +173,7 @@
 	.service-icon {
 		width: 28px;
 		height: 28px;
-		opacity: 0.7;
-		filter: invert(1);
+		opacity: 0.85;
 	}
 
 	.sets {
@@ -176,19 +201,42 @@
 		transition: all 0.2s ease;
 	}
 
+	.set-score-cell {
+		background: #1a1a1a;
+		color: #94a3b8;
+		width: 56px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 28px;
+		font-weight: 800;
+		font-variant-numeric: tabular-nums;
+		border-left: 1px solid #2a2a2a;
+	}
+
+	.set-score-current {
+		color: white;
+		background: #0c1929;
+		border: 2px solid #38bdf8;
+	}
+
 	.timeout {
-		margin-top: 8px;
+		margin-left: 3px;
 		background: rgba(234, 179, 8, 0.95);
 		color: black;
-		padding: 10px 24px;
+		padding: 0 20px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		font-weight: 800;
-		font-size: 20px;
-		text-align: center;
+		font-size: 14px;
+		letter-spacing: 1px;
+		white-space: nowrap;
 		animation: fadeIn 0.3s ease;
 	}
 
 	@keyframes fadeIn {
-		from { opacity: 0; transform: translateY(-10px); }
-		to { opacity: 1; transform: translateY(0); }
+		from { opacity: 0; transform: translateX(-10px); }
+		to { opacity: 1; transform: translateX(0); }
 	}
 </style>

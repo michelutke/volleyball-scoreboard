@@ -19,6 +19,7 @@ export function toMatchState(match: MatchRow, score: ScoreRow): MatchState {
 		currentSet: score.currentSet,
 		setScores: score.setScores as SetScore[],
 		serviceTeam: score.serviceTeam,
+		showSetScores: match.showSetScores,
 		status: match.status
 	};
 }

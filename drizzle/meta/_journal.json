@@ -8,6 +8,13 @@
       "when": 1771178077035,
       "tag": "0000_lucky_shaman",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771191271587,
+      "tag": "0001_light_puma",
+      "breakpoints": true
     }
   ]
 }
