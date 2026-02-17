@@ -1,1 +1,72 @@
 @import 'tailwindcss';
+
+:root {
+	/* Surfaces */
+	--color-bg-base: #0b0e1a;
+	--color-bg-panel: #111827;
+	--color-bg-panel-alt: #151929;
+	--color-bg-panel-hover: #1a2035;
+	--color-bg-input: #1e293b;
+	--color-bg-elevated: #0c1929;
+	--color-bg-elevated-hover: #132f4c;
+	--color-bg-dim: #0f172a;
+
+	/* Borders */
+	--color-border-default: #1e293b;
+	--color-border-subtle: #334155;
+
+	/* Text */
+	--color-text-primary: #e2e8f0;
+	--color-text-secondary: #94a3b8;
+	--color-text-tertiary: #64748b;
+	--color-text-muted: #334155;
+
+	/* Accent (sky-blue default, overridable) */
+	--color-accent: #38bdf8;
+	--color-accent-mid: #0ea5e9;
+	--color-accent-dark: #0284c7;
+	--color-accent-deep: #0369a1;
+	--color-accent-deepest: #0c4a6e;
+	--color-accent-border: #1e3a5f;
+
+	/* Status (fixed, not configurable) */
+	--color-success: #22c55e;
+	--color-warning: #eab308;
+	--color-error: #ef4444;
+	--color-error-light: #f87171;
+
+	/* Overlay-specific */
+	--color-overlay-bg: #1a1a1a;
+	--color-overlay-bg-dark: #0a0a0a;
+	--color-overlay-border: #2a2a2a;
+}
+
+@theme inline {
+	--color-bg-base: var(--color-bg-base);
+	--color-bg-panel: var(--color-bg-panel);
+	--color-bg-panel-alt: var(--color-bg-panel-alt);
+	--color-bg-panel-hover: var(--color-bg-panel-hover);
+	--color-bg-input: var(--color-bg-input);
+	--color-bg-elevated: var(--color-bg-elevated);
+	--color-bg-elevated-hover: var(--color-bg-elevated-hover);
+	--color-bg-dim: var(--color-bg-dim);
+	--color-border-default: var(--color-border-default);
+	--color-border-subtle: var(--color-border-subtle);
+	--color-text-primary: var(--color-text-primary);
+	--color-text-secondary: var(--color-text-secondary);
+	--color-text-tertiary: var(--color-text-tertiary);
+	--color-text-muted: var(--color-text-muted);
+	--color-accent: var(--color-accent);
+	--color-accent-mid: var(--color-accent-mid);
+	--color-accent-dark: var(--color-accent-dark);
+	--color-accent-deep: var(--color-accent-deep);
+	--color-accent-deepest: var(--color-accent-deepest);
+	--color-accent-border: var(--color-accent-border);
+	--color-success: var(--color-success);
+	--color-warning: var(--color-warning);
+	--color-error: var(--color-error);
+	--color-error-light: var(--color-error-light);
+	--color-overlay-bg: var(--color-overlay-bg);
+	--color-overlay-bg-dark: var(--color-overlay-bg-dark);
+	--color-overlay-border: var(--color-overlay-border);
+}

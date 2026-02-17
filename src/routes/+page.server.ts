@@ -16,7 +16,10 @@ export const load: PageServerLoad = async ({ url }) => {
 		if (url.searchParams.get('edit') !== 'true') {
 			redirect(302, '/teams');
 		}
-		return { clubName: clubNameSetting.value };
+		const accentSetting = await db.query.settings.findFirst({
+			where: eq(settings.key, 'accentColor')
+		});
+		return { clubName: clubNameSetting.value, accentColor: accentSetting?.value ?? null };
 	}
 
 	// No clubName yet — try auto-setup from Swiss Volley API

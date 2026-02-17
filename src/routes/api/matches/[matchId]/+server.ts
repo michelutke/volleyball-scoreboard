@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import { matches, scores } from '$lib/server/db/schema.js';
-import { emitAll } from '$lib/server/sse.js';
+import { matchSSEEmitter } from '$lib/server/sse.js';
 import { toMatchState } from '$lib/server/match-state.js';
 import { addPoint, removePoint, resetMatch, isMatchOver } from '$lib/volleyball.js';
 import { eq, desc } from 'drizzle-orm';
@@ -83,7 +83,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 					await db.update(matches).set({ status: correctStatus, updatedAt: new Date() }).where(eq(matches.id, matchId));
 					undoState.status = correctStatus;
 				}
-				emitAll(matchId, { type: 'score', data: undoState });
+				matchSSEEmitter.emit(matchId, { type: 'score', data: undoState });
 				return json(undoState);
 			}
 			default:
@@ -105,7 +105,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			serviceTeam: newState.serviceTeam
 		});
 
-		emitAll(matchId, { type: 'score', data: newState });
+		matchSSEEmitter.emit(matchId, { type: 'score', data: newState });
 		return json(newState);
 	}
 
@@ -127,6 +127,6 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 	if (!match || !score) return json({ error: 'Not found' }, { status: 404 });
 
 	const state = toMatchState(match, score);
-	emitAll(matchId, { type: 'match', data: state });
+	matchSSEEmitter.emit(matchId, { type: 'match', data: state });
 	return json(state);
 };

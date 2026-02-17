@@ -82,7 +82,7 @@
 
 {#if match}
 	<div class="overlay">
-		<div class="scoreboard">
+		<div class="scoreboard" class:with-jersey={match.showJerseyColors}>
 			<!-- Home Team Row -->
 			<div class="team-row home-row">
 				{#if match.showJerseyColors}
@@ -145,11 +145,30 @@
 		z-index: 9999;
 	}
 
-	.scoreboard { display: flex; flex-direction: column; gap: 3px; }
-	.team-row { display: flex; align-items: stretch; height: 64px; }
-	.home-row .team-name { background: #0a0a0a; }
-	.guest-row .team-name { background: #1a1a1a; }
-	.jersey { width: 10px; flex-shrink: 0; }
+	.scoreboard {
+		display: grid;
+		grid-template-rows: 64px 64px;
+		row-gap: 3px;
+	}
+
+	.scoreboard.with-jersey {
+		grid-template-columns: 10px minmax(260px, auto) 64px auto 72px auto auto;
+	}
+
+	.scoreboard:not(.with-jersey) {
+		grid-template-columns: minmax(260px, auto) 64px auto 72px auto auto;
+	}
+
+	.team-row {
+		display: grid;
+		grid-template-columns: subgrid;
+		grid-column: 1 / -1;
+		align-items: stretch;
+	}
+
+	.home-row .team-name { background: var(--color-overlay-bg-dark); }
+	.guest-row .team-name { background: var(--color-overlay-bg); }
+	.jersey { flex-shrink: 0; }
 
 	.team-name {
 		color: white;
@@ -157,7 +176,6 @@
 		display: flex;
 		align-items: center;
 		gap: 12px;
-		min-width: 260px;
 		font-size: 28px;
 		font-weight: 800;
 		letter-spacing: 0.5px;
@@ -167,7 +185,7 @@
 	.service-icon.service-hidden { visibility: hidden; }
 
 	.sets {
-		background: #1a1a1a;
+		background: var(--color-overlay-bg);
 		color: white;
 		width: 64px;
 		display: flex;
@@ -176,7 +194,7 @@
 		font-size: 32px;
 		font-weight: 800;
 		font-variant-numeric: tabular-nums;
-		border-left: 2px solid #2a2a2a;
+		border-left: 2px solid var(--color-overlay-border);
 	}
 
 	.points {
@@ -192,8 +210,8 @@
 	}
 
 	.set-score-cell {
-		background: #1a1a1a;
-		color: #94a3b8;
+		background: var(--color-overlay-bg);
+		color: var(--color-text-secondary);
 		width: 56px;
 		display: flex;
 		align-items: center;
@@ -201,11 +219,11 @@
 		font-size: 28px;
 		font-weight: 800;
 		font-variant-numeric: tabular-nums;
-		border-left: 1px solid #2a2a2a;
+		border-left: 1px solid var(--color-overlay-border);
 		border-bottom: 3px solid transparent;
 	}
 
-	.set-score-winner { border-bottom-color: var(--winner-color); color: #e2e8f0; }
+	.set-score-winner { border-bottom-color: var(--winner-color); color: var(--color-text-primary); }
 
 	.set-scores-container {
 		display: flex;

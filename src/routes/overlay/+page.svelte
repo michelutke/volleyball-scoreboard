@@ -184,11 +184,11 @@
 	}
 
 	.home-row .team-name {
-		background: #0a0a0a;
+		background: var(--color-overlay-bg-dark);
 	}
 
 	.guest-row .team-name {
-		background: #1a1a1a;
+		background: var(--color-overlay-bg);
 	}
 
 	.jersey {
@@ -220,7 +220,7 @@
 	}
 
 	.sets {
-		background: #1a1a1a;
+		background: var(--color-overlay-bg);
 		color: white;
 		width: 64px;
 		display: flex;
@@ -229,7 +229,7 @@
 		font-size: 32px;
 		font-weight: 800;
 		font-variant-numeric: tabular-nums;
-		border-left: 2px solid #2a2a2a;
+		border-left: 2px solid var(--color-overlay-border);
 	}
 
 	.points {
@@ -245,8 +245,8 @@
 	}
 
 	.set-score-cell {
-		background: #1a1a1a;
-		color: #94a3b8;
+		background: var(--color-overlay-bg);
+		color: var(--color-text-secondary);
 		width: 56px;
 		display: flex;
 		align-items: center;
@@ -254,13 +254,13 @@
 		font-size: 28px;
 		font-weight: 800;
 		font-variant-numeric: tabular-nums;
-		border-left: 1px solid #2a2a2a;
+		border-left: 1px solid var(--color-overlay-border);
 		border-bottom: 3px solid transparent;
 	}
 
 	.set-score-winner {
 		border-bottom-color: var(--winner-color);
-		color: #e2e8f0;
+		color: var(--color-text-primary);
 	}
 
 	.set-scores-container {
