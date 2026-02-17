@@ -1,5 +1,10 @@
 <script lang="ts">
-	let clubName = $state('');
+	import type { PageData } from './$types.js';
+
+	let { data }: { data: PageData } = $props();
+
+	let isEdit = $derived(!!data.clubName);
+	let clubName = $state(data.clubName ?? '');
 	let saving = $state(false);
 	let error = $state('');
 
@@ -27,8 +32,8 @@
 
 <div class="min-h-screen bg-[#0b0e1a] flex items-center justify-center p-4">
 	<div class="bg-[#151929] rounded-2xl p-8 w-full max-w-md shadow-xl">
-		<h1 class="text-2xl font-bold text-white mb-2">Scoring Setup</h1>
-		<p class="text-gray-400 mb-6">Verein einmalig konfigurieren</p>
+		<h1 class="text-2xl font-bold text-white mb-2">{isEdit ? 'Einstellungen' : 'Scoring Setup'}</h1>
+		<p class="text-gray-400 mb-6">{isEdit ? 'Vereinseinstellungen bearbeiten' : 'Verein einmalig konfigurieren'}</p>
 
 		{#if error}
 			<div class="bg-red-900/30 border border-red-700 text-red-300 rounded-lg p-3 mb-4 text-sm">{error}</div>
@@ -51,11 +56,14 @@
 				disabled={saving}
 				class="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-lg py-2.5 transition-colors"
 			>
-				{saving ? 'Speichern...' : 'Einrichten'}
+				{saving ? 'Speichern...' : isEdit ? 'Speichern' : 'Einrichten'}
 			</button>
 		</form>
 
-		<div class="mt-6 pt-4 border-t border-gray-800">
+		<div class="mt-6 pt-4 border-t border-gray-800 flex justify-between">
+			{#if isEdit}
+				<a href="/teams" class="text-sm text-gray-500 hover:text-gray-300">&larr; Zurück</a>
+			{/if}
 			<a href="/control" class="text-sm text-gray-500 hover:text-gray-300">Legacy Control Panel &rarr;</a>
 		</div>
 	</div>

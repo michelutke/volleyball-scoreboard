@@ -32,7 +32,7 @@
 				<h1 class="text-2xl font-bold text-white">{data.clubName ?? 'Teams'}</h1>
 				<p class="text-gray-400 text-sm">Teams verwalten</p>
 			</div>
-			<a href="/" class="text-sm text-gray-500 hover:text-gray-300">Einstellungen</a>
+			<a href="/?edit=true" class="text-sm text-gray-500 hover:text-gray-300">Einstellungen</a>
 		</div>
 
 		{#if data.teams.length === 0}

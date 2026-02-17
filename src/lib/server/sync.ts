@@ -10,10 +10,12 @@ export async function syncTeams(): Promise<number> {
 	let synced = 0;
 	for (const svTeam of svTeams) {
 		const svId = String(svTeam.teamId);
-		const leagueMatch = svTeam.league.caption.match(/^(\d+)\./);
-		const name = leagueMatch
-			? `${leagueMatch[1]}L ${svTeam.gender}`
-			: `${svTeam.league.caption} ${svTeam.gender}`;
+		const gender = svTeam.gender.toUpperCase();
+		const leagueMatch = svTeam.league.caption.match(/^(\d+)\.\s*Liga\s*(.*)/i);
+		const league = leagueMatch ? `${leagueMatch[1]}L` : svTeam.league.caption;
+		const qualifier = leagueMatch?.[2]?.trim() || '';
+		const letter = svTeam.caption.replace(svTeam.club.clubCaption, '').trim();
+		const name = [league, qualifier, letter, gender].filter(Boolean).join(' ');
 
 		const existing = await db.query.teams.findFirst({
 			where: eq(teams.swissVolleyTeamId, svId)
