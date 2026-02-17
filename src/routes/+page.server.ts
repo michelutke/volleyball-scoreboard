@@ -5,14 +5,11 @@ import { eq } from 'drizzle-orm';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async () => {
-	const clubId = await db.query.settings.findFirst({
-		where: eq(settings.key, 'swissVolleyClubId')
-	});
 	const clubName = await db.query.settings.findFirst({
 		where: eq(settings.key, 'clubName')
 	});
 
-	if (clubId || clubName) {
+	if (clubName) {
 		redirect(302, '/teams');
 	}
 

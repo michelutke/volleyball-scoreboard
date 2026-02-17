@@ -6,23 +6,18 @@ import { eq, asc } from 'drizzle-orm';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async () => {
-	const clubIdSetting = await db.query.settings.findFirst({
-		where: eq(settings.key, 'swissVolleyClubId')
-	});
 	const clubNameSetting = await db.query.settings.findFirst({
 		where: eq(settings.key, 'clubName')
 	});
 
-	if (!clubIdSetting && !clubNameSetting) {
+	if (!clubNameSetting) {
 		redirect(302, '/');
 	}
 
-	if (clubIdSetting) {
-		try {
-			await syncTeams(clubIdSetting.value);
-		} catch {
-			// Sync failure is non-fatal, show local data
-		}
+	try {
+		await syncTeams();
+	} catch {
+		// Sync failure is non-fatal, show local data
 	}
 
 	const allTeams = await db.select().from(teams).orderBy(asc(teams.name));
@@ -33,7 +28,6 @@ export const load: PageServerLoad = async () => {
 			name: t.name,
 			swissVolleyTeamId: t.swissVolleyTeamId
 		})),
-		clubName: clubNameSetting?.value ?? null,
-		hasSwissVolley: !!clubIdSetting
+		clubName: clubNameSetting.value
 	};
 };

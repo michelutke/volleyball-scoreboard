@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/private';
 
-const BASE_URL = 'https://volleymanager.volleyball.ch/api';
+const BASE_URL = 'https://api.volleyball.ch';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 interface CacheEntry<T> {
@@ -24,23 +24,42 @@ function setCache<T>(key: string, data: T): void {
 	cache.set(key, { data, timestamp: Date.now() });
 }
 
-export interface SwissVolleyTeam {
-	id: string;
-	name: string;
-	clubName: string;
+export interface SVTeam {
+	teamId: number;
+	seasonalTeamId: number;
+	caption: string;
+	gender: string;
+	league: { leagueId: number; caption: string };
+	club: { clubId: number; clubCaption: string };
 }
 
-export interface SwissVolleyMatch {
-	id: string;
-	homeTeam: string;
-	guestTeam: string;
-	date: string;
-	venue: string;
-	league: string;
-	wonSetsHome: number | null;
-	wonSetsGuest: number | null;
-	hallName: string | null;
-	hallCity: string | null;
+export interface SVGameTeam {
+	teamId: number;
+	seasonalTeamId: number;
+	caption: string;
+	clubId: number;
+	clubCaption: string;
+	logo: string | null;
+}
+
+export interface SVGame {
+	gameId: number;
+	playDate: string;
+	playDateUtc: string;
+	gender: string;
+	status: number;
+	teams: { home: SVGameTeam; away: SVGameTeam };
+	league: { leagueId: number; caption: string; season: number };
+	hall: {
+		hallId: number;
+		caption: string;
+		street: string;
+		number: string;
+		zip: number;
+		city: string;
+	} | null;
+	setResults: unknown[];
+	resultSummary: unknown[];
 }
 
 async function apiFetch<T>(path: string): Promise<T> {
@@ -52,7 +71,7 @@ async function apiFetch<T>(path: string): Promise<T> {
 
 	const res = await fetch(`${BASE_URL}${path}`, {
 		headers: {
-			Authorization: `Bearer ${apiKey}`,
+			Authorization: apiKey,
 			Accept: 'application/json'
 		}
 	});
@@ -66,18 +85,10 @@ async function apiFetch<T>(path: string): Promise<T> {
 	return data as T;
 }
 
-export async function getTeams(clubId: string): Promise<SwissVolleyTeam[]> {
-	return apiFetch<SwissVolleyTeam[]>(`/clubs/${clubId}/teams`);
+export async function getTeams(): Promise<SVTeam[]> {
+	return apiFetch<SVTeam[]>('/indoor/teams');
 }
 
-export async function getUpcomingMatches(teamId: string): Promise<SwissVolleyMatch[]> {
-	return apiFetch<SwissVolleyMatch[]>(`/teams/${teamId}/matches?status=upcoming`);
-}
-
-export async function getMatches(teamId: string): Promise<SwissVolleyMatch[]> {
-	const [upcoming, played] = await Promise.all([
-		apiFetch<SwissVolleyMatch[]>(`/teams/${teamId}/matches?status=upcoming`).catch(() => []),
-		apiFetch<SwissVolleyMatch[]>(`/teams/${teamId}/matches?status=played`).catch(() => [])
-	]);
-	return [...upcoming, ...played];
+export async function getUpcomingGames(): Promise<SVGame[]> {
+	return apiFetch<SVGame[]>('/indoor/upcomingGames');
 }

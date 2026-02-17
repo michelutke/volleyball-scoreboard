@@ -1,6 +1,5 @@
 <script lang="ts">
 	let clubName = $state('');
-	let clubId = $state('');
 	let saving = $state(false);
 	let error = $state('');
 
@@ -12,12 +11,10 @@
 		saving = true;
 		error = '';
 		try {
-			const settings: Record<string, string> = { clubName: clubName.trim() };
-			if (clubId.trim()) settings.swissVolleyClubId = clubId.trim();
 			const res = await fetch('/api/settings', {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(settings)
+				body: JSON.stringify({ clubName: clubName.trim() })
 			});
 			if (!res.ok) throw new Error('Speichern fehlgeschlagen');
 			window.location.href = '/teams';
@@ -47,18 +44,6 @@
 					placeholder="z.B. VBC Thun"
 					class="w-full bg-[#0b0e1a] border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
 				/>
-			</div>
-
-			<div>
-				<label for="clubId" class="block text-sm font-medium text-gray-300 mb-1">Swiss Volley Club-ID <span class="text-gray-500">(optional)</span></label>
-				<input
-					id="clubId"
-					type="text"
-					bind:value={clubId}
-					placeholder="z.B. 12345"
-					class="w-full bg-[#0b0e1a] border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-				/>
-				<p class="text-xs text-gray-500 mt-1">Für automatischen Team-/Spielplan-Sync</p>
 			</div>
 
 			<button

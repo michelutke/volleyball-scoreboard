@@ -38,9 +38,7 @@
 		{#if data.teams.length === 0}
 			<div class="bg-[#151929] rounded-xl p-8 text-center">
 				<p class="text-gray-400 mb-4">Noch keine Teams vorhanden</p>
-				{#if data.hasSwissVolley}
-					<p class="text-gray-500 text-sm mb-4">Teams werden automatisch von Swiss Volley synchronisiert.</p>
-				{/if}
+				<p class="text-gray-500 text-sm mb-4">Teams werden automatisch von Swiss Volley synchronisiert.</p>
 			</div>
 		{:else}
 			<div class="space-y-2">
