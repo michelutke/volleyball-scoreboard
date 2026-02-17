@@ -7,6 +7,8 @@ export interface AccentPalette {
 	accentBorder: string;
 }
 
+export type ThemeMode = 'light' | 'dark' | 'system';
+
 export const DEFAULT_ACCENT = '#38bdf8';
 
 function hexToHsl(hex: string): [number, number, number] {
@@ -48,8 +50,18 @@ export const ACCENT_CSS_PROPS: readonly (readonly [string, keyof AccentPalette])
 	['--color-accent-border', 'accentBorder']
 ];
 
-export function generateAccentPalette(hex: string): AccentPalette {
+export function generateAccentPalette(hex: string, mode: 'light' | 'dark' = 'dark'): AccentPalette {
 	const [h, s] = hexToHsl(hex);
+	if (mode === 'light') {
+		return {
+			accent: hslToHex(h, Math.min(s, 90), 40),
+			accentMid: hslToHex(h, Math.min(s, 90), 56),
+			accentDark: hslToHex(h, Math.min(s, 85), 45),
+			accentDeep: hslToHex(h, Math.min(s, 80), 37),
+			accentDeepest: hslToHex(h, Math.min(s, 70), 24),
+			accentBorder: hslToHex(h, 30, 75)
+		};
+	}
 	return {
 		accent: hslToHex(h, Math.min(s, 90), 72),
 		accentMid: hslToHex(h, Math.min(s, 90), 56),
@@ -58,4 +70,20 @@ export function generateAccentPalette(hex: string): AccentPalette {
 		accentDeepest: hslToHex(h, Math.min(s, 70), 24),
 		accentBorder: hslToHex(h, 40, 24)
 	};
+}
+
+export function getStoredTheme(): ThemeMode {
+	if (typeof localStorage === 'undefined') return 'system';
+	return (localStorage.getItem('theme') as ThemeMode) ?? 'system';
+}
+
+export function setStoredTheme(mode: ThemeMode): void {
+	localStorage.setItem('theme', mode);
+	window.dispatchEvent(new CustomEvent('themechange', { detail: mode }));
+}
+
+export function getEffectiveTheme(mode: ThemeMode): 'light' | 'dark' {
+	if (mode === 'light' || mode === 'dark') return mode;
+	if (typeof window === 'undefined') return 'dark';
+	return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 }

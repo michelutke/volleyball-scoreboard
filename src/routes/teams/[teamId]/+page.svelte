@@ -45,7 +45,7 @@
 	function statusBadge(status: string): { text: string; class: string } {
 		switch (status) {
 			case 'live': return { text: 'Live', class: 'bg-red-600 text-white' };
-			case 'finished': return { text: 'Beendet', class: 'bg-gray-700 text-text-primary' };
+			case 'finished': return { text: 'Beendet', class: 'bg-bg-panel-hover text-text-primary' };
 			default: return { text: 'Geplant', class: 'bg-accent-deepest/40 text-accent' };
 		}
 	}
@@ -103,7 +103,7 @@
 	<div class="max-w-2xl mx-auto">
 		<div class="mb-6">
 			<a href="/teams" class="text-sm text-text-tertiary hover:text-text-primary mb-2 inline-block">&larr; Teams</a>
-			<h1 class="text-2xl font-bold text-white">{data.team.name}</h1>
+			<h1 class="text-2xl font-bold text-text-primary">{data.team.name}</h1>
 			<p class="text-text-secondary text-sm">Spielplan</p>
 		</div>
 
@@ -111,13 +111,13 @@
 		<div class="flex gap-1 bg-bg-panel-alt rounded-xl p-1 mb-4">
 			<button
 				onclick={() => { tab = 'upcoming'; }}
-				class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors {tab === 'upcoming' ? 'bg-accent-mid text-white' : 'text-text-secondary hover:text-white'}"
+				class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors {tab === 'upcoming' ? 'bg-accent-mid text-white' : 'text-text-secondary hover:text-text-primary'}"
 			>
 				Kommende ({upcomingMatches.length})
 			</button>
 			<button
 				onclick={() => { tab = 'past'; }}
-				class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors {tab === 'past' ? 'bg-accent-mid text-white' : 'text-text-secondary hover:text-white'}"
+				class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors {tab === 'past' ? 'bg-accent-mid text-white' : 'text-text-secondary hover:text-text-primary'}"
 			>
 				Vergangene ({pastMatches.length})
 			</button>
@@ -129,7 +129,7 @@
 				<div class="bg-bg-panel-alt rounded-xl p-4">
 					<div class="flex items-start justify-between mb-2">
 						<div class="flex-1">
-							<div class="text-white font-medium">
+							<div class="text-text-primary font-medium">
 								{match.homeTeamName} <span class="text-text-tertiary">vs</span> {match.guestTeamName}
 							</div>
 							<div class="text-xs text-text-tertiary mt-1 space-x-3">
@@ -193,19 +193,19 @@
 			{#if showCreate}
 				<form onsubmit={(e) => { e.preventDefault(); createMatch(); }} class="bg-bg-panel-alt rounded-xl p-4 space-y-3">
 					<div class="grid grid-cols-2 gap-2">
-						<input type="text" bind:value={homeTeamName} placeholder="Heim" class="bg-bg-base border border-border-subtle rounded-lg px-3 py-2 text-white text-sm placeholder-text-tertiary focus:outline-none focus:border-accent" />
-						<input type="text" bind:value={guestTeamName} placeholder="Gast" class="bg-bg-base border border-border-subtle rounded-lg px-3 py-2 text-white text-sm placeholder-text-tertiary focus:outline-none focus:border-accent" />
+						<input type="text" bind:value={homeTeamName} placeholder="Heim" class="bg-bg-base border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm placeholder-text-tertiary focus:outline-none focus:border-accent" />
+						<input type="text" bind:value={guestTeamName} placeholder="Gast" class="bg-bg-base border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm placeholder-text-tertiary focus:outline-none focus:border-accent" />
 					</div>
-					<input type="datetime-local" bind:value={scheduledAt} class="w-full bg-bg-base border border-border-subtle rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-accent" />
+					<input type="datetime-local" bind:value={scheduledAt} class="w-full bg-bg-base border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-accent" />
 					<div class="grid grid-cols-2 gap-2">
-						<input type="text" bind:value={venue} placeholder="Spielort" class="bg-bg-base border border-border-subtle rounded-lg px-3 py-2 text-white text-sm placeholder-text-tertiary focus:outline-none focus:border-accent" />
-						<input type="text" bind:value={league} placeholder="Liga" class="bg-bg-base border border-border-subtle rounded-lg px-3 py-2 text-white text-sm placeholder-text-tertiary focus:outline-none focus:border-accent" />
+						<input type="text" bind:value={venue} placeholder="Spielort" class="bg-bg-base border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm placeholder-text-tertiary focus:outline-none focus:border-accent" />
+						<input type="text" bind:value={league} placeholder="Liga" class="bg-bg-base border border-border-subtle rounded-lg px-3 py-2 text-text-primary text-sm placeholder-text-tertiary focus:outline-none focus:border-accent" />
 					</div>
 					<div class="flex gap-2">
 						<button type="submit" disabled={creating} class="bg-accent-mid hover:bg-accent-dark disabled:opacity-50 text-white font-semibold rounded-lg px-4 py-2 text-sm">
 							{creating ? '...' : 'Erstellen'}
 						</button>
-						<button type="button" onclick={() => { showCreate = false; }} class="text-text-secondary hover:text-white px-2">Abbrechen</button>
+						<button type="button" onclick={() => { showCreate = false; }} class="text-text-secondary hover:text-text-primary px-2">Abbrechen</button>
 					</div>
 				</form>
 			{:else}

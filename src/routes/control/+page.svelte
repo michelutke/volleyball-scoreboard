@@ -659,7 +659,7 @@
 		background: var(--color-bg-input);
 		border: 1px solid var(--color-border-subtle);
 		border-radius: 8px;
-		color: white;
+		color: var(--color-text-primary);
 		font-size: 15px;
 		outline: none;
 		transition: border-color 0.2s;
@@ -1020,13 +1020,13 @@
 	}
 
 	.btn-action-danger {
-		border-color: #7f1d1d;
-		background: #1c0a0a;
+		border-color: color-mix(in srgb, var(--color-error) 30%, var(--color-bg-panel));
+		background: color-mix(in srgb, var(--color-error) 10%, var(--color-bg-panel));
 		color: var(--color-error-light);
 	}
 
 	.btn-action-danger:hover {
-		background: #2d1111;
+		background: color-mix(in srgb, var(--color-error) 20%, var(--color-bg-panel));
 		border-color: var(--color-error-light);
 	}
 
@@ -1188,7 +1188,7 @@
 	.text-xl { font-size: 20px; }
 	.text-sm { font-size: 13px; }
 	.text-gray-400 { color: var(--color-text-secondary); }
-	.text-gray-300 { color: #cbd5e1; }
+	.text-gray-300 { color: var(--color-text-secondary); }
 	.flex { display: flex; }
 	.items-center { align-items: center; }
 	.justify-center { justify-content: center; }

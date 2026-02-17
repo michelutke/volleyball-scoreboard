@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { DEFAULT_ACCENT } from '$lib/theme.js';
+	import { DEFAULT_ACCENT, getStoredTheme, setStoredTheme } from '$lib/theme.js';
+	import type { ThemeMode } from '$lib/theme.js';
 	import type { PageData } from './$types.js';
 
 	let { data }: { data: PageData } = $props();
@@ -9,6 +10,11 @@
 	let accentColor = $state(data.accentColor ?? DEFAULT_ACCENT);
 	let saving = $state(false);
 	let error = $state('');
+	let theme = $state<ThemeMode>('system');
+
+	$effect(() => {
+		theme = getStoredTheme();
+	});
 
 	async function submit() {
 		if (!clubName.trim()) {
@@ -38,11 +44,11 @@
 
 <div class="min-h-screen bg-bg-base flex items-center justify-center p-4">
 	<div class="bg-bg-panel-alt rounded-2xl p-8 w-full max-w-md shadow-xl">
-		<h1 class="text-2xl font-bold text-white mb-2">{isEdit ? 'Einstellungen' : 'Scoring Setup'}</h1>
+		<h1 class="text-2xl font-bold text-text-primary mb-2">{isEdit ? 'Einstellungen' : 'Scoring Setup'}</h1>
 		<p class="text-text-secondary mb-6">{isEdit ? 'Vereinseinstellungen bearbeiten' : 'Verein einmalig konfigurieren'}</p>
 
 		{#if error}
-			<div class="bg-red-900/30 border border-red-700 text-red-300 rounded-lg p-3 mb-4 text-sm">{error}</div>
+			<div class="bg-red-900/30 border border-red-700 text-error-light rounded-lg p-3 mb-4 text-sm">{error}</div>
 		{/if}
 
 		<form onsubmit={(e) => { e.preventDefault(); submit(); }} class="space-y-4">
@@ -53,7 +59,7 @@
 					type="text"
 					bind:value={clubName}
 					placeholder="z.B. VBC Thun"
-					class="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2.5 text-white placeholder-text-tertiary focus:outline-none focus:border-accent"
+					class="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2.5 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent"
 				/>
 			</div>
 
@@ -77,6 +83,25 @@
 								Standard
 							</button>
 						{/if}
+					</div>
+				</div>
+
+				<div>
+					<label class="block text-sm font-medium text-text-primary mb-2">Design</label>
+					<div class="flex gap-1 bg-bg-base rounded-lg p-1">
+						{#each [
+							{ value: 'system', label: 'System' },
+							{ value: 'light', label: 'Hell' },
+							{ value: 'dark', label: 'Dunkel' }
+						] as opt}
+							<button
+								type="button"
+								onclick={() => { theme = opt.value as ThemeMode; setStoredTheme(opt.value as ThemeMode); }}
+								class="flex-1 py-2 rounded-md text-sm font-medium transition-colors {theme === opt.value ? 'bg-accent-mid text-white' : 'text-text-secondary hover:text-text-primary'}"
+							>
+								{opt.label}
+							</button>
+						{/each}
 					</div>
 				</div>
 			{/if}

@@ -109,6 +109,17 @@ SWISS_VOLLEY_API_KEY=  # Optional, for Swiss Volley team/match sync
 ### Score History
 Each action inserts a new `scores` row (append-only). Undo deletes the latest row and restores previous state.
 
+### Theme System
+- Light/dark/system theme via `[data-theme="light"]` CSS var overrides in `app.css`
+- `:root` = dark (default), `[data-theme="light"]` overrides surface/text/border/error vars
+- Overlay vars (`--color-overlay-*`) intentionally NOT overridden — overlays always dark
+- No-flash: inline `<script>` in `app.html` reads localStorage before paint
+- Theme state managed in `+layout.svelte`, listens for `themechange` CustomEvent + `prefers-color-scheme`
+- Accent palette (`theme.ts`) accepts `mode` param — light mode uses darker accent (L=40) for WCAG AA
+- Theme selector (System/Hell/Dunkel) on settings page only, stored in `localStorage('theme')`
+- `setStoredTheme()` dispatches `themechange` event so layout re-derives immediately
+- Preview scoreboards in control pages stay dark (they mirror the overlay appearance)
+
 ### Overlay Features
 - Team names, jersey colors (configurable), set/point scores
 - Inline set scores (toggle `showSetScores`): each team row shows per-set scores + current set highlighted

@@ -29,7 +29,7 @@
 	<div class="max-w-2xl mx-auto">
 		<div class="flex items-center justify-between mb-6">
 			<div>
-				<h1 class="text-2xl font-bold text-white">{data.clubName ?? 'Teams'}</h1>
+				<h1 class="text-2xl font-bold text-text-primary">{data.clubName ?? 'Teams'}</h1>
 				<p class="text-text-secondary text-sm">Teams verwalten</p>
 			</div>
 			<a href="/?edit=true" class="text-sm text-text-tertiary hover:text-text-primary">Einstellungen</a>
@@ -48,7 +48,7 @@
 						class="flex items-center justify-between bg-bg-panel-alt hover:bg-bg-panel-hover rounded-xl p-4 transition-colors"
 					>
 						<div>
-							<span class="text-white font-medium">{team.name}</span>
+							<span class="text-text-primary font-medium">{team.name}</span>
 							{#if team.swissVolleyTeamId}
 								<span class="ml-2 text-xs bg-accent-deepest/30 text-accent px-2 py-0.5 rounded">SV</span>
 							{/if}
@@ -66,12 +66,12 @@
 						type="text"
 						bind:value={newTeamName}
 						placeholder="Teamname"
-						class="flex-1 bg-bg-base border border-border-subtle rounded-lg px-4 py-2 text-white placeholder-text-tertiary focus:outline-none focus:border-accent"
+						class="flex-1 bg-bg-base border border-border-subtle rounded-lg px-4 py-2 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent"
 					/>
 					<button type="submit" disabled={creating} class="bg-accent-mid hover:bg-accent-dark disabled:opacity-50 text-white font-semibold rounded-lg px-4 py-2">
 						{creating ? '...' : 'Erstellen'}
 					</button>
-					<button type="button" onclick={() => { showCreate = false; }} class="text-text-secondary hover:text-white px-2">
+					<button type="button" onclick={() => { showCreate = false; }} class="text-text-secondary hover:text-text-primary px-2">
 						&times;
 					</button>
 				</form>
