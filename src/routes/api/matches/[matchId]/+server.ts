@@ -110,7 +110,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 	}
 
 	// Settings update
-	const settingsFields = ['homeTeamName', 'guestTeamName', 'homeJerseyColor', 'guestJerseyColor', 'showJerseyColors', 'showSetScores'] as const;
+	const settingsFields = ['homeTeamName', 'guestTeamName', 'homeJerseyColor', 'guestJerseyColor', 'showJerseyColors', 'showSetScores', 'overlayBg', 'overlayBg2', 'overlayBgGradient', 'overlayText', 'overlayRounded', 'overlayDivider', 'overlaySatsBg', 'overlaySetScoreBg'] as const;
 	const updateData: Record<string, unknown> = { updatedAt: new Date() };
 	for (const field of settingsFields) {
 		if (body[field] !== undefined) updateData[field] = body[field];

@@ -24,13 +24,29 @@
 	let editHomeJersey = $state('#000000');
 	let editGuestJersey = $state('#000000');
 	let editShowJerseyColors = $state(false);
+	let editOverlayBg = $state('#1a1a1a');
+	let editOverlayBg2 = $state('#1a1a1a');
+	let editOverlayBgGradient = $state(false);
+	let editOverlayText = $state('#ffffff');
+	let editOverlayRounded = $state(false);
+	let editOverlayDivider = $state('#2a2a2a');
+	let editOverlaySatsBg = $state('#1a1a1a');
+	let editOverlaySetScoreBg = $state('#1a1a1a');
 
 	let settingsDirty = $derived(
 		editHomeName !== (match?.homeTeamName ?? '') ||
 			editGuestName !== (match?.guestTeamName ?? '') ||
 			editHomeJersey !== (match?.homeJerseyColor ?? '#000000') ||
 			editGuestJersey !== (match?.guestJerseyColor ?? '#000000') ||
-			editShowJerseyColors !== (match?.showJerseyColors ?? false)
+			editShowJerseyColors !== (match?.showJerseyColors ?? false) ||
+			editOverlayBg !== (match?.overlayBg ?? '#1a1a1a') ||
+			editOverlayBg2 !== (match?.overlayBg2 ?? '#1a1a1a') ||
+			editOverlayBgGradient !== (match?.overlayBgGradient ?? false) ||
+			editOverlayText !== (match?.overlayText ?? '#ffffff') ||
+			editOverlayRounded !== (match?.overlayRounded ?? false) ||
+			editOverlayDivider !== (match?.overlayDivider ?? '#2a2a2a') ||
+			editOverlaySatsBg !== (match?.overlaySatsBg ?? '#1a1a1a') ||
+			editOverlaySetScoreBg !== (match?.overlaySetScoreBg ?? '#1a1a1a')
 	);
 
 	$effect(() => {
@@ -163,12 +179,47 @@
 		navigator.clipboard.writeText(`${window.location.origin}/matches/${matchId}/overlay`);
 	}
 
+	function darkenHex(hex: string, amount = 16): string {
+		const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - amount);
+		const g = Math.max(0, parseInt(hex.slice(3, 5), 16) - amount);
+		const b = Math.max(0, parseInt(hex.slice(5, 7), 16) - amount);
+		return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+	}
+
+	function lightenHex(hex: string, amount = 16): string {
+		const r = Math.min(255, parseInt(hex.slice(1, 3), 16) + amount);
+		const g = Math.min(255, parseInt(hex.slice(3, 5), 16) + amount);
+		const b = Math.min(255, parseInt(hex.slice(5, 7), 16) + amount);
+		return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+	}
+
+	function hexWithAlpha(hex: string, alpha: number): string {
+		const r = parseInt(hex.slice(1, 3), 16);
+		const g = parseInt(hex.slice(3, 5), 16);
+		const b = parseInt(hex.slice(5, 7), 16);
+		return `rgba(${r},${g},${b},${alpha})`;
+	}
+
+	function overlayBgStyle(bg: string, bg2: string, gradient: boolean, dark = false): string {
+		const c1 = dark ? darkenHex(bg) : bg;
+		const c2 = dark ? darkenHex(bg2) : bg2;
+		return gradient ? `linear-gradient(to right, ${c1}, ${c2})` : c1;
+	}
+
 	function openSettings() {
 		editHomeName = match?.homeTeamName ?? '';
 		editGuestName = match?.guestTeamName ?? '';
 		editHomeJersey = match?.homeJerseyColor ?? '#000000';
 		editGuestJersey = match?.guestJerseyColor ?? '#000000';
 		editShowJerseyColors = match?.showJerseyColors ?? false;
+		editOverlayBg = match?.overlayBg ?? '#1a1a1a';
+		editOverlayBg2 = match?.overlayBg2 ?? '#1a1a1a';
+		editOverlayBgGradient = match?.overlayBgGradient ?? false;
+		editOverlayText = match?.overlayText ?? '#ffffff';
+		editOverlayRounded = match?.overlayRounded ?? false;
+		editOverlayDivider = match?.overlayDivider ?? '#2a2a2a';
+		editOverlaySatsBg = match?.overlaySatsBg ?? '#1a1a1a';
+		editOverlaySetScoreBg = match?.overlaySetScoreBg ?? '#1a1a1a';
 		settingsOpen = true;
 	}
 
@@ -179,7 +230,15 @@
 			guestTeamName: editGuestName,
 			homeJerseyColor: editHomeJersey,
 			guestJerseyColor: editGuestJersey,
-			showJerseyColors: editShowJerseyColors
+			showJerseyColors: editShowJerseyColors,
+			overlayBg: editOverlayBg,
+			overlayBg2: editOverlayBg2,
+			overlayBgGradient: editOverlayBgGradient,
+			overlayText: editOverlayText,
+			overlayRounded: editOverlayRounded,
+			overlayDivider: editOverlayDivider,
+			overlaySatsBg: editOverlaySatsBg,
+			overlaySetScoreBg: editOverlaySetScoreBg
 		});
 		settingsOpen = false;
 	}
@@ -291,38 +350,46 @@
 					</label>
 				</div>
 				<div class="card-body flex items-center justify-center">
-					<div class="scoreboard-preview" class:with-jersey={match.showJerseyColors}>
+					<div class="scoreboard-preview" class:with-jersey={match.showJerseyColors} class:rounded={match.overlayRounded} style:--overlay-border={match.overlayDivider} style:color={match.overlayText}>
 						<div class="preview-row">
 							{#if match.showJerseyColors}
 								<div class="preview-jersey" style:background-color={match.homeJerseyColor}></div>
 							{/if}
-							<div class="preview-name preview-name-dark">
+							<div class="preview-name preview-name-dark" style:background={overlayBgStyle(match.overlayBg, match.overlayBg2, match.overlayBgGradient, true)} style:color={match.overlayText}>
 								{match.homeTeamName.toUpperCase()}
 								<img src="/vbcthun-ball.svg" alt="" class="preview-service" class:preview-service-hidden={match.serviceTeam !== 'home'} />
 							</div>
-							<div class="preview-sets">{match.homeSets}</div>
+							<div class="preview-sets" style:background-color={match.overlaySatsBg} style:color={match.overlayText} style:border-color={match.overlayDivider}>{match.homeSets}</div>
 							<div class="preview-set-scores" class:expanded={setScoresExpanded}>
 								{#each match.setScores as s}
-									<div class="preview-set-cell" class:preview-set-cell-winner={s.home > s.guest} style:--winner-color={match.homeJerseyColor}>{s.home}</div>
+									<div class="preview-set-cell" class:preview-set-cell-winner={s.home > s.guest} style:--winner-color={match.homeJerseyColor} style:background-color={match.overlaySetScoreBg} style:border-left-color={match.overlayDivider} style:color={s.home > s.guest ? match.overlayText : hexWithAlpha(match.overlayText, 0.5)}>{s.home}</div>
 								{/each}
 							</div>
 							<div class="preview-points" style:background-color={match.homeJerseyColor}>{match.homePoints}</div>
+							<div class="preview-timeout-boxes" style:--jersey-color={match.homeJerseyColor}>
+								<div class="preview-timeout-box" class:taken={matchTimeouts.home >= 2} style:background-color={matchTimeouts.home < 2 ? match.homeJerseyColor : undefined}></div>
+								<div class="preview-timeout-box" class:taken={matchTimeouts.home >= 1} style:background-color={matchTimeouts.home < 1 ? match.homeJerseyColor : undefined}></div>
+							</div>
 						</div>
 						<div class="preview-row">
 							{#if match.showJerseyColors}
 								<div class="preview-jersey" style:background-color={match.guestJerseyColor}></div>
 							{/if}
-							<div class="preview-name">
+							<div class="preview-name" style:background={overlayBgStyle(match.overlayBg, match.overlayBg2, match.overlayBgGradient)} style:color={match.overlayText}>
 								{match.guestTeamName.toUpperCase()}
 								<img src="/vbcthun-ball.svg" alt="" class="preview-service" class:preview-service-hidden={match.serviceTeam !== 'guest'} />
 							</div>
-							<div class="preview-sets">{match.guestSets}</div>
+							<div class="preview-sets" style:background-color={match.overlaySatsBg} style:color={match.overlayText} style:border-color={match.overlayDivider}>{match.guestSets}</div>
 							<div class="preview-set-scores" class:expanded={setScoresExpanded}>
 								{#each match.setScores as s}
-									<div class="preview-set-cell" class:preview-set-cell-winner={s.guest > s.home} style:--winner-color={match.guestJerseyColor}>{s.guest}</div>
+									<div class="preview-set-cell" class:preview-set-cell-winner={s.guest > s.home} style:--winner-color={match.guestJerseyColor} style:background-color={match.overlaySetScoreBg} style:border-left-color={match.overlayDivider} style:color={s.guest > s.home ? match.overlayText : hexWithAlpha(match.overlayText, 0.5)}>{s.guest}</div>
 								{/each}
 							</div>
 							<div class="preview-points" style:background-color={match.guestJerseyColor}>{match.guestPoints}</div>
+							<div class="preview-timeout-boxes" style:--jersey-color={match.guestJerseyColor}>
+								<div class="preview-timeout-box" class:taken={matchTimeouts.guest >= 2} style:background-color={matchTimeouts.guest < 2 ? match.guestJerseyColor : undefined}></div>
+								<div class="preview-timeout-box" class:taken={matchTimeouts.guest >= 1} style:background-color={matchTimeouts.guest < 1 ? match.guestJerseyColor : undefined}></div>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -490,25 +557,80 @@
 					</label>
 				</div>
 				<div class="dialog-section">
-					<h4 class="dialog-section-title">Trikotfarben</h4>
-					<label class="toggle-label toggle-label-start">
-						Sichtbar
-						<button class="toggle" class:active={editShowJerseyColors} onclick={() => editShowJerseyColors = !editShowJerseyColors} aria-label="Trikotfarben sichtbar">
-							<span class="toggle-knob"></span>
-						</button>
-					</label>
-					<div class="color-field">
-						<span class="text-sm text-gray-400">Heim-Trikot</span>
-						<div class="color-row">
+					<div class="dialog-section-row">
+						<h4 class="dialog-section-title">Trikotfarben</h4>
+						<label class="toggle-label toggle-label-start">
+							Sichtbar
+							<button class="toggle" class:active={editShowJerseyColors} onclick={() => editShowJerseyColors = !editShowJerseyColors} aria-label="Trikotfarben sichtbar">
+								<span class="toggle-knob"></span>
+							</button>
+						</label>
+					</div>
+					<div class="color-row-compact">
+						<div class="color-field-inline">
 							<input type="color" bind:value={editHomeJersey} class="color-picker" />
-							<span class="color-hex">{editHomeJersey}</span>
+							<span class="text-sm text-gray-400">Heim</span>
+						</div>
+						<div class="color-field-inline">
+							<input type="color" bind:value={editGuestJersey} class="color-picker" />
+							<span class="text-sm text-gray-400">Gast</span>
 						</div>
 					</div>
-					<div class="color-field">
-						<span class="text-sm text-gray-400">Gast-Trikot</span>
-						<div class="color-row">
-							<input type="color" bind:value={editGuestJersey} class="color-picker" />
-							<span class="color-hex">{editGuestJersey}</span>
+				</div>
+				<div class="dialog-section">
+					<h4 class="dialog-section-title">Overlay-Farben</h4>
+					<div class="dialog-section-row">
+						<span class="text-sm text-gray-400">Hintergrund</span>
+						<label class="toggle-label toggle-label-start">
+							Verlauf
+							<button class="toggle" class:active={editOverlayBgGradient} onclick={() => editOverlayBgGradient = !editOverlayBgGradient} aria-label="Verlauf">
+								<span class="toggle-knob"></span>
+							</button>
+						</label>
+						<label class="toggle-label toggle-label-start">
+							Abgerundet
+							<button class="toggle" class:active={editOverlayRounded} onclick={() => editOverlayRounded = !editOverlayRounded} aria-label="Abgerundet">
+								<span class="toggle-knob"></span>
+							</button>
+						</label>
+					</div>
+					<div class="color-row-compact">
+						<div class="color-field-inline">
+							<input type="color" bind:value={editOverlayBg} class="color-picker" />
+							<span class="color-hex">{editOverlayBg}</span>
+						</div>
+						{#if editOverlayBgGradient}
+							<div class="color-field-inline">
+								<input type="color" bind:value={editOverlayBg2} class="color-picker" />
+								<span class="color-hex">{editOverlayBg2}</span>
+							</div>
+						{/if}
+					</div>
+					<div class="color-row-compact">
+						<div class="color-field-inline">
+							<input type="color" bind:value={editOverlayText} class="color-picker" />
+							<span class="text-sm text-gray-400">Text</span>
+						</div>
+					</div>
+					<div class="color-row-compact">
+						<div class="color-field-inline">
+							<input type="color" bind:value={editOverlayDivider} class="color-picker" />
+							<span class="text-sm text-gray-400">Trennlinie</span>
+							<span class="color-hex">{editOverlayDivider}</span>
+						</div>
+					</div>
+					<div class="color-row-compact">
+						<div class="color-field-inline">
+							<input type="color" bind:value={editOverlaySatsBg} class="color-picker" />
+							<span class="text-sm text-gray-400">Satz</span>
+							<span class="color-hex">{editOverlaySatsBg}</span>
+						</div>
+					</div>
+					<div class="color-row-compact">
+						<div class="color-field-inline">
+							<input type="color" bind:value={editOverlaySetScoreBg} class="color-picker" />
+							<span class="text-sm text-gray-400">Satzresultate</span>
+							<span class="color-hex">{editOverlaySetScoreBg}</span>
 						</div>
 					</div>
 				</div>
@@ -648,11 +770,11 @@
 	}
 
 	.scoreboard-preview.with-jersey {
-		grid-template-columns: 8px minmax(160px, auto) 44px auto 52px;
+		grid-template-columns: 8px minmax(160px, auto) 44px auto 52px auto;
 	}
 
 	.scoreboard-preview:not(.with-jersey) {
-		grid-template-columns: minmax(160px, auto) 44px auto 52px;
+		grid-template-columns: minmax(160px, auto) 44px auto 52px auto;
 	}
 
 	.preview-row {
@@ -665,8 +787,6 @@
 	.preview-jersey { flex-shrink: 0; }
 
 	.preview-name {
-		background: #1a1a1a;
-		color: white;
 		padding: 0 16px;
 		display: flex;
 		align-items: center;
@@ -675,25 +795,27 @@
 		font-weight: 800;
 	}
 
-	.preview-name-dark { background: #0a0a0a; }
+	.scoreboard-preview.rounded:not(.with-jersey) .preview-row:first-child .preview-name { border-radius: 8px 0 0 0; }
+	.scoreboard-preview.rounded.with-jersey .preview-row:first-child .preview-jersey { border-radius: 8px 0 0 0; }
+	.scoreboard-preview.rounded .preview-row:first-child .preview-timeout-boxes { border-radius: 0 8px 0 0; }
+	.scoreboard-preview.rounded:not(.with-jersey) .preview-row:last-child .preview-name { border-radius: 0 0 0 8px; }
+	.scoreboard-preview.rounded.with-jersey .preview-row:last-child .preview-jersey { border-radius: 0 0 0 8px; }
+	.scoreboard-preview.rounded .preview-row:last-child .preview-timeout-boxes { border-radius: 0 0 8px 0; }
 	.preview-service { width: 20px; height: 20px; opacity: 0.85; margin-left: auto; }
 	.preview-service-hidden { visibility: hidden; }
 
 	.preview-sets {
-		background: #1a1a1a;
-		color: white;
 		width: 44px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		font-size: 22px;
 		font-weight: 800;
-		border-left: 2px solid #2a2a2a;
+		border-left: 2px solid var(--overlay-border, #2a2a2a);
 		font-variant-numeric: tabular-nums;
 	}
 
 	.preview-points {
-		color: white;
 		width: 52px;
 		display: flex;
 		align-items: center;
@@ -715,7 +837,6 @@
 	.preview-set-scores.expanded { max-width: 300px; opacity: 1; }
 
 	.preview-set-cell {
-		background: #1a1a1a;
 		color: var(--color-text-secondary);
 		width: 38px;
 		display: flex;
@@ -724,11 +845,18 @@
 		font-size: 18px;
 		font-weight: 800;
 		font-variant-numeric: tabular-nums;
-		border-left: 1px solid #2a2a2a;
+		border-left: 1px solid var(--overlay-border, #2a2a2a);
 		border-bottom: 2px solid transparent;
 	}
 
 	.preview-set-cell-winner { border-bottom-color: var(--winner-color); color: var(--color-text-primary); }
+
+	.preview-timeout-boxes { display: flex; flex-direction: column; gap: 0; justify-content: center; border-left: 1px solid var(--overlay-text, white); overflow: hidden; }
+	.preview-timeout-box { width: 8px; height: 50%; }
+	.preview-timeout-box:first-child { border-bottom: 1px solid var(--overlay-text, white); }
+	.scoreboard-preview.rounded .preview-row:first-child .preview-timeout-box:first-child { border-radius: 0 4px 0 0; }
+	.scoreboard-preview.rounded .preview-row:last-child .preview-timeout-box:last-child { border-radius: 0 0 4px 0; }
+	.preview-timeout-box.taken { background: transparent; border: 1px solid var(--jersey-color); border-left: none; }
 
 	.set-scores { display: flex; justify-content: center; gap: 8px; padding: 0 20px 16px; }
 
@@ -979,8 +1107,9 @@
 
 	.field-input:focus { border-color: var(--color-accent); }
 
-	.color-field { display: flex; flex-direction: column; gap: 6px; }
-	.color-row { display: flex; align-items: center; gap: 10px; }
+	.dialog-section-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+	.color-row-compact { display: flex; align-items: center; gap: 16px; }
+	.color-field-inline { display: flex; align-items: center; gap: 8px; }
 	.color-picker { width: 40px; height: 40px; border: none; border-radius: 6px; cursor: pointer; padding: 0; }
 	.color-hex { font-family: monospace; font-size: 14px; color: var(--color-text-secondary); }
 

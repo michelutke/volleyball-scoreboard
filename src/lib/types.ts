@@ -22,6 +22,14 @@ export interface MatchState {
 	setScores: SetScore[];
 	serviceTeam: Team;
 	showSetScores: boolean;
+	overlayBg: string;
+	overlayBg2: string;
+	overlayBgGradient: boolean;
+	overlayText: string;
+	overlayRounded: boolean;
+	overlayDivider: string;
+	overlaySatsBg: string;
+	overlaySetScoreBg: string;
 	status: MatchStatus;
 }
 

@@ -41,6 +41,14 @@ export const POST: RequestHandler = async ({ params }) => {
 		setScores: [],
 		serviceTeam: 'home',
 		showSetScores: updated.showSetScores,
+		overlayBg: updated.overlayBg,
+		overlayBg2: updated.overlayBg2,
+		overlayBgGradient: updated.overlayBgGradient,
+		overlayText: updated.overlayText,
+		overlayRounded: updated.overlayRounded,
+		overlayDivider: updated.overlayDivider,
+		overlaySatsBg: updated.overlaySatsBg,
+		overlaySetScoreBg: updated.overlaySetScoreBg,
 		status: 'upcoming'
 	};
 	matchSSEEmitter.emit(matchId, { type: 'match', data: state });

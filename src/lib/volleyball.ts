@@ -118,6 +118,14 @@ export function createInitialState(matchId: number): MatchState {
 		setScores: [],
 		serviceTeam: 'home',
 		showSetScores: false,
+		overlayBg: '#1a1a1a',
+		overlayBg2: '#1a1a1a',
+		overlayBgGradient: false,
+		overlayText: '#ffffff',
+		overlayRounded: false,
+		overlayDivider: '#2a2a2a',
+		overlaySatsBg: '#1a1a1a',
+		overlaySetScoreBg: '#1a1a1a',
 		status: 'live'
 	};
 }
