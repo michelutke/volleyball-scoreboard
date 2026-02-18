@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { DEFAULT_ACCENT, getStoredTheme, setStoredTheme } from '$lib/theme.js';
 	import type { ThemeMode } from '$lib/theme.js';
 	import type { PageData } from './$types.js';
@@ -6,8 +7,9 @@
 	let { data }: { data: PageData } = $props();
 
 	let isEdit = $derived(!!data.clubName);
-	let clubName = $state(data.clubName ?? '');
-	let accentColor = $state(data.accentColor ?? DEFAULT_ACCENT);
+	let clubName = $state(untrack(() => data.clubName ?? ''));
+	let accentColor = $state(untrack(() => data.accentColor ?? DEFAULT_ACCENT));
+	let swissVolleyApiKey = $state('');
 	let saving = $state(false);
 	let error = $state('');
 	let theme = $state<ThemeMode>('system');
@@ -27,6 +29,9 @@
 			const payload: Record<string, string> = { clubName: clubName.trim() };
 			if (isEdit) {
 				payload.accentColor = accentColor;
+			}
+			if (swissVolleyApiKey) {
+				payload.swissVolleyApiKey = swissVolleyApiKey;
 			}
 			const res = await fetch('/api/settings', {
 				method: 'PUT',
@@ -87,7 +92,7 @@
 				</div>
 
 				<div>
-					<label class="block text-sm font-medium text-text-primary mb-2">Design</label>
+					<p class="block text-sm font-medium text-text-primary mb-2">Design</p>
 					<div class="flex gap-1 bg-bg-base rounded-lg p-1">
 						{#each [
 							{ value: 'system', label: 'System' },
@@ -104,6 +109,23 @@
 						{/each}
 					</div>
 				</div>
+
+				{#if data.isAdmin}
+					<div>
+						<label for="svApiKey" class="block text-sm font-medium text-text-primary mb-1">Swiss Volley API-Key</label>
+						{#if data.swissVolleyApiKeySet}
+							<p class="text-xs text-text-tertiary mb-1">API-Key ist konfiguriert</p>
+						{/if}
+						<input
+							id="svApiKey"
+							type="password"
+							bind:value={swissVolleyApiKey}
+							placeholder={data.swissVolleyApiKeySet ? '••••••••' : 'API-Key eingeben'}
+							autocomplete="off"
+							class="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2.5 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent"
+						/>
+					</div>
+				{/if}
 			{/if}
 
 			<button

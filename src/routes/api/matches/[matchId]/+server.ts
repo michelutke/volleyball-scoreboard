@@ -4,15 +4,16 @@ import { matches, scores } from '$lib/server/db/schema.js';
 import { matchSSEEmitter } from '$lib/server/sse.js';
 import { toMatchState } from '$lib/server/match-state.js';
 import { addPoint, removePoint, resetMatch, isMatchOver } from '$lib/volleyball.js';
-import { eq, desc } from 'drizzle-orm';
+import { and, eq, desc } from 'drizzle-orm';
 import type { MatchState } from '$lib/types.js';
 import type { RequestHandler } from './$types.js';
 
-export const GET: RequestHandler = async ({ params }) => {
+export const GET: RequestHandler = async ({ params, locals }) => {
+	const { orgId } = locals;
 	const matchId = parseInt(params.matchId);
 
 	const match = await db.query.matches.findFirst({
-		where: eq(matches.id, matchId)
+		where: and(eq(matches.orgId, orgId), eq(matches.id, matchId))
 	});
 	if (!match) return json({ error: 'Match not found' }, { status: 404 });
 
@@ -25,7 +26,8 @@ export const GET: RequestHandler = async ({ params }) => {
 	return json(toMatchState(match, score));
 };
 
-export const PUT: RequestHandler = async ({ params, request }) => {
+export const PUT: RequestHandler = async ({ params, request, locals }) => {
+	const { orgId } = locals;
 	const matchId = parseInt(params.matchId);
 	const body = await request.json();
 
@@ -37,7 +39,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		if (!currentScore) return json({ error: 'Score not found' }, { status: 404 });
 
 		const match = await db.query.matches.findFirst({
-			where: eq(matches.id, matchId)
+			where: and(eq(matches.orgId, orgId), eq(matches.id, matchId))
 		});
 		if (!match) return json({ error: 'Match not found' }, { status: 404 });
 
@@ -116,9 +118,11 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		if (body[field] !== undefined) updateData[field] = body[field];
 	}
 
-	await db.update(matches).set(updateData).where(eq(matches.id, matchId));
+	await db.update(matches).set(updateData).where(and(eq(matches.orgId, orgId), eq(matches.id, matchId)));
 
-	const match = await db.query.matches.findFirst({ where: eq(matches.id, matchId) });
+	const match = await db.query.matches.findFirst({
+		where: and(eq(matches.orgId, orgId), eq(matches.id, matchId))
+	});
 	const score = await db.query.scores.findFirst({
 		where: eq(scores.matchId, matchId),
 		orderBy: desc(scores.createdAt)

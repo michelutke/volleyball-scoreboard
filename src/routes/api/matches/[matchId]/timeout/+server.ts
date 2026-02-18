@@ -5,12 +5,13 @@ import { matchSSEEmitter } from '$lib/server/sse.js';
 import { eq, and, desc } from 'drizzle-orm';
 import type { RequestHandler } from './$types.js';
 
-export const POST: RequestHandler = async ({ params, request }) => {
+export const POST: RequestHandler = async ({ params, request, locals }) => {
+	const { orgId } = locals;
 	const matchId = parseInt(params.matchId);
 	const { team } = await request.json();
 
 	const match = await db.query.matches.findFirst({
-		where: eq(matches.id, matchId)
+		where: and(eq(matches.orgId, orgId), eq(matches.id, matchId))
 	});
 	if (!match) return json({ error: 'Match not found' }, { status: 404 });
 
@@ -44,12 +45,13 @@ export const POST: RequestHandler = async ({ params, request }) => {
 	return json({ ok: true, timeoutsUsed: usedTimeouts.length + 1 });
 };
 
-export const DELETE: RequestHandler = async ({ params, request }) => {
+export const DELETE: RequestHandler = async ({ params, request, locals }) => {
+	const { orgId } = locals;
 	const matchId = parseInt(params.matchId);
 	const { team } = await request.json();
 
 	const match = await db.query.matches.findFirst({
-		where: eq(matches.id, matchId)
+		where: and(eq(matches.orgId, orgId), eq(matches.id, matchId))
 	});
 	if (!match) return json({ error: 'Match not found' }, { status: 404 });
 

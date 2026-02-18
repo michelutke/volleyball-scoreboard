@@ -28,6 +28,7 @@
 		"vitest": "^4.0.18"
 	},
 	"dependencies": {
+		"@auth/sveltekit": "^1.11.1",
 		"@sveltejs/adapter-node": "^5.5.3",
 		"drizzle-orm": "^0.45.1",
 		"postgres": "^3.4.8",

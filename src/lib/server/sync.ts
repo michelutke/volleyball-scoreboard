@@ -3,9 +3,9 @@ import { matches, teams } from '$lib/server/db/schema.js';
 import { getTeams, getUpcomingGames } from '$lib/server/swiss-volley.js';
 import { eq, and } from 'drizzle-orm';
 
-/** Sync teams from Swiss Volley API into local DB. API key scopes to club. */
-export async function syncTeams(): Promise<number> {
-	const svTeams = await getTeams();
+/** Sync teams from Swiss Volley API into local DB. */
+export async function syncTeams(orgId: string): Promise<number> {
+	const svTeams = await getTeams(orgId);
 
 	let synced = 0;
 	for (const svTeam of svTeams) {
@@ -18,16 +18,13 @@ export async function syncTeams(): Promise<number> {
 		const name = [league, qualifier, letter, gender].filter(Boolean).join(' ');
 
 		const existing = await db.query.teams.findFirst({
-			where: eq(teams.swissVolleyTeamId, svId)
+			where: and(eq(teams.orgId, orgId), eq(teams.swissVolleyTeamId, svId))
 		});
 
 		if (existing) {
-			await db
-				.update(teams)
-				.set({ name })
-				.where(eq(teams.id, existing.id));
+			await db.update(teams).set({ name }).where(eq(teams.id, existing.id));
 		} else {
-			await db.insert(teams).values({ name, swissVolleyTeamId: svId });
+			await db.insert(teams).values({ orgId, name, swissVolleyTeamId: svId });
 		}
 		synced++;
 	}
@@ -36,8 +33,12 @@ export async function syncTeams(): Promise<number> {
 }
 
 /** Sync matches for a team from Swiss Volley API into local DB. */
-export async function syncMatches(teamId: number, svTeamId: string): Promise<number> {
-	const games = await getUpcomingGames();
+export async function syncMatches(
+	teamId: number,
+	svTeamId: string,
+	orgId: string
+): Promise<number> {
+	const games = await getUpcomingGames(orgId);
 	const numericSvTeamId = parseInt(svTeamId);
 	const svGames = games.filter(
 		(g) => g.teams.home.teamId === numericSvTeamId || g.teams.away.teamId === numericSvTeamId
@@ -69,6 +70,7 @@ export async function syncMatches(teamId: number, svTeamId: string): Promise<num
 				.where(eq(matches.id, existing.id));
 		} else {
 			await db.insert(matches).values({
+				orgId,
 				teamId,
 				homeTeamName: game.teams.home.caption.trim(),
 				guestTeamName: game.teams.away.caption.trim(),

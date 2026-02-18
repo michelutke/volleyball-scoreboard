@@ -1,12 +1,14 @@
-import { pgTable, serial, text, integer, boolean, timestamp, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, primaryKey, serial, text, integer, boolean, timestamp, jsonb } from 'drizzle-orm/pg-core';
 
 export const settings = pgTable('settings', {
-	key: text('key').primaryKey(),
+	orgId: text('org_id').notNull().default('default'),
+	key: text('key').notNull(),
 	value: text('value').notNull()
-});
+}, (t) => [primaryKey({ columns: [t.orgId, t.key] })]);
 
 export const teams = pgTable('teams', {
 	id: serial('id').primaryKey(),
+	orgId: text('org_id').notNull().default('default'),
 	name: text('name').notNull(),
 	swissVolleyTeamId: text('swiss_volley_team_id'),
 	createdAt: timestamp('created_at').notNull().defaultNow()
@@ -14,6 +16,7 @@ export const teams = pgTable('teams', {
 
 export const matches = pgTable('matches', {
 	id: serial('id').primaryKey(),
+	orgId: text('org_id').notNull().default('default'),
 	teamId: integer('team_id').references(() => teams.id, { onDelete: 'set null' }),
 	homeTeamName: text('home_team_name').notNull().default('Heim'),
 	guestTeamName: text('guest_team_name').notNull().default('Gast'),

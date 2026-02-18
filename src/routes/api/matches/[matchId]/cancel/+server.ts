@@ -2,15 +2,16 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import { matches, scores, timeouts } from '$lib/server/db/schema.js';
 import { matchSSEEmitter } from '$lib/server/sse.js';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import type { MatchState } from '$lib/types.js';
 import type { RequestHandler } from './$types.js';
 
-export const POST: RequestHandler = async ({ params }) => {
+export const POST: RequestHandler = async ({ params, locals }) => {
+	const { orgId } = locals;
 	const matchId = parseInt(params.matchId);
 
 	const match = await db.query.matches.findFirst({
-		where: eq(matches.id, matchId)
+		where: and(eq(matches.orgId, orgId), eq(matches.id, matchId))
 	});
 	if (!match) return json({ error: 'Match not found' }, { status: 404 });
 	if (match.status !== 'live') return json({ error: 'Match is not live' }, { status: 400 });
