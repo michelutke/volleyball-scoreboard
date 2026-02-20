@@ -37,10 +37,14 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 					const payload = JSON.parse(
 						Buffer.from(account.access_token.split('.')[1], 'base64url').toString()
 					);
-					token.orgId = payload.org_id as string | undefined;
+					// KC 26: org_id may be a direct claim (explicit mapper) or inside
+					// the organizations map (oidc-organization-membership-mapper with addOrganizationId)
+					const orgsMap = payload.organizations as Record<string, { id?: string }> | undefined;
+					const firstOrgId = orgsMap ? Object.values(orgsMap)[0]?.id : undefined;
+					token.orgId = (payload.org_id as string | undefined) ?? firstOrgId;
 					token.roles = (payload.realm_access?.roles as string[]) ?? [];
-				} catch {
-					// ignore decode errors
+				} catch (err) {
+					console.error('KC token decode failed', err);
 				}
 			}
 			return token;

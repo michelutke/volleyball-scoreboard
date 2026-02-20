@@ -11,6 +11,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {
+	if (!locals.isAdmin) return json({ error: 'Forbidden' }, { status: 403 });
 	const { orgId } = locals;
 	const body = await request.json();
 

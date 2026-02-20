@@ -163,6 +163,25 @@ Each action inserts a new `scores` row (append-only). Undo deletes the latest ro
 - Requires a separate `keycloak` database in postgres: `CREATE DATABASE keycloak;`
 - Realm roles mapper must be added to the client to include `realm_access.roles` in access token
 
+## User Management
+
+### Roles
+- `admin` KC realm role: full access, user management
+- No special role (org member): scorer access only
+
+### KC Admin API client
+`src/lib/server/keycloak-admin.ts` — typed client using client_credentials grant with 50-min token cache.
+Env vars: `KEYCLOAK_ADMIN_URL`, `KEYCLOAK_ADMIN_CLIENT_ID`, `KEYCLOAK_ADMIN_CLIENT_SECRET`, `KEYCLOAK_REALM`.
+
+### User management routes
+- `GET /api/users` — list org members (admin only)
+- `POST /api/users` — invite scorer by email (admin only)
+- `DELETE /api/users/[id]` — remove + disable user (admin only, cannot self-remove)
+- `/admin/users` — user management UI (admin only)
+
+### kcOrgId
+KC's internal org UUID stored in `settings` table under key `kcOrgId` per org.
+
 ### DB Migration Gotcha — dual postgres
 **Critical:** On macOS with Homebrew postgres + Docker postgres both running on `:5432`, the native process wins for `localhost:5432` connections. `DATABASE_URL` in `.env` and drizzle-kit both use the native postgres. Migrations applied to the Docker container don't affect the app. Always verify with `lsof -i :5432` if you see unexpected schema errors.
 

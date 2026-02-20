@@ -3,8 +3,9 @@
 	import { generateAccentPalette, ACCENT_CSS_PROPS, getStoredTheme, getEffectiveTheme } from '$lib/theme.js';
 	import type { ThemeMode } from '$lib/theme.js';
 	import type { LayoutData } from './$types.js';
+	import type { Snippet } from 'svelte';
 
-	let { data, children }: { data: LayoutData; children: any } = $props();
+	let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
 	let themeMode = $state<ThemeMode>('system');
 	let effectiveTheme = $state<'light' | 'dark'>('dark');
@@ -61,5 +62,20 @@
 		{@html `<style>${accentStyle}</style>`}
 	{/if}
 </svelte:head>
+
+{#if data.session}
+	<div class="fixed top-2 right-2 z-50 flex gap-2">
+		{#if data.isAdmin}
+			<a href="/admin/users" class="text-xs text-text-tertiary hover:text-text-primary bg-bg-panel-alt/80 backdrop-blur rounded-lg px-3 py-1.5">
+				Nutzer
+			</a>
+		{/if}
+		<form method="POST" action="/auth/signout">
+			<button type="submit" class="text-xs text-text-tertiary hover:text-text-primary bg-bg-panel-alt/80 backdrop-blur rounded-lg px-3 py-1.5">
+				Abmelden
+			</button>
+		</form>
+	</div>
+{/if}
 
 {@render children()}
