@@ -2,6 +2,13 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { redirect } from '@sveltejs/kit';
 import { handle as authHandle } from './auth';
 import type { HandleServerError } from '@sveltejs/kit';
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
+import { db } from '$lib/server/db';
+
+export async function init() {
+	await migrate(db, { migrationsFolder: 'drizzle' });
+	console.log('[db] migrations applied');
+}
 
 export const handleError: HandleServerError = ({ error, event }) => {
 	console.error('[500]', event.url.pathname, error);
