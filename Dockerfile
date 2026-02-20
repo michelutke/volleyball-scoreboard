@@ -5,7 +5,7 @@ ENV NODE_OPTIONS=--max-old-space-size=4096
 COPY package*.json ./
 RUN npm ci
 COPY . .
-RUN npm run build > /tmp/build.log 2>&1 || (cat /tmp/build.log && exit 1)
+RUN npm run build
 
 FROM node:22-slim
 WORKDIR /app

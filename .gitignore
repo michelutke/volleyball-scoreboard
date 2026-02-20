@@ -29,3 +29,4 @@ keycloak/realm-export.json
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 docs/saas-plan.md
+CLAUDE.md
