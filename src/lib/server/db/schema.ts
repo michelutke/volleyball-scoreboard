@@ -1,12 +1,14 @@
-import { pgTable, serial, text, integer, boolean, timestamp, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, primaryKey, serial, text, integer, boolean, timestamp, jsonb } from 'drizzle-orm/pg-core';
 
 export const settings = pgTable('settings', {
-	key: text('key').primaryKey(),
+	orgId: text('org_id').notNull().default('default'),
+	key: text('key').notNull(),
 	value: text('value').notNull()
-});
+}, (t) => [primaryKey({ columns: [t.orgId, t.key] })]);
 
 export const teams = pgTable('teams', {
 	id: serial('id').primaryKey(),
+	orgId: text('org_id').notNull().default('default'),
 	name: text('name').notNull(),
 	swissVolleyTeamId: text('swiss_volley_team_id'),
 	createdAt: timestamp('created_at').notNull().defaultNow()
@@ -14,6 +16,7 @@ export const teams = pgTable('teams', {
 
 export const matches = pgTable('matches', {
 	id: serial('id').primaryKey(),
+	orgId: text('org_id').notNull().default('default'),
 	teamId: integer('team_id').references(() => teams.id, { onDelete: 'set null' }),
 	homeTeamName: text('home_team_name').notNull().default('Heim'),
 	guestTeamName: text('guest_team_name').notNull().default('Gast'),
@@ -21,6 +24,14 @@ export const matches = pgTable('matches', {
 	guestJerseyColor: text('guest_jersey_color').notNull().default('#dc2626'),
 	showJerseyColors: boolean('show_jersey_colors').notNull().default(true),
 	showSetScores: boolean('show_set_scores').notNull().default(false),
+	overlayBg: text('overlay_bg').notNull().default('#1a1a1a'),
+	overlayBg2: text('overlay_bg2').notNull().default('#1a1a1a'),
+	overlayBgGradient: boolean('overlay_bg_gradient').notNull().default(false),
+	overlayText: text('overlay_text').notNull().default('#ffffff'),
+	overlayRounded: boolean('overlay_rounded').notNull().default(false),
+	overlayDivider: text('overlay_divider').notNull().default('#2a2a2a'),
+	overlaySatsBg: text('overlay_sats_bg').notNull().default('#1a1a1a'),
+	overlaySetScoreBg: text('overlay_set_score_bg').notNull().default('#1a1a1a'),
 	status: text('status', { enum: ['upcoming', 'live', 'finished'] }).notNull().default('upcoming'),
 	swissVolleyMatchId: text('swiss_volley_match_id'),
 	scheduledAt: timestamp('scheduled_at'),

@@ -1,4 +1,7 @@
-import { env } from '$env/dynamic/private';
+import { db } from '$lib/server/db/index.js';
+import { settings } from '$lib/server/db/schema.js';
+import { decrypt } from '$lib/server/crypto.js';
+import { and, eq } from 'drizzle-orm';
 
 const BASE_URL = 'https://api.volleyball.ch';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -22,6 +25,16 @@ function getCached<T>(key: string): T | null {
 
 function setCache<T>(key: string, data: T): void {
 	cache.set(key, { data, timestamp: Date.now() });
+}
+
+async function getApiKey(orgId: string): Promise<string> {
+	const row = await db
+		.select()
+		.from(settings)
+		.where(and(eq(settings.orgId, orgId), eq(settings.key, 'swissVolleyApiKey')))
+		.limit(1);
+	if (!row[0]) throw new Error('Swiss Volley API key not configured');
+	return decrypt(row[0].value);
 }
 
 export interface SVTeam {
@@ -62,12 +75,12 @@ export interface SVGame {
 	resultSummary: unknown[];
 }
 
-async function apiFetch<T>(path: string): Promise<T> {
-	const cached = getCached<T>(path);
+async function apiFetch<T>(path: string, orgId: string): Promise<T> {
+	const cacheKey = `${orgId}:${path}`;
+	const cached = getCached<T>(cacheKey);
 	if (cached) return cached;
 
-	const apiKey = env.SWISS_VOLLEY_API_KEY;
-	if (!apiKey) throw new Error('SWISS_VOLLEY_API_KEY not configured');
+	const apiKey = await getApiKey(orgId);
 
 	const res = await fetch(`${BASE_URL}${path}`, {
 		headers: {
@@ -81,14 +94,14 @@ async function apiFetch<T>(path: string): Promise<T> {
 	}
 
 	const data = await res.json();
-	setCache(path, data);
+	setCache(cacheKey, data);
 	return data as T;
 }
 
-export async function getTeams(): Promise<SVTeam[]> {
-	return apiFetch<SVTeam[]>('/indoor/teams');
+export async function getTeams(orgId: string): Promise<SVTeam[]> {
+	return apiFetch<SVTeam[]>('/indoor/teams', orgId);
 }
 
-export async function getUpcomingGames(): Promise<SVGame[]> {
-	return apiFetch<SVGame[]>('/indoor/upcomingGames');
+export async function getUpcomingGames(orgId: string): Promise<SVGame[]> {
+	return apiFetch<SVGame[]>('/indoor/upcomingGames', orgId);
 }

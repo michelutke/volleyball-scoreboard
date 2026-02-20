@@ -1,0 +1,446 @@
+{
+  "id": "322b2624-ad5d-498b-b5b3-99591f56906a",
+  "prevId": "0f2798b3-ad2f-4bf1-846c-ce1e0dff9fc4",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.matches": {
+      "name": "matches",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'default'"
+        },
+        "team_id": {
+          "name": "team_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "home_team_name": {
+          "name": "home_team_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Heim'"
+        },
+        "guest_team_name": {
+          "name": "guest_team_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Gast'"
+        },
+        "home_jersey_color": {
+          "name": "home_jersey_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#1e40af'"
+        },
+        "guest_jersey_color": {
+          "name": "guest_jersey_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#dc2626'"
+        },
+        "show_jersey_colors": {
+          "name": "show_jersey_colors",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "show_set_scores": {
+          "name": "show_set_scores",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "overlay_bg": {
+          "name": "overlay_bg",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#1a1a1a'"
+        },
+        "overlay_bg2": {
+          "name": "overlay_bg2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#1a1a1a'"
+        },
+        "overlay_bg_gradient": {
+          "name": "overlay_bg_gradient",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "overlay_text": {
+          "name": "overlay_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#ffffff'"
+        },
+        "overlay_rounded": {
+          "name": "overlay_rounded",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "overlay_divider": {
+          "name": "overlay_divider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#2a2a2a'"
+        },
+        "overlay_sats_bg": {
+          "name": "overlay_sats_bg",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#1a1a1a'"
+        },
+        "overlay_set_score_bg": {
+          "name": "overlay_set_score_bg",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'#1a1a1a'"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'upcoming'"
+        },
+        "swiss_volley_match_id": {
+          "name": "swiss_volley_match_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scheduled_at": {
+          "name": "scheduled_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "venue": {
+          "name": "venue",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "league": {
+          "name": "league",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "matches_team_id_teams_id_fk": {
+          "name": "matches_team_id_teams_id_fk",
+          "tableFrom": "matches",
+          "tableTo": "teams",
+          "columnsFrom": [
+            "team_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.scores": {
+      "name": "scores",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "match_id": {
+          "name": "match_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "home_points": {
+          "name": "home_points",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "guest_points": {
+          "name": "guest_points",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "home_sets": {
+          "name": "home_sets",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "guest_sets": {
+          "name": "guest_sets",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "current_set": {
+          "name": "current_set",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "set_scores": {
+          "name": "set_scores",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'"
+        },
+        "service_team": {
+          "name": "service_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'home'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "scores_match_id_matches_id_fk": {
+          "name": "scores_match_id_matches_id_fk",
+          "tableFrom": "scores",
+          "tableTo": "matches",
+          "columnsFrom": [
+            "match_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.settings": {
+      "name": "settings",
+      "schema": "",
+      "columns": {
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'default'"
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "settings_org_id_key_pk": {
+          "name": "settings_org_id_key_pk",
+          "columns": [
+            "org_id",
+            "key"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.teams": {
+      "name": "teams",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'default'"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "swiss_volley_team_id": {
+          "name": "swiss_volley_team_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.timeouts": {
+      "name": "timeouts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "match_id": {
+          "name": "match_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team": {
+          "name": "team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "set": {
+          "name": "set",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "timeouts_match_id_matches_id_fk": {
+          "name": "timeouts_match_id_matches_id_fk",
+          "tableFrom": "timeouts",
+          "tableTo": "matches",
+          "columnsFrom": [
+            "match_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

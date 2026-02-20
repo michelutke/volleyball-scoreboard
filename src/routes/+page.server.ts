@@ -1,43 +1,33 @@
 import { redirect } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
 import { db } from '$lib/server/db/index.js';
 import { settings } from '$lib/server/db/schema.js';
-import { eq } from 'drizzle-orm';
-import { getTeams } from '$lib/server/swiss-volley.js';
-import { syncTeams } from '$lib/server/sync.js';
+import { and, eq } from 'drizzle-orm';
 import type { PageServerLoad } from './$types.js';
 
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
+	const orgId = locals.orgId;
+
 	const clubNameSetting = await db.query.settings.findFirst({
-		where: eq(settings.key, 'clubName')
+		where: and(eq(settings.orgId, orgId), eq(settings.key, 'clubName'))
 	});
 
 	if (clubNameSetting) {
 		if (url.searchParams.get('edit') !== 'true') {
 			redirect(302, '/teams');
 		}
-		return { clubName: clubNameSetting.value };
+		const accentSetting = await db.query.settings.findFirst({
+			where: and(eq(settings.orgId, orgId), eq(settings.key, 'accentColor'))
+		});
+		const apiKeySetting = await db.query.settings.findFirst({
+			where: and(eq(settings.orgId, orgId), eq(settings.key, 'swissVolleyApiKey'))
+		});
+		return {
+			clubName: clubNameSetting.value,
+			accentColor: accentSetting?.value ?? null,
+			isAdmin: locals.isAdmin ?? false,
+			swissVolleyApiKeySet: !!apiKeySetting
+		};
 	}
 
-	// No clubName yet — try auto-setup from Swiss Volley API
-	if (env.SWISS_VOLLEY_API_KEY) {
-		try {
-			const svTeams = await getTeams();
-			if (svTeams.length > 0) {
-				const clubName = svTeams[0].club.clubCaption;
-				await db
-					.insert(settings)
-					.values({ key: 'clubName', value: clubName })
-					.onConflictDoUpdate({ target: settings.key, set: { value: clubName } });
-				await syncTeams();
-				redirect(302, '/teams');
-			}
-		} catch (e) {
-			// If it's a redirect, rethrow
-			if (e instanceof Response || (e && typeof e === 'object' && 'status' in e)) throw e;
-			// API failure — fall through to manual form
-		}
-	}
-
-	return {};
+	return { isAdmin: locals.isAdmin ?? false, swissVolleyApiKeySet: false };
 };

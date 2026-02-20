@@ -71,7 +71,12 @@ npx drizzle-kit push      # Push schema to DB
 
 ```
 DATABASE_URL=postgres://scoring:scoring@localhost:5432/scoring
-SWISS_VOLLEY_API_KEY=  # Optional, for Swiss Volley team/match sync
+KEYCLOAK_CLIENT_ID=scoring-app
+KEYCLOAK_CLIENT_SECRET=...
+KEYCLOAK_ISSUER=http://localhost:8080/realms/scoring
+AUTH_SECRET=...          # random 32-byte string (openssl rand -base64 32)
+ENCRYPTION_KEY=...       # 32-byte hex (openssl rand -hex 32)
+# SWISS_VOLLEY_API_KEY no longer used — API key stored encrypted in DB per org
 ```
 
 ## Architecture
@@ -109,6 +114,17 @@ SWISS_VOLLEY_API_KEY=  # Optional, for Swiss Volley team/match sync
 ### Score History
 Each action inserts a new `scores` row (append-only). Undo deletes the latest row and restores previous state.
 
+### Theme System
+- Light/dark/system theme via `[data-theme="light"]` CSS var overrides in `app.css`
+- `:root` = dark (default), `[data-theme="light"]` overrides surface/text/border/error vars
+- Overlay vars (`--color-overlay-*`) intentionally NOT overridden — overlays always dark
+- No-flash: inline `<script>` in `app.html` reads localStorage before paint
+- Theme state managed in `+layout.svelte`, listens for `themechange` CustomEvent + `prefers-color-scheme`
+- Accent palette (`theme.ts`) accepts `mode` param — light mode uses darker accent (L=40) for WCAG AA
+- Theme selector (System/Hell/Dunkel) on settings page only, stored in `localStorage('theme')`
+- `setStoredTheme()` dispatches `themechange` event so layout re-derives immediately
+- Preview scoreboards in control pages stay dark (they mirror the overlay appearance)
+
 ### Overlay Features
 - Team names, jersey colors (configurable), set/point scores
 - Inline set scores (toggle `showSetScores`): each team row shows per-set scores + current set highlighted
@@ -117,11 +133,57 @@ Each action inserts a new `scores` row (append-only). Undo deletes the latest ro
 - Transparent background for OBS chroma key / browser source
 
 ### Database Tables
-- `settings`: key/value store (clubName, swissVolleyClubId)
-- `teams`: team name, optional swissVolleyTeamId
-- `matches`: team names, jersey colors, settings, status, teamId FK, scheduledAt, venue, league
+- `settings`: key/value store per org — composite PK `(org_id, key)` — stores clubName, swissVolleyClubId, accentColor, swissVolleyApiKey (encrypted)
+- `teams`: team name, optional swissVolleyTeamId, orgId
+- `matches`: team names, jersey colors, settings, status, teamId FK, scheduledAt, venue, league, orgId
 - `scores`: point-in-time snapshots (homePoints, guestPoints, homeSets, guestSets, setScores JSON, serviceTeam)
 - `timeouts`: timeout records per match/set/team
+
+## Auth & Multi-tenancy
+
+### Authentication
+- Auth.js v5 (`@auth/sveltekit`) with Keycloak OIDC provider
+- Session guard in `src/hooks.server.ts` — public paths: `/auth`, `/api/auth`, `/matches/*/overlay`, `/overlay`
+- `src/auth.ts` decodes Keycloak access token manually (base64url split) to extract `org_id` and `realm_access.roles` — the ID token doesn't contain realm roles by default
+- Session exposes `session.user.orgId` and `session.user.roles`
+
+### Multi-tenancy
+- Every DB table (`settings`, `teams`, `matches`) has `org_id text NOT NULL DEFAULT 'default'`
+- `settings` composite PK: `(org_id, key)`
+- `locals.orgId` injected by hook from `session.user.orgId ?? 'default'`
+- All API routes filter by `eq(table.orgId, locals.orgId)` — never query without orgId
+
+### Encrypted settings
+- `src/lib/server/crypto.ts` — AES-256-GCM using `ENCRYPTION_KEY` env var (32-byte hex)
+- Swiss Volley API key stored encrypted in `settings` table under key `swissVolleyApiKey`
+- GET `/api/settings` never returns the API key value; PUT encrypts before writing
+
+### Keycloak (Docker)
+- Feature flag is `KC_FEATURES: organization` (singular, not `organizations`)
+- Requires a separate `keycloak` database in postgres: `CREATE DATABASE keycloak;`
+- Realm roles mapper must be added to the client to include `realm_access.roles` in access token
+
+## User Management
+
+### Roles
+- `admin` KC realm role: full access, user management
+- No special role (org member): scorer access only
+
+### KC Admin API client
+`src/lib/server/keycloak-admin.ts` — typed client using client_credentials grant with 50-min token cache.
+Env vars: `KEYCLOAK_ADMIN_URL`, `KEYCLOAK_ADMIN_CLIENT_ID`, `KEYCLOAK_ADMIN_CLIENT_SECRET`, `KEYCLOAK_REALM`.
+
+### User management routes
+- `GET /api/users` — list org members (admin only)
+- `POST /api/users` — invite scorer by email (admin only)
+- `DELETE /api/users/[id]` — remove + disable user (admin only, cannot self-remove)
+- `/admin/users` — user management UI (admin only)
+
+### kcOrgId
+KC's internal org UUID stored in `settings` table under key `kcOrgId` per org.
+
+### DB Migration Gotcha — dual postgres
+**Critical:** On macOS with Homebrew postgres + Docker postgres both running on `:5432`, the native process wins for `localhost:5432` connections. `DATABASE_URL` in `.env` and drizzle-kit both use the native postgres. Migrations applied to the Docker container don't affect the app. Always verify with `lsof -i :5432` if you see unexpected schema errors.
 
 ## Conventions
 
@@ -130,3 +192,4 @@ Each action inserts a new `scores` row (append-only). Undo deletes the latest ro
 - German UI labels (Heim/Gast, Auszeit, Satzresultate)
 - Scoped styles in components, no global CSS beyond Tailwind
 - Legacy routes (`/control`, `/overlay`, `/api/match/*`) remain as backup — do not remove
+- Use `untrack(() => data.X)` from `svelte` when initializing `$state` from props to avoid reactive dependency warnings

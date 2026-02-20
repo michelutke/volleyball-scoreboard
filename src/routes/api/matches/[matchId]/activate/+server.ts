@@ -1,16 +1,17 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import { matches, scores } from '$lib/server/db/schema.js';
-import { emitAll } from '$lib/server/sse.js';
+import { matchSSEEmitter } from '$lib/server/sse.js';
 import { toMatchState } from '$lib/server/match-state.js';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import type { RequestHandler } from './$types.js';
 
-export const POST: RequestHandler = async ({ params }) => {
+export const POST: RequestHandler = async ({ params, locals }) => {
+	const { orgId } = locals;
 	const matchId = parseInt(params.matchId);
 
 	const match = await db.query.matches.findFirst({
-		where: eq(matches.id, matchId)
+		where: and(eq(matches.orgId, orgId), eq(matches.id, matchId))
 	});
 	if (!match) return json({ error: 'Match not found' }, { status: 404 });
 
@@ -35,7 +36,7 @@ export const POST: RequestHandler = async ({ params }) => {
 	}
 
 	const state = toMatchState(updated, score);
-	emitAll(matchId, { type: 'match', data: state });
+	matchSSEEmitter.emit(matchId, { type: 'match', data: state });
 
 	return json(state);
 };

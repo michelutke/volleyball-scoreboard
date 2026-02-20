@@ -2,12 +2,13 @@ import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import { settings, teams } from '$lib/server/db/schema.js';
 import { syncTeams } from '$lib/server/sync.js';
-import { eq, asc } from 'drizzle-orm';
+import { and, eq, asc } from 'drizzle-orm';
 import type { PageServerLoad } from './$types.js';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	const { orgId } = locals;
 	const clubNameSetting = await db.query.settings.findFirst({
-		where: eq(settings.key, 'clubName')
+		where: and(eq(settings.orgId, orgId), eq(settings.key, 'clubName'))
 	});
 
 	if (!clubNameSetting) {
@@ -15,12 +16,12 @@ export const load: PageServerLoad = async () => {
 	}
 
 	try {
-		await syncTeams();
+		await syncTeams(orgId);
 	} catch {
 		// Sync failure is non-fatal, show local data
 	}
 
-	const allTeams = await db.select().from(teams).orderBy(asc(teams.name));
+	const allTeams = await db.select().from(teams).where(eq(teams.orgId, orgId)).orderBy(asc(teams.name));
 
 	return {
 		teams: allTeams.map((t) => ({

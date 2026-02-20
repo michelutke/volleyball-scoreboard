@@ -15,6 +15,27 @@
       "when": 1771191271587,
       "tag": "0001_light_puma",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771347274428,
+      "tag": "0002_light_mad_thinker",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1771348234087,
+      "tag": "0003_loud_cable",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1771418510297,
+      "tag": "0004_fluffy_slapstick",
+      "breakpoints": true
     }
   ]
 }

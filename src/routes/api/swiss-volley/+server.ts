@@ -2,16 +2,17 @@ import { json } from '@sveltejs/kit';
 import { getTeams, getUpcomingGames } from '$lib/server/swiss-volley.js';
 import type { RequestHandler } from './$types.js';
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, locals }) => {
+	const { orgId } = locals;
 	const action = url.searchParams.get('action');
 
 	try {
 		switch (action) {
 			case 'teams':
-				return json(await getTeams());
+				return json(await getTeams(orgId));
 			case 'upcomingGames': {
 				const teamId = url.searchParams.get('teamId');
-				const games = await getUpcomingGames();
+				const games = await getUpcomingGames(orgId);
 				if (teamId) {
 					const id = parseInt(teamId);
 					return json(games.filter((g) => g.teams.home.teamId === id || g.teams.away.teamId === id));

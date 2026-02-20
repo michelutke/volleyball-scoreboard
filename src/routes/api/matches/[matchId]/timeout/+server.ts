@@ -1,16 +1,17 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import { matches, timeouts, scores } from '$lib/server/db/schema.js';
-import { emitAll } from '$lib/server/sse.js';
+import { matchSSEEmitter } from '$lib/server/sse.js';
 import { eq, and, desc } from 'drizzle-orm';
 import type { RequestHandler } from './$types.js';
 
-export const POST: RequestHandler = async ({ params, request }) => {
+export const POST: RequestHandler = async ({ params, request, locals }) => {
+	const { orgId } = locals;
 	const matchId = parseInt(params.matchId);
 	const { team } = await request.json();
 
 	const match = await db.query.matches.findFirst({
-		where: eq(matches.id, matchId)
+		where: and(eq(matches.orgId, orgId), eq(matches.id, matchId))
 	});
 	if (!match) return json({ error: 'Match not found' }, { status: 404 });
 
@@ -39,17 +40,18 @@ export const POST: RequestHandler = async ({ params, request }) => {
 	});
 
 	const teamName = team === 'home' ? match.homeTeamName : match.guestTeamName;
-	emitAll(matchId, { type: 'timeout', data: { team, teamName, active: true } });
+	matchSSEEmitter.emit(matchId, { type: 'timeout', data: { team, teamName, active: true } });
 
 	return json({ ok: true, timeoutsUsed: usedTimeouts.length + 1 });
 };
 
-export const DELETE: RequestHandler = async ({ params, request }) => {
+export const DELETE: RequestHandler = async ({ params, request, locals }) => {
+	const { orgId } = locals;
 	const matchId = parseInt(params.matchId);
 	const { team } = await request.json();
 
 	const match = await db.query.matches.findFirst({
-		where: eq(matches.id, matchId)
+		where: and(eq(matches.orgId, orgId), eq(matches.id, matchId))
 	});
 	if (!match) return json({ error: 'Match not found' }, { status: 404 });
 
@@ -73,7 +75,7 @@ export const DELETE: RequestHandler = async ({ params, request }) => {
 	await db.delete(timeouts).where(eq(timeouts.id, lastTimeout.id));
 
 	const teamName = team === 'home' ? match.homeTeamName : match.guestTeamName;
-	emitAll(matchId, { type: 'timeout', data: { team, teamName, active: false } });
+	matchSSEEmitter.emit(matchId, { type: 'timeout', data: { team, teamName, active: false } });
 
 	const remaining = await db.query.timeouts.findMany({
 		where: and(

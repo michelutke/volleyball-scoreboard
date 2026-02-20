@@ -22,6 +22,10 @@ Thumbs.db
 *.pem
 *.key
 
+# Keycloak — may contain SMTP password after export
+keycloak/realm-export.json
+
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+docs/saas-plan.md
