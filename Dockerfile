@@ -10,6 +10,7 @@ RUN npm run build
 FROM node:22-slim
 WORKDIR /app
 COPY --from=build /app/build ./build
+COPY --from=build /app/drizzle ./drizzle
 COPY --from=build /app/package*.json ./
 RUN npm ci --omit=dev --ignore-scripts
 ENV PORT=3000
