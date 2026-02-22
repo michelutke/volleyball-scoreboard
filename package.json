@@ -20,7 +20,7 @@
 		"@types/node": "^25.2.3",
 		"drizzle-kit": "^0.31.9",
 		"husky": "^9.1.7",
-		"svelte": "^5.49.2",
+		"svelte": "^5.53.2",
 		"svelte-check": "^4.3.6",
 		"tailwindcss": "^4.1.18",
 		"typescript": "^5.9.3",
