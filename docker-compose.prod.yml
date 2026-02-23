@@ -44,6 +44,7 @@ services:
   app:
     build: .
     environment:
+      ORIGIN: ${ORIGIN}
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/scoring
       AUTH_SECRET: ${AUTH_SECRET}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}

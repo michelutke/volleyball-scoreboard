@@ -5,8 +5,11 @@ Complete setup guide for running Scoring on your own infrastructure.
 ## Prerequisites
 
 - Docker 24+ and Docker Compose
-- Node.js 20+
+- Node.js 22+
 - Git
+
+> **macOS only:** If you have Homebrew postgres installed, it will conflict with Docker on port 5432.
+> Check with `lsof -i :5432`. Stop it with `brew services stop postgresql@16` before continuing.
 
 ## Quick Start
 
@@ -17,98 +20,100 @@ cd scoring
 
 # 2. Configure environment
 cp .env.example .env
-# Edit .env — see "Environment Variables" below
+```
 
-# 3. Start PostgreSQL and Keycloak
-docker-compose up -d
+Edit `.env` and fill in the required values:
 
-# 4. Wait for Keycloak to be ready (~30s)
-# Check: http://localhost:8080 should show KC login page
-
-# 5. Set up Keycloak realm
-# Option A: Import realm export
-#   KC Admin Console > Create realm > Import > select keycloak/realm-export.json
-#   IMPORTANT: After import, regenerate client secrets:
-#     Clients > scoring-app > Credentials > Regenerate → copy to KEYCLOAK_CLIENT_SECRET
-#     Clients > scoring-admin > Credentials > Regenerate → copy to KEYCLOAK_ADMIN_CLIENT_SECRET
-#   (The exported file contains placeholder secrets, not real ones)
-#
-# Option B: Manual setup
-#   Follow docs/keycloak-setup.md step by step
-
-# 6. Copy the scoring-app client secret from KC into .env
-#    KEYCLOAK_CLIENT_SECRET=<paste here>
-
-# 7. Generate secrets
-# AUTH_SECRET:
+```bash
+# Generate AUTH_SECRET
 openssl rand -base64 32
-# ENCRYPTION_KEY:
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
-# 8. Install dependencies and build
+# Generate ENCRYPTION_KEY
+openssl rand -hex 32
+```
+
+Paste the outputs into `.env`. You'll add `KEYCLOAK_CLIENT_SECRET` after the next step.
+
+```bash
+# 3. Start PostgreSQL and Keycloak
+docker compose up -d
+# Keycloak auto-imports the realm from keycloak/realm.json on first start (~30s)
+
+# 4. Create your first admin user in Keycloak
+# See docs/keycloak-setup.md — takes ~2 minutes
+
+# 5. Install dependencies and build
 npm install
 npm run build
 
-# 9. Push database schema
-npx drizzle-kit push
-
-# 10. Start the app
+# 6. Start the app (DB migrations run automatically)
 node build
-# App runs on http://localhost:3000
+# App runs at http://localhost:3000
 ```
-
-**Note:** The `docker-compose.yml` runs PostgreSQL and Keycloak only. The app itself is built and run separately with Node.js.
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
+| `ORIGIN` | **Yes (production)** | Public URL of the app, e.g. `https://scoreboard.example.com`. Required by SvelteKit for CSRF protection — omitting it causes 502/bad gateway errors behind a reverse proxy. Not needed for local dev. |
 | `DATABASE_URL` | Yes | PostgreSQL connection string. Default: `postgres://scoring:scoring@localhost:5432/scoring` |
-| `KEYCLOAK_CLIENT_ID` | Yes | OIDC client ID in Keycloak. Default: `scoring-app` |
-| `KEYCLOAK_CLIENT_SECRET` | Yes | Client secret from KC `scoring-app` client Credentials tab |
-| `KEYCLOAK_ISSUER` | Yes | KC realm issuer URL. Default: `http://localhost:8080/realms/scoring` |
-| `AUTH_SECRET` | Yes | Random 32-byte string for Auth.js session encryption. Generate: `openssl rand -base64 32` |
-| `ENCRYPTION_KEY` | Yes | 64-char hex string (32 bytes) for AES-256-GCM encryption of API keys in DB. Generate: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
-| `POSTGRES_USER` | No | Docker Compose postgres user. Default: `scoring` |
-| `POSTGRES_PASSWORD` | No | Docker Compose postgres password. Default: `scoring` |
-| `POSTGRES_DB` | No | Docker Compose postgres database name. Default: `scoring` |
-| `KC_ADMIN_PASSWORD` | No | Keycloak admin console password. Default: `admin` |
+| `AUTH_SECRET` | Yes | Random string for session encryption. Generate: `openssl rand -base64 32` |
+| `ENCRYPTION_KEY` | Yes | 64-char hex for AES-256-GCM. Generate: `openssl rand -hex 32` |
+| `KEYCLOAK_CLIENT_ID` | Yes | OIDC client ID. Default: `scoring-app` |
+| `KEYCLOAK_CLIENT_SECRET` | Yes | Client secret from KC `scoring-app` Credentials tab |
+| `KEYCLOAK_ISSUER` | Yes | KC realm URL. Default: `http://localhost:8080/realms/scoring` |
 | `KEYCLOAK_REALM` | No | KC realm name. Default: `scoring` |
-| `KEYCLOAK_ADMIN_URL` | Only for user mgmt | Base URL of KC server for admin API. Default: `http://localhost:8080` |
-| `KEYCLOAK_ADMIN_CLIENT_ID` | Only for user mgmt | Service account client ID. Default: `scoring-admin` |
-| `KEYCLOAK_ADMIN_CLIENT_SECRET` | Only for user mgmt | Secret from KC `scoring-admin` client Credentials tab |
+| `KEYCLOAK_ADMIN_URL` | User mgmt only | KC base URL. Default: `http://localhost:8080` |
+| `KEYCLOAK_ADMIN_CLIENT_ID` | User mgmt only | Service account client ID. Default: `scoring-app` |
+| `KEYCLOAK_ADMIN_CLIENT_SECRET` | User mgmt only | Secret from KC `scoring-app` Credentials tab |
+| `POSTGRES_USER` | No | Docker postgres user. Default: `scoring` |
+| `POSTGRES_PASSWORD` | No | Docker postgres password. Default: `scoring` |
+| `KC_ADMIN_PASSWORD` | No | Keycloak admin console password. Default: `admin` |
 
-The `KEYCLOAK_ADMIN_*` variables are only required if you use the `/admin/users` user management page. Basic scoring works without them.
+The `KEYCLOAK_ADMIN_*` variables are only needed for the `/admin/users` user management page. Basic scoring works without them.
 
 ## Keycloak Realm Setup
 
-See [docs/keycloak-setup.md](keycloak-setup.md) for detailed instructions on:
-- Creating the `scoring` realm
-- Configuring the `scoring-app` OIDC client
-- Setting up the realm roles mapper
-- Creating the first admin user
+The realm is auto-imported from `keycloak/realm.json` on first Keycloak startup — no manual realm configuration needed.
 
-Alternatively, import the realm export from `keycloak/realm-export.json` and update secrets.
+The only required step is creating your first admin user. See [docs/keycloak-setup.md](keycloak-setup.md).
 
 ## First Admin User
 
-After Keycloak is configured:
+1. KC Admin Console: http://localhost:8080/admin → realm `scoring`
+2. Users > Add user — fill in username, email, Email verified: ON → Save
+3. Credentials tab > Set password (Temporary: ON)
+4. Role mapping tab > Assign roles > select `admin`
 
-1. Open KC Admin Console: http://localhost:8080/admin
-2. Select realm `scoring`
-3. Go to Users > Add user
-4. Fill in username and email, save
-5. Go to Credentials tab > Set password (temporary: on)
-6. Go to Role mapping tab > Assign roles > select `admin`
-7. User can now log in to the app and will be prompted to set a permanent password
+The user can now log in and will be prompted to set a permanent password.
 
 ## Inviting Users (User Management)
 
-The `/admin/users` page lets admins invite scorers by email. This requires:
-1. `KEYCLOAK_ADMIN_*` env vars configured (see table above)
-2. A KC Organization linked to the app (see [docs/keycloak-setup.md](keycloak-setup.md#8-create-organization-required-for-user-management))
+The `/admin/users` page lets admins invite scorers by email. Requires:
+1. `KEYCLOAK_ADMIN_*` env vars set (see table above)
+2. KC Organization linked to the app (see [keycloak-setup.md](keycloak-setup.md#8-create-organization-required-for-user-management))
 
-**Without SMTP configured:** Invitation creates the user in Keycloak but does not send an email. The admin must then set the user's password manually via KC Admin Console > Users > Credentials.
+**Without SMTP:** User is created in KC but no email is sent. Set the password manually via KC Admin Console > Users > Credentials.
+
+## Production (Docker Compose)
+
+For fully containerized production (e.g. via [Coolify](https://coolify.io)):
+
+```bash
+# Set all required env vars in .env (see table above)
+# Plus these production-specific vars:
+KC_HOSTNAME=your-keycloak-domain.com
+POSTGRES_USER=scoring
+POSTGRES_PASSWORD=<strong-password>
+
+docker compose -f docker-compose.prod.yml up -d
+```
+
+The app is available on port `3000`. Put it behind a reverse proxy (nginx, Caddy) for HTTPS.
+
+> **Reverse proxy + SSE:** Disable response buffering for the scoring domain, otherwise the OBS overlay will not receive live updates. For nginx: `proxy_buffering off;`. For Caddy it works automatically.
+
+DB migrations run automatically when the app container starts — no separate step needed.
 
 ## Upgrading
 
@@ -116,11 +121,13 @@ The `/admin/users` page lets admins invite scorers by email. This requires:
 git pull
 npm install
 npm run build
-npx drizzle-kit push    # Apply any new DB migrations
-node build
+node build    # DB migrations run automatically
 ```
 
-If using a process manager (PM2, systemd), restart the service after building.
+For Docker Compose production, rebuild the app container:
+```bash
+docker compose -f docker-compose.prod.yml up -d --build app
+```
 
 ## Troubleshooting
 
@@ -130,37 +137,34 @@ If using a process manager (PM2, systemd), restart the service after building.
 Error: connect ECONNREFUSED 127.0.0.1:5432
 ```
 
-- Verify Docker is running: `docker-compose ps`
-- Check postgres container logs: `docker-compose logs postgres`
-- On macOS: if you have Homebrew postgres installed, it may bind to port 5432 before Docker. Check with `lsof -i :5432`. Stop local postgres (`brew services stop postgresql`) or change the Docker port mapping.
+- Verify Docker is running: `docker compose ps`
+- Check postgres logs: `docker compose logs postgres`
+- **macOS:** Homebrew postgres may have claimed port 5432 before Docker. Run `lsof -i :5432` to check. Stop it with `brew services stop postgresql@16`.
 
 ### Keycloak login loop
 
-After clicking "Sign in", you're redirected back to the login page repeatedly.
+After clicking "Sign in" you're redirected back to the login page.
 
 - Verify `KEYCLOAK_ISSUER` matches exactly (protocol, host, port, realm name)
 - Verify `KEYCLOAK_CLIENT_SECRET` is correct (re-copy from KC Admin Console > Clients > scoring-app > Credentials)
-- Check that the `scoring-app` client has `http://localhost:5173/*` (dev) or `http://localhost:3000/*` (prod) in Valid Redirect URIs
+- Check that `scoring-app` has the correct Valid Redirect URIs (`http://localhost:3000/*` for prod)
 - Clear browser cookies for localhost
 
 ### Overlay not updating
 
 The overlay at `/matches/{id}/overlay` shows stale data.
 
-- Verify the match status is `live` (activate it from the control panel)
+- Verify the match status is `live` (activate from the control panel)
 - Check browser console for SSE connection errors
-- Ensure no reverse proxy is buffering SSE responses (disable response buffering / set `X-Accel-Buffering: no`)
+- Check reverse proxy buffering (see note above)
 
 ### Keycloak "organization" feature not available
 
-- Ensure `KC_FEATURES: organization` (singular, not `organizations`) in docker-compose.yml
-- Restart Keycloak after changing: `docker-compose restart keycloak`
+- Ensure `KC_FEATURES: organization` (singular — not `organizations`) in docker-compose.yml
+- Restart: `docker compose restart keycloak`
+- Also enable per-realm: KC Admin Console > realm `scoring` > Realm settings > Organizations: ON
 
-### Schema push fails
+### Schema errors (`relation "xyz" does not exist`)
 
-```
-error: relation "xyz" does not exist
-```
-
-- Make sure `DATABASE_URL` points to the correct postgres instance (Docker, not a local Homebrew postgres)
-- Verify with: `lsof -i :5432` to check which process owns the port
+- Verify `DATABASE_URL` points to the Docker postgres, not a local Homebrew postgres
+- Check which process owns port 5432: `lsof -i :5432`
