@@ -63,19 +63,4 @@
 	{/if}
 </svelte:head>
 
-{#if data.session}
-	<div class="fixed top-2 right-2 z-50 flex gap-2">
-		{#if data.isAdmin}
-			<a href="/admin/users" class="text-xs text-text-tertiary hover:text-text-primary bg-bg-panel-alt/80 backdrop-blur rounded-lg px-3 py-1.5">
-				Nutzer
-			</a>
-		{/if}
-		<form method="POST" action="/auth/signout">
-			<button type="submit" class="text-xs text-text-tertiary hover:text-text-primary bg-bg-panel-alt/80 backdrop-blur rounded-lg px-3 py-1.5">
-				Abmelden
-			</button>
-		</form>
-	</div>
-{/if}
-
 {@render children()}
