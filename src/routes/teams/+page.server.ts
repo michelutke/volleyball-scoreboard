@@ -15,11 +15,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		redirect(302, '/');
 	}
 
-	try {
-		await syncTeams(orgId);
-	} catch {
-		// Sync failure is non-fatal, show local data
-	}
+	syncTeams(orgId).catch(() => {});
 
 	const allTeams = await db.select().from(teams).where(eq(teams.orgId, orgId)).orderBy(asc(teams.name));
 
