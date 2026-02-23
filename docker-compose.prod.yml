@@ -1,13 +1,13 @@
 services:
   postgres:
-    build:
-      context: ./docker/postgres
+    image: postgres:16-alpine
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: scoring
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init-keycloak-db.sh:/docker-entrypoint-initdb.d/init-keycloak-db.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
@@ -15,21 +15,21 @@ services:
       retries: 5
 
   keycloak:
-    build:
-      context: .
-      dockerfile: docker/keycloak/Dockerfile
-    command: start
+    image: quay.io/keycloak/keycloak:26.5.3
+    command: start --import-realm
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
       KC_DB_USERNAME: ${POSTGRES_USER}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:-admin}
       KC_FEATURES: organization
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME: ${KC_HOSTNAME}
       KC_PROXY_HEADERS: xforwarded
+    volumes:
+      - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -42,22 +42,26 @@ services:
 
   app:
     build: .
+    ports:
+      - "3000:3000"
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/scoring
       AUTH_SECRET: ${AUTH_SECRET}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-scoring-app}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
       KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
-      KEYCLOAK_ADMIN_URL: ${KEYCLOAK_ADMIN_URL}
-      KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID}
+      KEYCLOAK_ADMIN_URL: ${KEYCLOAK_ADMIN_URL:-http://keycloak:8080}
+      KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID:-scoring-app}
       KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
-      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-scoring}
     depends_on:
       postgres:
         condition: service_healthy
+      keycloak:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/api/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))\""]
       interval: 30s
       timeout: 10s
       retries: 3
