@@ -413,12 +413,14 @@
 							<span class="scoring-team-icon">&#9675;</span>
 							<span class="font-bold">{match.homeTeamName}</span>
 						</div>
-						<button onclick={() => addPoint('home')} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
-						<div class="scoring-secondary">
-							<button onclick={() => callTimeout('home')} disabled={matchTimeouts.home >= 2 || !!activeTimeout} class="btn-action">&#9201; Auszeit</button>
-							<button onclick={() => { if (match?.serviceTeam !== 'home') switchService(); }} class="btn-service" class:btn-service-active={match?.serviceTeam === 'home'} disabled={match?.serviceTeam === 'home'}>
-								&#127952; Service
-							</button>
+						<div class="scoring-team-btns">
+							<button onclick={() => addPoint('home')} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
+							<div class="scoring-secondary">
+								<button onclick={() => callTimeout('home')} disabled={matchTimeouts.home >= 2 || !!activeTimeout} class="btn-action">&#9201; Auszeit</button>
+								<button onclick={() => { if (match?.serviceTeam !== 'home') switchService(); }} class="btn-service" class:btn-service-active={match?.serviceTeam === 'home'} disabled={match?.serviceTeam === 'home'}>
+									&#127952; Service
+								</button>
+							</div>
 						</div>
 					</div>
 					<div class="scoring-team">
@@ -426,12 +428,14 @@
 							<span class="scoring-team-icon">&#128101;</span>
 							<span class="font-bold">{match.guestTeamName}</span>
 						</div>
-						<button onclick={() => addPoint('guest')} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
-						<div class="scoring-secondary">
-							<button onclick={() => callTimeout('guest')} disabled={matchTimeouts.guest >= 2 || !!activeTimeout} class="btn-action">&#9201; Auszeit</button>
-							<button onclick={() => { if (match?.serviceTeam !== 'guest') switchService(); }} class="btn-service" class:btn-service-active={match?.serviceTeam === 'guest'} disabled={match?.serviceTeam === 'guest'}>
-								&#127952; Service
-							</button>
+						<div class="scoring-team-btns">
+							<button onclick={() => addPoint('guest')} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
+							<div class="scoring-secondary">
+								<button onclick={() => callTimeout('guest')} disabled={matchTimeouts.guest >= 2 || !!activeTimeout} class="btn-action">&#9201; Auszeit</button>
+								<button onclick={() => { if (match?.serviceTeam !== 'guest') switchService(); }} class="btn-service" class:btn-service-active={match?.serviceTeam === 'guest'} disabled={match?.serviceTeam === 'guest'}>
+									&#127952; Service
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -1173,4 +1177,98 @@
 	.flex { display: flex; }
 	.items-center { align-items: center; }
 	.justify-center { justify-content: center; }
+
+	@media (max-width: 480px) {
+		.control { padding: 8px; }
+		.nav-bar { margin-bottom: 8px; }
+		.card-header { padding: 10px 12px; }
+		.card-body { padding: 10px 12px; }
+
+		.scoreboard-preview { padding: 10px; }
+		.scoreboard-preview:not(.with-jersey) {
+			grid-template-columns: minmax(0, 1fr) 36px auto 40px auto;
+		}
+		.scoreboard-preview.with-jersey {
+			grid-template-columns: 8px minmax(0, 1fr) 36px auto 40px auto;
+		}
+		.preview-name { font-size: 13px; padding: 0 8px; }
+		.preview-sets { width: 36px; font-size: 18px; }
+		.preview-points { width: 40px; font-size: 20px; }
+		.preview-set-scores.expanded { max-width: 140px; }
+		.preview-set-cell { width: 28px; font-size: 14px; }
+
+		.scoring-team { padding: 10px 12px; }
+		.scoring-team-header { font-size: 13px; margin-bottom: 8px; overflow: hidden; }
+		.scoring-team-header .font-bold { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.btn-point { height: 52px; font-size: 18px; margin-bottom: 8px; }
+
+		.scoring-secondary { flex-direction: column; gap: 6px; }
+		.btn-action { padding: 8px 12px; font-size: 12px; }
+		.btn-service { padding: 8px 12px; font-size: 12px; }
+		.scoring-actions { padding: 10px 12px; gap: 8px; }
+	}
+
+	@media (max-height: 480px) and (orientation: landscape) {
+		.control { padding: 4px 8px; }
+		.nav-bar { margin-bottom: 4px; }
+		.card-header { padding: 6px 12px; }
+		.card-body { padding: 6px 10px; }
+
+		.scoreboard-preview { padding: 8px; grid-template-rows: 38px 38px; }
+		.scoreboard-preview:not(.with-jersey) {
+			grid-template-columns: minmax(0, 1fr) 34px auto 38px auto;
+		}
+		.scoreboard-preview.with-jersey {
+			grid-template-columns: 8px minmax(0, 1fr) 34px auto 38px auto;
+		}
+		.preview-name { font-size: 12px; padding: 0 6px; }
+		.preview-sets { width: 34px; font-size: 16px; }
+		.preview-points { width: 38px; font-size: 18px; }
+		.preview-set-scores.expanded { max-width: 110px; }
+		.preview-set-cell { width: 26px; font-size: 13px; }
+
+		.timeout-info { display: none; }
+
+		.set-scores { padding: 0 10px 6px; gap: 6px; }
+		.scoring-actions { padding: 6px 12px; gap: 8px; }
+		.timeout-banner { padding: 6px 12px; font-size: 13px; }
+
+		.scoring-team {
+			display: flex;
+			flex-direction: row;
+			align-items: stretch;
+			padding: 6px 8px;
+			gap: 6px;
+		}
+		.scoring-team-header {
+			writing-mode: vertical-rl;
+			transform: rotate(180deg);
+			margin-bottom: 0;
+			font-size: 11px;
+			align-self: stretch;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 0;
+			overflow: hidden;
+			max-width: 18px;
+		}
+		.scoring-team-icon { display: none; }
+		.scoring-team-header .font-bold {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			max-height: 100px;
+		}
+		.scoring-team-btns {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+			flex: 1;
+		}
+		.btn-point { height: 42px; font-size: 14px; margin-bottom: 0; }
+		.scoring-secondary { flex-direction: column; gap: 4px; }
+		.btn-action { padding: 5px 8px; font-size: 11px; }
+		.btn-service { padding: 5px 8px; font-size: 11px; }
+	}
 </style>
