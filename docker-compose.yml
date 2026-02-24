@@ -31,6 +31,7 @@ services:
       KC_HOSTNAME_STRICT_HTTPS: "false"
     volumes:
       - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
+      - ./keycloak/themes:/opt/keycloak/themes:ro
     ports:
       - '8080:8080'
     depends_on:
