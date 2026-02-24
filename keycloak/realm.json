@@ -1,5 +1,7 @@
 {
   "realm": "scoring",
+  "displayName": "Volleyball Scoreboard",
+  "loginTheme": "vbcthun",
   "enabled": true,
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,

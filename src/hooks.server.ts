@@ -42,7 +42,7 @@ export const handleError: HandleServerError = ({ error, event }) => {
 	console.error('[500]', event.url.pathname, error);
 };
 
-const PUBLIC_PATHS = ['/auth', '/api/auth', '/api/health', '/signin'];
+const PUBLIC_PATHS = ['/auth', '/api/auth', '/api/health'];
 const OVERLAY_PATTERN = /^\/matches\/[^/]+\/overlay/;
 const LEGACY_OVERLAY = /^\/overlay/;
 
@@ -55,7 +55,7 @@ export const handle = sequence(authHandle, async ({ event, resolve }) => {
 
 	if (!isPublic) {
 		const session = await event.locals.auth();
-		if (!session) redirect(307, `/signin?callbackUrl=${encodeURIComponent(event.url.pathname)}`);
+		if (!session) redirect(307, `/api/auth/signin/keycloak?callbackUrl=${encodeURIComponent(event.url.pathname)}`);
 		event.locals.session = session;
 		event.locals.orgId = session.user.orgId ?? 'default';
 		event.locals.isAdmin = (session.user.roles ?? []).includes('admin');
