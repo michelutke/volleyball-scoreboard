@@ -1,6 +1,10 @@
-import { SvelteKitAuth } from '@auth/sveltekit';
+import { SvelteKitAuth, type SvelteKitAuthConfig } from '@auth/sveltekit';
+import { Auth, createActionURL, raw, skipCSRFCheck, setEnvDefaults } from '@auth/core';
 import Keycloak from '@auth/sveltekit/providers/keycloak';
+import { base } from '$app/paths';
 import { env } from '$env/dynamic/private';
+import { redirect } from '@sveltejs/kit';
+import type { RequestEvent } from '@sveltejs/kit';
 
 declare module '@auth/core/types' {
 	interface Session {
@@ -21,7 +25,7 @@ declare module '@auth/core/jwt' {
 	}
 }
 
-export const { handle, signIn, signOut } = SvelteKitAuth({
+const baseConfig: SvelteKitAuthConfig = {
 	trustHost: true,
 	providers: [
 		Keycloak({
@@ -33,13 +37,10 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 	callbacks: {
 		jwt({ token, account }) {
 			if (account?.access_token) {
-				// Decode access token to extract Keycloak-specific claims
 				try {
 					const payload = JSON.parse(
 						Buffer.from(account.access_token.split('.')[1], 'base64url').toString()
 					);
-					// KC 26: org_id may be a direct claim (explicit mapper) or inside
-					// the organizations map (oidc-organization-membership-mapper with addOrganizationId)
 					const orgsMap = payload.organizations as Record<string, { id?: string }> | undefined;
 					const firstOrgId = orgsMap ? Object.values(orgsMap)[0]?.id : undefined;
 					token.orgId = (payload.org_id as string | undefined) ?? firstOrgId;
@@ -56,4 +57,37 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 			return session;
 		}
 	}
-});
+};
+
+export const { handle, signIn, signOut } = SvelteKitAuth(baseConfig);
+
+/**
+ * Server-side OAuth initiation for use in `load` functions.
+ * Replicates @auth/sveltekit internal signIn using public @auth/core APIs.
+ */
+export async function serverSignIn(
+	event: RequestEvent,
+	provider: string,
+	redirectTo: string
+): Promise<never> {
+	// Must assign unique symbols directly — TS widens them when spread
+	const config: SvelteKitAuthConfig = { ...baseConfig, basePath: `${base}/auth` };
+	config.skipCSRFCheck = skipCSRFCheck;
+	setEnvDefaults(env, config);
+
+	const headers = new Headers(event.request.headers);
+	const signinURL = createActionURL('signin', event.url.protocol, headers, env, config);
+	headers.set('Content-Type', 'application/x-www-form-urlencoded');
+	const body = new URLSearchParams({ callbackUrl: redirectTo });
+	const req = new Request(`${signinURL}/${provider}`, { method: 'POST', headers, body });
+
+	const configWithRaw: SvelteKitAuthConfig & { raw: typeof raw } = config as SvelteKitAuthConfig & { raw: typeof raw };
+	configWithRaw.raw = raw;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const res = await Auth(req, configWithRaw) as any;
+
+	for (const c of res?.cookies ?? []) {
+		event.cookies.set(c.name, c.value, { path: '/', ...c.options });
+	}
+	redirect(302, res.redirect);
+}
