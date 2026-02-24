@@ -4,9 +4,15 @@
 	const error = $derived(page.url.searchParams.get('error'));
 
 	const raw = $derived(page.url.searchParams.get('callbackUrl') ?? '/');
-	const callbackUrl = $derived(
-		raw.startsWith('/') && !raw.startsWith('/signin') ? raw : '/'
-	);
+	const callbackUrl = $derived((() => {
+		try {
+			const u = new URL(raw);
+			const p = u.pathname;
+			return p.startsWith('/signin') ? '/' : p;
+		} catch {
+			return raw.startsWith('/') && !raw.startsWith('/signin') ? raw : '/';
+		}
+	})());
 </script>
 
 <svelte:head>
