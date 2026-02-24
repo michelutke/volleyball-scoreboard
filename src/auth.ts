@@ -23,6 +23,7 @@ declare module '@auth/core/jwt' {
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
 	trustHost: true,
+	pages: { signIn: '/auth/signin' },
 	providers: [
 		Keycloak({
 			clientId: env.KEYCLOAK_CLIENT_ID,
