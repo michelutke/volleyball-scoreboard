@@ -2,6 +2,11 @@
 	import { page } from '$app/state';
 
 	const error = $derived(page.url.searchParams.get('error'));
+
+	const raw = $derived(page.url.searchParams.get('callbackUrl') ?? '/');
+	const callbackUrl = $derived(
+		raw.startsWith('/') && !raw.startsWith('/signin') ? raw : '/'
+	);
 </script>
 
 <svelte:head>
@@ -23,6 +28,8 @@
 			{/if}
 
 			<form method="POST" class="w-full">
+				<input type="hidden" name="provider" value="keycloak" />
+				<input type="hidden" name="callbackUrl" value={callbackUrl} />
 				<button
 					type="submit"
 					class="w-full bg-accent text-bg-base font-medium py-2.5 px-4 rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
