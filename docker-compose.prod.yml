@@ -15,7 +15,7 @@ services:
       retries: 5
 
   keycloak:
-    image: quay.io/keycloak/keycloak:26.5.3
+    build: ./keycloak
     command: start --import-realm
     environment:
       KC_DB: postgres
@@ -31,7 +31,6 @@ services:
       KC_HEALTH_ENABLED: "true"
     volumes:
       - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
-      - ./keycloak/themes:/opt/keycloak/themes:ro
     depends_on:
       postgres:
         condition: service_healthy
