@@ -123,10 +123,16 @@
         </div>
         </#if>
 
+        <#-- Normalize usernameHidden: KC26 passes it as string "true", older versions as boolean -->
+        <#if usernameHidden??>
+            <#if usernameHidden?is_boolean><#assign _usernameHidden = usernameHidden>
+            <#else><#assign _usernameHidden = (usernameHidden == "true")></#if>
+        <#else><#assign _usernameHidden = false></#if>
+
         <form action="${url.loginAction}" method="post">
             <input type="hidden" name="credentialId" value="${(auth.selectedCredential)!''}"/>
 
-            <#if !(usernameHidden?? && usernameHidden?string == "true")>
+            <#if !_usernameHidden>
             <div class="field">
                 <label for="username">E-Mail</label>
                 <input type="text" id="username" name="username"
@@ -140,7 +146,7 @@
                 <label for="password">Passwort</label>
                 <input type="password" id="password" name="password"
                        autocomplete="current-password"
-                       <#if usernameHidden?? && usernameHidden?string == "true">autofocus</#if>/>
+                       <#if _usernameHidden>autofocus</#if>/>
             </div>
 
             <#if realm.rememberMe>
