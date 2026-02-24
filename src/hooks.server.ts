@@ -55,7 +55,7 @@ export const handle = sequence(authHandle, async ({ event, resolve }) => {
 
 	if (!isPublic) {
 		const session = await event.locals.auth();
-		if (!session) redirect(307, '/signin');
+		if (!session) redirect(307, `/signin?callbackUrl=${encodeURIComponent(event.url.pathname)}`);
 		event.locals.session = session;
 		event.locals.orgId = session.user.orgId ?? 'default';
 		event.locals.isAdmin = (session.user.roles ?? []).includes('admin');
