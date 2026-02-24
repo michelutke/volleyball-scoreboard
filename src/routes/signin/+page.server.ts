@@ -1,3 +1,8 @@
 import { signIn } from '../../auth';
+import type { PageServerLoad } from './$types';
 
-export const actions = { default: signIn };
+export const load: PageServerLoad = async (event) => {
+	const raw = event.url.searchParams.get('callbackUrl') ?? '/';
+	const callbackUrl = raw.startsWith('/') && !raw.startsWith('/signin') ? raw : '/';
+	await signIn('keycloak', { redirectTo: callbackUrl });
+};
