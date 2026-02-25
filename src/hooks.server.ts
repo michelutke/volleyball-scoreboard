@@ -4,38 +4,14 @@ import { handle as authHandle } from './auth';
 import type { HandleServerError } from '@sveltejs/kit';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { db } from '$lib/server/db';
-import { settings } from '$lib/server/db/schema';
-import { and, eq } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
-import { getAdminToken } from '$lib/server/keycloak-admin';
+import { bootstrapKcOrgId, syncClientRedirectUri } from '$lib/server/keycloak-admin';
 
 export async function init() {
 	await migrate(db, { migrationsFolder: 'drizzle' });
 	console.log('[db] migrations applied');
 	await bootstrapKcOrgId();
-}
-
-async function bootstrapKcOrgId(): Promise<void> {
-	if (!env.KEYCLOAK_ADMIN_URL || !env.KEYCLOAK_ADMIN_CLIENT_SECRET) return;
-	const existing = await db.query.settings.findFirst({
-		where: and(eq(settings.orgId, 'default'), eq(settings.key, 'kcOrgId'))
-	});
-	if (existing) return;
-	try {
-		const token = await getAdminToken();
-		const realm = env.KEYCLOAK_REALM ?? 'scoring';
-		const res = await fetch(`${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}/organizations`, {
-			headers: { Authorization: `Bearer ${token}` }
-		});
-		if (!res.ok) return;
-		const orgs: { id: string; name: string }[] = await res.json();
-		if (orgs.length === 0) return;
-		await db.insert(settings).values({ orgId: 'default', key: 'kcOrgId', value: orgs[0].id })
-			.onConflictDoNothing();
-		console.log('[keycloak] kcOrgId auto-configured:', orgs[0].id);
-	} catch (e) {
-		console.warn('[keycloak] kcOrgId bootstrap failed (non-fatal):', e);
-	}
+	if (env.ORIGIN) await syncClientRedirectUri(env.ORIGIN);
 }
 
 export const handleError: HandleServerError = ({ error, event }) => {

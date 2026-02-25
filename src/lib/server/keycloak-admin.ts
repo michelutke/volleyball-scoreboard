@@ -1,4 +1,7 @@
 import { env } from '$env/dynamic/private';
+import { db } from '$lib/server/db';
+import { settings } from '$lib/server/db/schema';
+import { and, eq } from 'drizzle-orm';
 
 export interface KcUser {
 	id: string;
@@ -32,7 +35,7 @@ export async function getAdminToken(): Promise<string> {
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
 			grant_type: 'client_credentials',
-			client_id: env.KEYCLOAK_ADMIN_CLIENT_ID ?? 'scoring-admin',
+			client_id: env.KEYCLOAK_ADMIN_CLIENT_ID ?? 'scoring-app',
 			client_secret: (() => {
 			const s = env.KEYCLOAK_ADMIN_CLIENT_SECRET;
 			if (!s) throw new Error('KEYCLOAK_ADMIN_CLIENT_SECRET not configured');
@@ -175,5 +178,63 @@ export async function disableUser(userId: string): Promise<void> {
 	});
 	if (!res.ok && res.status !== 404) {
 		throw new Error(`disableUser ${res.status}: ${await kcErrorBody(res)}`);
+	}
+}
+
+export async function getKcOrgId(orgId: string): Promise<string | null> {
+	const row = await db.query.settings.findFirst({
+		where: and(eq(settings.orgId, orgId), eq(settings.key, 'kcOrgId'))
+	});
+	if (row?.value) return row.value;
+	if (orgId === 'default') return null;
+	const fallback = await db.query.settings.findFirst({
+		where: and(eq(settings.orgId, 'default'), eq(settings.key, 'kcOrgId'))
+	});
+	return fallback?.value ?? null;
+}
+
+export async function bootstrapKcOrgId(): Promise<void> {
+	if (!env.KEYCLOAK_ADMIN_URL || !env.KEYCLOAK_ADMIN_CLIENT_SECRET) return;
+	const existing = await db.query.settings.findFirst({
+		where: and(eq(settings.orgId, 'default'), eq(settings.key, 'kcOrgId'))
+	});
+	if (existing) return;
+	try {
+		const res = await kcFetch('/organizations');
+		if (!res.ok) return;
+		const orgs: { id: string; name: string }[] = await res.json();
+		if (orgs.length === 0) return;
+		await db.insert(settings).values({ orgId: 'default', key: 'kcOrgId', value: orgs[0].id })
+			.onConflictDoNothing();
+		console.log('[keycloak] kcOrgId auto-configured:', orgs[0].id);
+	} catch (e) {
+		console.warn('[keycloak] kcOrgId bootstrap failed (non-fatal):', e);
+	}
+}
+
+export async function syncClientRedirectUri(origin: string): Promise<void> {
+	if (!env.KEYCLOAK_ADMIN_URL || !env.KEYCLOAK_ADMIN_CLIENT_SECRET) return;
+	try {
+		const clientId = env.KEYCLOAK_CLIENT_ID ?? 'scoring-app';
+		const searchRes = await kcFetch(`/clients?clientId=${encodeURIComponent(clientId)}`);
+		if (!searchRes.ok) return;
+		const clients: { id: string; redirectUris: string[]; webOrigins: string[] }[] = await searchRes.json();
+		if (clients.length === 0) return;
+		const client = clients[0];
+		const uri = `${origin}/*`;
+		if (client.redirectUris.includes(uri)) return;
+		await kcFetch(`/clients/${client.id}`, {
+			method: 'PUT',
+			body: JSON.stringify({
+				...client,
+				redirectUris: [...client.redirectUris, uri],
+				webOrigins: client.webOrigins.includes(origin)
+					? client.webOrigins
+					: [...client.webOrigins, origin]
+			})
+		});
+		console.log('[keycloak] redirect URI registered:', uri);
+	} catch (e) {
+		console.warn('[keycloak] syncClientRedirectUri failed (non-fatal):', e);
 	}
 }
