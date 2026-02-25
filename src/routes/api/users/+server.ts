@@ -1,22 +1,6 @@
 import { json } from '@sveltejs/kit';
-import { db } from '$lib/server/db/index.js';
-import { settings } from '$lib/server/db/schema.js';
-import { and, eq } from 'drizzle-orm';
-import { listOrgMembers, createUser, addToOrg, sendSetPasswordEmail, disableUser } from '$lib/server/keycloak-admin.js';
+import { listOrgMembers, createUser, addToOrg, sendSetPasswordEmail, disableUser, getKcOrgId } from '$lib/server/keycloak-admin.js';
 import type { RequestHandler } from './$types.js';
-
-async function getKcOrgId(orgId: string): Promise<string | null> {
-	const row = await db.query.settings.findFirst({
-		where: and(eq(settings.orgId, orgId), eq(settings.key, 'kcOrgId'))
-	});
-	if (row?.value) return row.value;
-	if (orgId === 'default') return null;
-	// fallback: try 'default' org (single-tenant self-hosted)
-	const fallback = await db.query.settings.findFirst({
-		where: and(eq(settings.orgId, 'default'), eq(settings.key, 'kcOrgId'))
-	});
-	return fallback?.value ?? null;
-}
 
 export const GET: RequestHandler = async ({ locals }) => {
 	if (!locals.isAdmin) return json({ error: 'Forbidden' }, { status: 403 });
