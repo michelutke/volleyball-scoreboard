@@ -29,6 +29,7 @@ services:
       KC_FEATURES: organization
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_OVERRIDE: "true"
     volumes:
       - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
       - ./keycloak/themes:/opt/keycloak/themes:ro
