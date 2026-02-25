@@ -27,7 +27,6 @@ services:
       KC_FEATURES: organization
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME: ${KC_HOSTNAME}
-      KC_OVERRIDE: "true"
       KC_PROXY_HEADERS: xforwarded
       KC_HEALTH_ENABLED: "true"
     volumes:
