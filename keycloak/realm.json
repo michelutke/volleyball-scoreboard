@@ -1,7 +1,7 @@
 {
   "realm": "scoring",
   "displayName": "Volleyball Scoreboard",
-  "loginTheme": "",
+  "loginTheme": "scorely",
   "enabled": true,
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
