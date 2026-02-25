@@ -10,6 +10,6 @@ export const POST: RequestHandler = async (event) => {
 		event.cookies.delete(`__Host-${name}`, { path: '/' });
 	}
 	const returnUrl = encodeURIComponent(`${event.url.origin}/signin`);
-	const clientId = encodeURIComponent(env.KEYCLOAK_CLIENT_ID);
+	const clientId = encodeURIComponent(env.KEYCLOAK_CLIENT_ID!);
 	redirect(302, `${env.KEYCLOAK_ISSUER}/protocol/openid-connect/logout?client_id=${clientId}&post_logout_redirect_uri=${returnUrl}`);
 };
