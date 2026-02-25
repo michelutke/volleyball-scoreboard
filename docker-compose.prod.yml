@@ -16,7 +16,7 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.5.3
-    command: start
+    command: start --import-realm
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
@@ -29,11 +29,6 @@ services:
       KC_HOSTNAME: ${KC_HOSTNAME}
       KC_PROXY_HEADERS: xforwarded
       KC_HEALTH_ENABLED: "true"
-      JAVA_OPTS_APPEND: >-
-        -Dkeycloak.migration.action=import
-        -Dkeycloak.migration.provider=dir
-        -Dkeycloak.migration.dir=/opt/keycloak/data/import
-        -Dkeycloak.migration.strategy=OVERWRITE_EXISTING
     volumes:
       - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
       - ./keycloak/themes/scorely:/opt/keycloak/themes/scorely:ro
