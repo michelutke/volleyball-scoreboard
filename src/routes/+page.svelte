@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { DEFAULT_ACCENT } from '$lib/theme.js';
+	import { DEFAULT_ACCENT, getStoredTheme, setStoredTheme } from '$lib/theme.js';
+	import type { ThemeMode } from '$lib/theme.js';
 	import type { PageData } from './$types.js';
 
 	let { data }: { data: PageData } = $props();
@@ -11,6 +12,11 @@
 	let swissVolleyApiKey = $state('');
 	let saving = $state(false);
 	let error = $state('');
+	let theme = $state<ThemeMode>('system');
+
+	$effect(() => {
+		theme = getStoredTheme();
+	});
 
 	async function submit() {
 		if (!clubName.trim()) {
@@ -82,6 +88,25 @@
 								Standard
 							</button>
 						{/if}
+					</div>
+				</div>
+
+				<div>
+					<p class="block text-sm font-medium text-text-primary mb-2">Design</p>
+					<div class="flex gap-1 bg-bg-base rounded-lg p-1">
+						{#each [
+							{ value: 'system', label: 'System' },
+							{ value: 'light', label: 'Hell' },
+							{ value: 'dark', label: 'Dunkel' }
+						] as opt}
+							<button
+								type="button"
+								onclick={() => { theme = opt.value as ThemeMode; setStoredTheme(opt.value as ThemeMode); }}
+								class="flex-1 py-2 rounded-md text-sm font-medium transition-colors {theme === opt.value ? 'bg-accent-mid text-white' : 'text-text-secondary hover:text-text-primary'}"
+							>
+								{opt.label}
+							</button>
+						{/each}
 					</div>
 				</div>
 
