@@ -65,7 +65,7 @@
 						{/if}
 					</button>
 				{/if}
-				<form method="POST" action="/auth/signout">
+				<form method="POST" action="/signout">
 					<button type="submit" class="text-xs text-text-tertiary hover:text-text-primary bg-bg-panel-alt rounded-lg px-3 py-1.5">Abmelden</button>
 				</form>
 			</div>

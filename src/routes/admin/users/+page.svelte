@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
 	import type { PageData } from './$types.js';
 
 	let { data }: { data: PageData } = $props();
 
-	let users = $state(untrack(() => data.users));
+	const initialUsers = data.users;
+	let users = $state(initialUsers);
 	const kcOrgIdMissing = data.kcOrgIdMissing ?? false;
 	let showInvite = $state(false);
 	let email = $state('');
