@@ -14,6 +14,7 @@ declare module '@auth/core/types' {
 			image?: string | null;
 			orgId?: string;
 			roles?: string[];
+			idToken?: string;
 		};
 	}
 }
@@ -22,6 +23,7 @@ declare module '@auth/core/jwt' {
 	interface JWT {
 		orgId?: string;
 		roles?: string[];
+		idToken?: string;
 	}
 }
 
@@ -49,11 +51,13 @@ const baseConfig: SvelteKitAuthConfig = {
 					console.error('KC token decode failed', err);
 				}
 			}
+			if (account?.id_token) token.idToken = account.id_token;
 			return token;
 		},
 		session({ session, token }) {
 			session.user.orgId = token.orgId;
 			session.user.roles = token.roles ?? [];
+			session.user.idToken = token.idToken;
 			return session;
 		}
 	}
@@ -76,7 +80,9 @@ export async function serverSignIn(
 	setEnvDefaults(env, config);
 
 	const headers = new Headers(event.request.headers);
-	const signinURL = createActionURL('signin', event.url.protocol, headers, env, config);
+	const authUrl = env.AUTH_URL ?? env.ORIGIN;
+	const protocol = authUrl ? new URL(authUrl).protocol : event.url.protocol;
+	const signinURL = createActionURL('signin', protocol, headers, env, config);
 	headers.set('Content-Type', 'application/x-www-form-urlencoded');
 	const body = new URLSearchParams({ callbackUrl: redirectTo });
 	const req = new Request(`${signinURL}/${provider}`, { method: 'POST', headers, body });
