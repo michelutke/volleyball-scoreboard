@@ -85,7 +85,7 @@
 
 {#if match}
 	<div class="overlay">
-		<div class="scoreboard">
+		<div class="scoreboard" class:has-logo={!!(match.homeTeamLogo || match.guestTeamLogo)}>
 			<!-- Home Team Row -->
 			<div class="team-row home-row">
 				{#if match.showJerseyColors}
@@ -207,9 +207,13 @@
 	}
 
 	.jersey {
-		width: 64px;
+		width: 10px;
 		flex-shrink: 0;
 		position: relative;
+	}
+
+	.has-logo .jersey {
+		width: 64px;
 	}
 	.jersey-logo {
 		position: absolute;
