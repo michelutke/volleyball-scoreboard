@@ -32,6 +32,11 @@
 	let editOverlayDivider = $state('#2a2a2a');
 	let editOverlaySatsBg = $state('#1a1a1a');
 	let editOverlaySetScoreBg = $state('#1a1a1a');
+	let editHomeLogo = $state('');
+	let editGuestLogo = $state('');
+	let editScoreColor = $state('#1a1a1a');
+	let editScoreColor2 = $state('#1a1a1a');
+	let editScoreColorGradient = $state(false);
 
 	let settingsDirty = $derived(
 		editHomeName !== (match?.homeTeamName ?? '') ||
@@ -46,7 +51,12 @@
 			editOverlayRounded !== (match?.overlayRounded ?? false) ||
 			editOverlayDivider !== (match?.overlayDivider ?? '#2a2a2a') ||
 			editOverlaySatsBg !== (match?.overlaySatsBg ?? '#1a1a1a') ||
-			editOverlaySetScoreBg !== (match?.overlaySetScoreBg ?? '#1a1a1a')
+			editOverlaySetScoreBg !== (match?.overlaySetScoreBg ?? '#1a1a1a') ||
+			editHomeLogo !== (match?.homeTeamLogo ?? '') ||
+			editGuestLogo !== (match?.guestTeamLogo ?? '') ||
+			editScoreColor !== (match?.scoreColor ?? '#1a1a1a') ||
+			editScoreColor2 !== (match?.scoreColor2 ?? '#1a1a1a') ||
+			editScoreColorGradient !== (match?.scoreColorGradient ?? false)
 	);
 
 	$effect(() => {
@@ -206,6 +216,12 @@
 		return gradient ? `linear-gradient(to right, ${c1}, ${c2})` : c1;
 	}
 
+	function previewScoreBg(m: MatchState): string {
+		return m.scoreColorGradient
+			? `linear-gradient(to bottom, ${m.scoreColor}, ${m.scoreColor2})`
+			: m.scoreColor;
+	}
+
 	function openSettings() {
 		editHomeName = match?.homeTeamName ?? '';
 		editGuestName = match?.guestTeamName ?? '';
@@ -220,6 +236,11 @@
 		editOverlayDivider = match?.overlayDivider ?? '#2a2a2a';
 		editOverlaySatsBg = match?.overlaySatsBg ?? '#1a1a1a';
 		editOverlaySetScoreBg = match?.overlaySetScoreBg ?? '#1a1a1a';
+		editHomeLogo = match?.homeTeamLogo ?? '';
+		editGuestLogo = match?.guestTeamLogo ?? '';
+		editScoreColor = match?.scoreColor ?? '#1a1a1a';
+		editScoreColor2 = match?.scoreColor2 ?? '#1a1a1a';
+		editScoreColorGradient = match?.scoreColorGradient ?? false;
 		settingsOpen = true;
 	}
 
@@ -238,7 +259,12 @@
 			overlayRounded: editOverlayRounded,
 			overlayDivider: editOverlayDivider,
 			overlaySatsBg: editOverlaySatsBg,
-			overlaySetScoreBg: editOverlaySetScoreBg
+			overlaySetScoreBg: editOverlaySetScoreBg,
+			homeTeamLogo: editHomeLogo || null,
+			guestTeamLogo: editGuestLogo || null,
+			scoreColor: editScoreColor,
+			scoreColor2: editScoreColor2,
+			scoreColorGradient: editScoreColorGradient
 		});
 		settingsOpen = false;
 	}
@@ -406,7 +432,11 @@
 					<div class="scoreboard-preview" class:with-jersey={match.showJerseyColors} class:rounded={match.overlayRounded} style:--overlay-border={match.overlayDivider} style:color={match.overlayText}>
 						<div class="preview-row">
 							{#if match.showJerseyColors}
-								<div class="preview-jersey" style:background-color={match.homeJerseyColor}></div>
+								<div class="preview-jersey" style:background-color={match.homeJerseyColor}>
+									{#if match.homeTeamLogo}
+										<img src="/api/image-proxy?url={encodeURIComponent(match.homeTeamLogo)}" alt="" class="preview-jersey-logo" />
+									{/if}
+								</div>
 							{/if}
 							<div class="preview-name preview-name-dark" style:background={overlayBgStyle(match.overlayBg, match.overlayBg2, match.overlayBgGradient, true)} style:color={match.overlayText}>
 								{match.homeTeamName.toUpperCase()}
@@ -418,7 +448,7 @@
 									<div class="preview-set-cell" class:preview-set-cell-winner={s.home > s.guest} style:--winner-color={match.homeJerseyColor} style:background-color={match.overlaySetScoreBg} style:border-left-color={match.overlayDivider} style:color={s.home > s.guest ? match.overlayText : hexWithAlpha(match.overlayText, 0.5)}>{s.home}</div>
 								{/each}
 							</div>
-							<div class="preview-points" style:background-color={match.homeJerseyColor}>{match.homePoints}</div>
+							<div class="preview-points" style:background={previewScoreBg(match)}>{match.homePoints}</div>
 							<div class="preview-timeout-boxes" style:--jersey-color={match.homeJerseyColor}>
 								<div class="preview-timeout-box" class:taken={matchTimeouts.home >= 2} style:background-color={matchTimeouts.home < 2 ? match.homeJerseyColor : undefined}></div>
 								<div class="preview-timeout-box" class:taken={matchTimeouts.home >= 1} style:background-color={matchTimeouts.home < 1 ? match.homeJerseyColor : undefined}></div>
@@ -426,7 +456,11 @@
 						</div>
 						<div class="preview-row">
 							{#if match.showJerseyColors}
-								<div class="preview-jersey" style:background-color={match.guestJerseyColor}></div>
+								<div class="preview-jersey" style:background-color={match.guestJerseyColor}>
+									{#if match.guestTeamLogo}
+										<img src="/api/image-proxy?url={encodeURIComponent(match.guestTeamLogo)}" alt="" class="preview-jersey-logo" />
+									{/if}
+								</div>
 							{/if}
 							<div class="preview-name" style:background={overlayBgStyle(match.overlayBg, match.overlayBg2, match.overlayBgGradient)} style:color={match.overlayText}>
 								{match.guestTeamName.toUpperCase()}
@@ -438,7 +472,7 @@
 									<div class="preview-set-cell" class:preview-set-cell-winner={s.guest > s.home} style:--winner-color={match.guestJerseyColor} style:background-color={match.overlaySetScoreBg} style:border-left-color={match.overlayDivider} style:color={s.guest > s.home ? match.overlayText : hexWithAlpha(match.overlayText, 0.5)}>{s.guest}</div>
 								{/each}
 							</div>
-							<div class="preview-points" style:background-color={match.guestJerseyColor}>{match.guestPoints}</div>
+							<div class="preview-points" style:background={previewScoreBg(match)}>{match.guestPoints}</div>
 							<div class="preview-timeout-boxes" style:--jersey-color={match.guestJerseyColor}>
 								<div class="preview-timeout-box" class:taken={matchTimeouts.guest >= 2} style:background-color={matchTimeouts.guest < 2 ? match.guestJerseyColor : undefined}></div>
 								<div class="preview-timeout-box" class:taken={matchTimeouts.guest >= 1} style:background-color={matchTimeouts.guest < 1 ? match.guestJerseyColor : undefined}></div>
@@ -687,6 +721,23 @@
 					</div>
 				</div>
 				<div class="dialog-section">
+					<h4 class="dialog-section-title">Team-Logos</h4>
+					<label class="field-label">
+						Heim-Logo (URL)
+						<input type="text" bind:value={editHomeLogo} class="field-input" placeholder="https://…" />
+					</label>
+					{#if editHomeLogo}
+						<img src="/api/image-proxy?url={encodeURIComponent(editHomeLogo)}" alt="" class="logo-preview" />
+					{/if}
+					<label class="field-label">
+						Gast-Logo (URL)
+						<input type="text" bind:value={editGuestLogo} class="field-input" placeholder="https://…" />
+					</label>
+					{#if editGuestLogo}
+						<img src="/api/image-proxy?url={encodeURIComponent(editGuestLogo)}" alt="" class="logo-preview" />
+					{/if}
+				</div>
+				<div class="dialog-section">
 					<h4 class="dialog-section-title">Overlay-Farben</h4>
 					<div class="dialog-section-row">
 						<span class="text-sm text-gray-400">Hintergrund</span>
@@ -741,6 +792,27 @@
 							<span class="text-sm text-gray-400">Satzresultate</span>
 							<span class="color-hex">{editOverlaySetScoreBg}</span>
 						</div>
+					</div>
+					<div class="dialog-section-row">
+						<span class="text-sm text-gray-400">Punktzahl</span>
+						<label class="toggle-label toggle-label-start">
+							Verlauf
+							<button class="toggle" class:active={editScoreColorGradient} onclick={() => editScoreColorGradient = !editScoreColorGradient} aria-label="Verlauf">
+								<span class="toggle-knob"></span>
+							</button>
+						</label>
+					</div>
+					<div class="color-row-compact">
+						<div class="color-field-inline">
+							<input type="color" bind:value={editScoreColor} class="color-picker" />
+							<span class="color-hex">{editScoreColor}</span>
+						</div>
+						{#if editScoreColorGradient}
+							<div class="color-field-inline">
+								<input type="color" bind:value={editScoreColor2} class="color-picker" />
+								<span class="color-hex">{editScoreColor2}</span>
+							</div>
+						{/if}
 					</div>
 				</div>
 			</div>
@@ -879,7 +951,7 @@
 	}
 
 	.scoreboard-preview.with-jersey {
-		grid-template-columns: 8px minmax(160px, auto) 44px auto 52px auto;
+		grid-template-columns: 48px minmax(160px, auto) 44px auto 52px auto;
 	}
 
 	.scoreboard-preview:not(.with-jersey) {
@@ -893,7 +965,16 @@
 		align-items: stretch;
 	}
 
-	.preview-jersey { flex-shrink: 0; }
+	.preview-jersey { flex-shrink: 0; position: relative; }
+	.preview-jersey-logo {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+		padding: 4px;
+	}
+	.logo-preview { height: 40px; margin: 4px 0; object-fit: contain; border-radius: 4px; background: #111; }
 
 	.preview-name {
 		padding: 0 16px;
@@ -1294,7 +1375,7 @@
 			grid-template-columns: minmax(0, 1fr) 36px auto 40px auto;
 		}
 		.scoreboard-preview.with-jersey {
-			grid-template-columns: 8px minmax(0, 1fr) 36px auto 40px auto;
+			grid-template-columns: 36px minmax(0, 1fr) 36px auto 40px auto;
 		}
 		.preview-name { font-size: 13px; padding: 0 8px; }
 		.preview-sets { width: 36px; font-size: 18px; }
@@ -1324,7 +1405,7 @@
 			grid-template-columns: minmax(0, 1fr) 34px auto 38px auto;
 		}
 		.scoreboard-preview.with-jersey {
-			grid-template-columns: 8px minmax(0, 1fr) 34px auto 38px auto;
+			grid-template-columns: 34px minmax(0, 1fr) 34px auto 38px auto;
 		}
 		.preview-name { font-size: 12px; padding: 0 6px; }
 		.preview-sets { width: 34px; font-size: 16px; }

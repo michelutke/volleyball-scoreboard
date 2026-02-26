@@ -126,6 +126,11 @@ export function createInitialState(matchId: number): MatchState {
 		overlayDivider: '#2a2a2a',
 		overlaySatsBg: '#1a1a1a',
 		overlaySetScoreBg: '#1a1a1a',
+		homeTeamLogo: null,
+		guestTeamLogo: null,
+		scoreColor: '#1a1a1a',
+		scoreColor2: '#1a1a1a',
+		scoreColorGradient: false,
 		status: 'live'
 	};
 }
