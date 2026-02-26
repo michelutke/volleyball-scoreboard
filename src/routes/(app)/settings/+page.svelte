@@ -39,7 +39,7 @@
 				body: JSON.stringify(payload)
 			});
 			if (!res.ok) throw new Error('Speichern fehlgeschlagen');
-			window.location.href = '/teams';
+			window.location.href = '/';
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Unbekannter Fehler';
 			saving = false;
@@ -49,8 +49,8 @@
 
 <div class="min-h-screen bg-bg-base flex items-center justify-center p-4">
 	<div class="bg-bg-panel-alt rounded-2xl p-8 w-full max-w-md shadow-xl">
-		<h1 class="text-2xl font-bold text-text-primary mb-2">{isEdit ? 'Einstellungen' : 'Scoring Setup'}</h1>
-		<p class="text-text-secondary mb-6">{isEdit ? 'Vereinseinstellungen bearbeiten' : 'Verein einmalig konfigurieren'}</p>
+		<h1 class="text-2xl font-bold text-text-primary mb-2">{data.isSetup ? 'Willkommen — Scoring Setup' : 'Einstellungen'}</h1>
+		<p class="text-text-secondary mb-6">{data.isSetup ? 'Verein einmalig konfigurieren' : 'Vereinseinstellungen bearbeiten'}</p>
 
 		{#if error}
 			<div class="bg-red-900/30 border border-red-700 text-error-light rounded-lg p-3 mb-4 text-sm">{error}</div>
@@ -136,12 +136,5 @@
 				{saving ? 'Speichern...' : isEdit ? 'Speichern' : 'Einrichten'}
 			</button>
 		</form>
-
-		<div class="mt-6 pt-4 border-t border-border-default flex justify-between">
-			{#if isEdit}
-				<a href="/teams" class="text-sm text-text-tertiary hover:text-text-primary">&larr; Zurück</a>
-			{/if}
-			<a href="/control" class="text-sm text-text-tertiary hover:text-text-primary">Legacy Control Panel &rarr;</a>
-		</div>
 	</div>
 </div>

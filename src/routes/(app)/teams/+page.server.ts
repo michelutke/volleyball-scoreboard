@@ -12,12 +12,19 @@ export const load: PageServerLoad = async ({ locals }) => {
 	});
 
 	if (!clubNameSetting) {
-		redirect(302, '/');
+		redirect(302, '/settings?setup=true');
 	}
 
 	syncTeams(orgId).catch(() => {});
 
-	const allTeams = await db.select().from(teams).where(eq(teams.orgId, orgId)).orderBy(asc(teams.name));
+	const [allTeams, pinnedRow] = await Promise.all([
+		db.select().from(teams).where(eq(teams.orgId, orgId)).orderBy(asc(teams.name)),
+		db.query.settings.findFirst({
+			where: and(eq(settings.orgId, orgId), eq(settings.key, 'pinnedTeams'))
+		})
+	]);
+
+	const pinnedTeamIds: number[] = pinnedRow ? JSON.parse(pinnedRow.value) : [];
 
 	return {
 		teams: allTeams.map((t) => ({
@@ -25,6 +32,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			name: t.name,
 			swissVolleyTeamId: t.swissVolleyTeamId
 		})),
-		clubName: clubNameSetting.value
+		clubName: clubNameSetting.value,
+		pinnedTeamIds
 	};
 };

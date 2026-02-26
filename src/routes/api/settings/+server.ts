@@ -20,10 +20,11 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
 	const { orgId, isAdmin } = locals;
 	if (!isAdmin) return json({ error: 'Forbidden' }, { status: 403 });
 
-	const body: Record<string, string> = await request.json();
+	const body: Record<string, unknown> = await request.json();
 
 	for (const [key, value] of Object.entries(body)) {
-		const storedValue = key === 'swissVolleyApiKey' ? encrypt(value) : value;
+		const rawValue = typeof value === 'string' ? value : JSON.stringify(value);
+		const storedValue = key === 'swissVolleyApiKey' ? encrypt(rawValue) : rawValue;
 		await db
 			.insert(settings)
 			.values({ orgId, key, value: storedValue })

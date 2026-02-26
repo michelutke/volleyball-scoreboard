@@ -6,7 +6,7 @@ import { listOrgMembers } from '$lib/server/keycloak-admin.js';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.isAdmin) redirect(303, '/');
+	if (!locals.isAdmin) redirect(303, '/teams');
 
 	const row = await db.query.settings.findFirst({
 		where: and(eq(settings.orgId, locals.orgId), eq(settings.key, 'kcOrgId'))
