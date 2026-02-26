@@ -429,7 +429,7 @@
 					</label>
 				</div>
 				<div class="card-body flex items-center justify-center">
-					<div class="scoreboard-preview" class:with-jersey={match.showJerseyColors} class:rounded={match.overlayRounded} style:--overlay-border={match.overlayDivider} style:color={match.overlayText}>
+					<div class="scoreboard-preview" class:with-jersey={match.showJerseyColors} class:has-logo={!!(match.homeTeamLogo || match.guestTeamLogo)} class:rounded={match.overlayRounded} style:--overlay-border={match.overlayDivider} style:color={match.overlayText}>
 						<div class="preview-row">
 							{#if match.showJerseyColors}
 								<div class="preview-jersey" style:background-color={match.homeJerseyColor}>
@@ -951,6 +951,10 @@
 	}
 
 	.scoreboard-preview.with-jersey {
+		grid-template-columns: 8px minmax(160px, auto) 44px auto 52px auto;
+	}
+
+	.scoreboard-preview.with-jersey.has-logo {
 		grid-template-columns: 48px minmax(160px, auto) 44px auto 52px auto;
 	}
 
@@ -1375,6 +1379,9 @@
 			grid-template-columns: minmax(0, 1fr) 36px auto 40px auto;
 		}
 		.scoreboard-preview.with-jersey {
+			grid-template-columns: 8px minmax(0, 1fr) 36px auto 40px auto;
+		}
+		.scoreboard-preview.with-jersey.has-logo {
 			grid-template-columns: 36px minmax(0, 1fr) 36px auto 40px auto;
 		}
 		.preview-name { font-size: 13px; padding: 0 8px; }
@@ -1405,6 +1412,9 @@
 			grid-template-columns: minmax(0, 1fr) 34px auto 38px auto;
 		}
 		.scoreboard-preview.with-jersey {
+			grid-template-columns: 8px minmax(0, 1fr) 34px auto 38px auto;
+		}
+		.scoreboard-preview.with-jersey.has-logo {
 			grid-template-columns: 34px minmax(0, 1fr) 34px auto 38px auto;
 		}
 		.preview-name { font-size: 12px; padding: 0 6px; }

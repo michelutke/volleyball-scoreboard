@@ -115,7 +115,7 @@
 
 {#if match}
 	<div class="overlay">
-		<div class="scoreboard" class:with-jersey={match.showJerseyColors} class:rounded={match.overlayRounded} style:--overlay-text={match.overlayText} style:--overlay-border={match.overlayDivider}>
+		<div class="scoreboard" class:with-jersey={match.showJerseyColors} class:has-logo={!!(match.homeTeamLogo || match.guestTeamLogo)} class:rounded={match.overlayRounded} style:--overlay-text={match.overlayText} style:--overlay-border={match.overlayDivider}>
 			<!-- Home Team Row -->
 			<div class="team-row home-row">
 				{#if match.showJerseyColors}
@@ -193,6 +193,10 @@
 	}
 
 	.scoreboard.with-jersey {
+		grid-template-columns: 10px minmax(260px, auto) 64px auto 72px auto auto;
+	}
+
+	.scoreboard.with-jersey.has-logo {
 		grid-template-columns: 64px minmax(260px, auto) 64px auto 72px auto auto;
 	}
 
