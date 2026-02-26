@@ -28,7 +28,8 @@
 	}
 
 	onMount(() => {
-		const es = new EventSource('/api/scores/stream');
+		if (!data.matchId) return;
+		const es = new EventSource(`/api/matches/${data.matchId}/stream`);
 
 		es.onmessage = (event) => {
 			const parsed: SSEEvent = JSON.parse(event.data);

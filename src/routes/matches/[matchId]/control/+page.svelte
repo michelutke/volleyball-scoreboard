@@ -243,6 +243,59 @@
 		settingsOpen = false;
 	}
 
+	// Permalink overlay
+	let permalinkMatchId = $state<number | null>(null);
+	let permalinkHome = $state<string | null>(null);
+	let permalinkGuest = $state<string | null>(null);
+	let permalinkLoading = $state(false);
+	let showPermalinkConfirm = $state(false);
+
+	$effect(() => {
+		permalinkMatchId = data.permalinkOverlayMatchId ?? null;
+	});
+
+	const isPermalinked = $derived(permalinkMatchId === matchId);
+
+	async function setPermalink(enable: boolean) {
+		permalinkLoading = true;
+		try {
+			const res = await fetch('/api/overlay/permalink', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ matchId: enable ? matchId : null })
+			});
+			if (res.ok) {
+				const result = await res.json();
+				permalinkMatchId = result.matchId;
+				permalinkHome = result.homeTeamName;
+				permalinkGuest = result.guestTeamName;
+			}
+		} finally {
+			permalinkLoading = false;
+			showPermalinkConfirm = false;
+		}
+	}
+
+	async function handlePermalinkToggle() {
+		if (isPermalinked) {
+			await setPermalink(false);
+			return;
+		}
+		// Check if another match is currently on permalink
+		if (permalinkMatchId !== null && permalinkMatchId !== matchId) {
+			// Fetch current permalink info
+			const res = await fetch('/api/overlay/permalink');
+			if (res.ok) {
+				const result = await res.json();
+				permalinkHome = result.homeTeamName;
+				permalinkGuest = result.guestTeamName;
+			}
+			showPermalinkConfirm = true;
+			return;
+		}
+		await setPermalink(true);
+	}
+
 	let setScoresExpanded = $derived(match?.showSetScores || match?.status === 'finished' || !!activeTimeout);
 
 	let setTimelines = $derived.by((): SetTimeline[] => {
@@ -504,6 +557,58 @@
 					</div>
 				</div>
 			{/if}
+
+		{#if page.data.isAdmin}
+			<div class="card col-span-full">
+				<div class="card-header">
+					<span class="card-icon">&#128250;</span>
+					<h2>Permalink-Overlay</h2>
+				</div>
+				<div class="card-body">
+					<div class="flex items-center justify-between">
+						<div>
+							<p class="text-sm text-text-secondary">Auf <code class="text-accent">/overlay</code> anzeigen</p>
+							{#if isPermalinked}
+								<p class="text-xs text-green-400 mt-1">Dieses Spiel wird aktuell auf /overlay angezeigt</p>
+							{:else if permalinkMatchId !== null}
+								<p class="text-xs text-text-tertiary mt-1">Anderes Spiel aktiv auf /overlay</p>
+							{/if}
+						</div>
+						<button
+							onclick={handlePermalinkToggle}
+							disabled={permalinkLoading}
+							class="toggle {isPermalinked ? 'active' : ''}"
+							aria-label="Auf /overlay anzeigen"
+						>
+							<span class="toggle-knob"></span>
+						</button>
+					</div>
+
+					{#if showPermalinkConfirm}
+						<div class="mt-3 bg-bg-base rounded-lg p-3 text-sm">
+							<p class="text-text-primary mb-2">
+								{permalinkHome ?? '?'} vs {permalinkGuest ?? '?'} wird gerade auf /overlay angezeigt. Ersetzen?
+							</p>
+							<div class="flex gap-2">
+								<button
+									onclick={() => setPermalink(true)}
+									disabled={permalinkLoading}
+									class="bg-accent-mid hover:bg-accent-dark disabled:opacity-50 text-white text-xs rounded-lg px-3 py-1.5"
+								>
+									Ersetzen
+								</button>
+								<button
+									onclick={() => { showPermalinkConfirm = false; }}
+									class="text-text-secondary hover:text-text-primary text-xs px-3 py-1.5"
+								>
+									Abbrechen
+								</button>
+							</div>
+						</div>
+					{/if}
+				</div>
+			</div>
+		{/if}
 		</div>
 
 		{#if match.status === 'finished'}

@@ -71,7 +71,6 @@
 				<h1 class="text-2xl font-bold text-text-primary">Nutzerverwaltung</h1>
 				<p class="text-text-secondary text-sm">Scorer einladen und verwalten</p>
 			</div>
-			<a href="/teams" class="text-sm text-text-tertiary hover:text-text-primary">&larr; Teams</a>
 		</div>
 
 		{#if feedback}
