@@ -30,6 +30,11 @@ export interface MatchState {
 	overlayDivider: string;
 	overlaySatsBg: string;
 	overlaySetScoreBg: string;
+	homeTeamLogo: string | null;
+	guestTeamLogo: string | null;
+	scoreColor: string;
+	scoreColor2: string;
+	scoreColorGradient: boolean;
 	status: MatchStatus;
 }
 

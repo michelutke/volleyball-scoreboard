@@ -62,6 +62,8 @@ export async function syncMatches(
 				.set({
 					homeTeamName: game.teams.home.caption.trim(),
 					guestTeamName: game.teams.away.caption.trim(),
+					homeTeamLogo: game.teams.home.logo ?? null,
+					guestTeamLogo: game.teams.away.logo ?? null,
 					scheduledAt: game.playDateUtc ? new Date(game.playDateUtc) : null,
 					venue,
 					league: game.league.caption,
@@ -74,6 +76,8 @@ export async function syncMatches(
 				teamId,
 				homeTeamName: game.teams.home.caption.trim(),
 				guestTeamName: game.teams.away.caption.trim(),
+				homeTeamLogo: game.teams.home.logo ?? null,
+				guestTeamLogo: game.teams.away.logo ?? null,
 				scheduledAt: game.playDateUtc ? new Date(game.playDateUtc) : null,
 				venue,
 				league: game.league.caption,

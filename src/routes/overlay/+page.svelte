@@ -18,6 +18,12 @@
 	let timeoutTimer = $state<ReturnType<typeof setTimeout> | null>(null);
 	let setScoresExpanded = $derived(match?.showSetScores || match?.status === 'finished' || !!timeoutTeam);
 
+	function scoreBg(m: MatchState): string {
+		return m.scoreColorGradient
+			? `linear-gradient(to bottom, ${m.scoreColor}, ${m.scoreColor2})`
+			: m.scoreColor;
+	}
+
 	function startTimeout(team: string) {
 		if (timeoutTimer) clearTimeout(timeoutTimer);
 		timeoutTeam = team;
@@ -83,7 +89,11 @@
 			<!-- Home Team Row -->
 			<div class="team-row home-row">
 				{#if match.showJerseyColors}
-					<div class="jersey" style:background-color={match.homeJerseyColor}></div>
+					<div class="jersey" style:background-color={match.homeJerseyColor}>
+						{#if match.homeTeamLogo}
+							<img src="/api/image-proxy?url={encodeURIComponent(match.homeTeamLogo)}" alt="" class="jersey-logo" />
+						{/if}
+					</div>
 				{/if}
 				<div class="team-name">
 					<span>{match.homeTeamName.toUpperCase()}</span>
@@ -100,7 +110,7 @@
 						<div class="set-score-cell" class:set-score-winner={s.home > s.guest} style:--winner-color={match.homeJerseyColor}>{s.home}</div>
 					{/each}
 				</div>
-				<div class="points" style:background-color={match.homeJerseyColor}>
+				<div class="points" style:background={scoreBg(match)}>
 					{match.homePoints}
 				</div>
 				<div class="timeout-boxes" style:--jersey-color={match.homeJerseyColor}>
@@ -123,7 +133,11 @@
 			<!-- Guest Team Row -->
 			<div class="team-row guest-row">
 				{#if match.showJerseyColors}
-					<div class="jersey" style:background-color={match.guestJerseyColor}></div>
+					<div class="jersey" style:background-color={match.guestJerseyColor}>
+						{#if match.guestTeamLogo}
+							<img src="/api/image-proxy?url={encodeURIComponent(match.guestTeamLogo)}" alt="" class="jersey-logo" />
+						{/if}
+					</div>
 				{/if}
 				<div class="team-name">
 					<span>{match.guestTeamName.toUpperCase()}</span>
@@ -140,7 +154,7 @@
 						<div class="set-score-cell" class:set-score-winner={s.guest > s.home} style:--winner-color={match.guestJerseyColor}>{s.guest}</div>
 					{/each}
 				</div>
-				<div class="points" style:background-color={match.guestJerseyColor}>
+				<div class="points" style:background={scoreBg(match)}>
 					{match.guestPoints}
 				</div>
 				<div class="timeout-boxes" style:--jersey-color={match.guestJerseyColor}>
@@ -193,8 +207,17 @@
 	}
 
 	.jersey {
-		width: 10px;
+		width: 64px;
 		flex-shrink: 0;
+		position: relative;
+	}
+	.jersey-logo {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+		padding: 6px;
 	}
 
 	.team-name {

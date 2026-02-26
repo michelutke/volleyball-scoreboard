@@ -49,6 +49,12 @@
 		return m.overlayBgGradient ? `linear-gradient(to right, ${c1}, ${c2})` : c1;
 	}
 
+	function scoreBg(m: MatchState): string {
+		return m.scoreColorGradient
+			? `linear-gradient(to bottom, ${m.scoreColor}, ${m.scoreColor2})`
+			: m.scoreColor;
+	}
+
 	function startTimeout(team: Team) {
 		if (timeoutTimer) clearTimeout(timeoutTimer);
 		timeoutTeam = team;
@@ -113,7 +119,11 @@
 			<!-- Home Team Row -->
 			<div class="team-row home-row">
 				{#if match.showJerseyColors}
-					<div class="jersey" style:background-color={match.homeJerseyColor}></div>
+					<div class="jersey" style:background-color={match.homeJerseyColor}>
+						{#if match.homeTeamLogo}
+							<img src="/api/image-proxy?url={encodeURIComponent(match.homeTeamLogo)}" alt="" class="jersey-logo" />
+						{/if}
+					</div>
 				{/if}
 				<div class="team-name" style:background={overlayBgStyle(match, true)} style:color={match.overlayText}>
 					<span>{match.homeTeamName.toUpperCase()}</span>
@@ -125,7 +135,7 @@
 						<div class="set-score-cell" class:set-score-winner={s.home > s.guest} style:--winner-color={match.homeJerseyColor} style:background-color={match.overlaySetScoreBg} style:color={s.home > s.guest ? match.overlayText : hexWithAlpha(match.overlayText, 0.5)}>{s.home}</div>
 					{/each}
 				</div>
-				<div class="points" style:background-color={match.homeJerseyColor} style:color={match.overlayText}>{match.homePoints}</div>
+				<div class="points" style:background={scoreBg(match)} style:color={match.overlayText}>{match.homePoints}</div>
 				<div class="timeout-boxes" style:--jersey-color={match.homeJerseyColor}>
 					<div class="timeout-box" class:taken={homeTimeoutsUsed >= 2} style:background-color={homeTimeoutsUsed < 2 ? match.homeJerseyColor : undefined}></div>
 					<div class="timeout-box" class:taken={homeTimeoutsUsed >= 1} style:background-color={homeTimeoutsUsed < 1 ? match.homeJerseyColor : undefined}></div>
@@ -138,7 +148,11 @@
 			<!-- Guest Team Row -->
 			<div class="team-row guest-row">
 				{#if match.showJerseyColors}
-					<div class="jersey" style:background-color={match.guestJerseyColor}></div>
+					<div class="jersey" style:background-color={match.guestJerseyColor}>
+						{#if match.guestTeamLogo}
+							<img src="/api/image-proxy?url={encodeURIComponent(match.guestTeamLogo)}" alt="" class="jersey-logo" />
+						{/if}
+					</div>
 				{/if}
 				<div class="team-name" style:background={overlayBgStyle(match)} style:color={match.overlayText}>
 					<span>{match.guestTeamName.toUpperCase()}</span>
@@ -150,7 +164,7 @@
 						<div class="set-score-cell" class:set-score-winner={s.guest > s.home} style:--winner-color={match.guestJerseyColor} style:background-color={match.overlaySetScoreBg} style:color={s.guest > s.home ? match.overlayText : hexWithAlpha(match.overlayText, 0.5)}>{s.guest}</div>
 					{/each}
 				</div>
-				<div class="points" style:background-color={match.guestJerseyColor} style:color={match.overlayText}>{match.guestPoints}</div>
+				<div class="points" style:background={scoreBg(match)} style:color={match.overlayText}>{match.guestPoints}</div>
 				<div class="timeout-boxes" style:--jersey-color={match.guestJerseyColor}>
 					<div class="timeout-box" class:taken={guestTimeoutsUsed >= 2} style:background-color={guestTimeoutsUsed < 2 ? match.guestJerseyColor : undefined}></div>
 					<div class="timeout-box" class:taken={guestTimeoutsUsed >= 1} style:background-color={guestTimeoutsUsed < 1 ? match.guestJerseyColor : undefined}></div>
@@ -179,7 +193,7 @@
 	}
 
 	.scoreboard.with-jersey {
-		grid-template-columns: 10px minmax(260px, auto) 64px auto 72px auto auto;
+		grid-template-columns: 64px minmax(260px, auto) 64px auto 72px auto auto;
 	}
 
 	.scoreboard:not(.with-jersey) {
@@ -193,7 +207,15 @@
 		align-items: stretch;
 	}
 
-	.jersey { flex-shrink: 0; }
+	.jersey { flex-shrink: 0; position: relative; }
+	.jersey-logo {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+		padding: 6px;
+	}
 
 	.team-name {
 		padding: 0 24px;

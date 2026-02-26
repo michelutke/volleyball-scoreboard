@@ -50,6 +50,11 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 		overlayDivider: updated.overlayDivider,
 		overlaySatsBg: updated.overlaySatsBg,
 		overlaySetScoreBg: updated.overlaySetScoreBg,
+		homeTeamLogo: updated.homeTeamLogo ?? null,
+		guestTeamLogo: updated.guestTeamLogo ?? null,
+		scoreColor: updated.scoreColor,
+		scoreColor2: updated.scoreColor2,
+		scoreColorGradient: updated.scoreColorGradient,
 		status: 'upcoming'
 	};
 	matchSSEEmitter.emit(matchId, { type: 'match', data: state });
