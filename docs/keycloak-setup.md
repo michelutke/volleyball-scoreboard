@@ -26,7 +26,7 @@ For production, regenerate a strong secret:
 
 ## 3. User Management (Optional)
 
-The `/admin/users` page requires the `scoring-app` service account to have permission to manage users in Keycloak.
+The `/admin/users` page requires the `scoring-app` service account to have permission to manage users in Keycloak. This is the same client used for OIDC — enable service accounts on it and grant the roles below. The env var `KEYCLOAK_ADMIN_CLIENT_ID` defaults to `scoring-app`.
 
 1. KC Admin Console > realm `scoring` > **Clients** > `scoring-app`
 2. **Service account roles** tab > **Assign roles**

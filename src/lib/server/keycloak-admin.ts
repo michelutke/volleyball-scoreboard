@@ -30,17 +30,16 @@ export async function getAdminToken(): Promise<string> {
 		return tokenCache.token;
 	}
 
+	const secret = env.KEYCLOAK_ADMIN_CLIENT_SECRET;
+	if (!secret) throw new Error('KEYCLOAK_ADMIN_CLIENT_SECRET not configured');
+
 	const res = await fetch(getTokenUrl(), {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
 			grant_type: 'client_credentials',
 			client_id: env.KEYCLOAK_ADMIN_CLIENT_ID ?? 'scoring-app',
-			client_secret: (() => {
-			const s = env.KEYCLOAK_ADMIN_CLIENT_SECRET;
-			if (!s) throw new Error('KEYCLOAK_ADMIN_CLIENT_SECRET not configured');
-			return s;
-		})()
+			client_secret: secret
 		})
 	});
 

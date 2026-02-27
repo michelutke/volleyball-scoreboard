@@ -20,7 +20,7 @@ export const handleError: HandleServerError = ({ error, event }) => {
 
 const PUBLIC_PATHS = ['/auth', '/api/health', '/signin', '/signout'];
 const OVERLAY_PATTERN = /^\/matches\/[^/]+\/overlay/;
-const LEGACY_OVERLAY = /^\/overlay/;
+const LEGACY_OVERLAY = /^\/overlay($|\/)/;
 
 export const handle = sequence(authHandle, async ({ event, resolve }) => {
 	const path = event.url.pathname;
