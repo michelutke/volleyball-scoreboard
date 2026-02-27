@@ -4,6 +4,7 @@ import { matches, teams } from '$lib/server/db/schema.js';
 import { syncMatches } from '$lib/server/sync.js';
 import { shouldSync } from '$lib/server/sync-throttle.js';
 import { toMatchListItems } from '$lib/server/match-list.js';
+import { autoFinishStale } from '$lib/server/auto-finish.js';
 import { and, eq, desc } from 'drizzle-orm';
 import type { PageServerLoad } from './$types.js';
 
@@ -19,6 +20,8 @@ export const load: PageServerLoad = async ({ params, locals, setHeaders }) => {
 	if (team.swissVolleyTeamId && shouldSync(`matches:${orgId}:${teamId}`)) {
 		syncMatches(teamId, team.swissVolleyTeamId, orgId).catch(() => {});
 	}
+
+	await autoFinishStale(orgId);
 
 	const teamMatches = await db.query.matches.findMany({
 		where: and(eq(matches.orgId, orgId), eq(matches.teamId, teamId)),

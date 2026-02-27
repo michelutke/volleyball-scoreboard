@@ -14,9 +14,16 @@
 	let activating = $state<number | null>(null);
 	let cancelling = $state<number | null>(null);
 
+	function isDatePast(scheduledAt: string | null): boolean {
+		if (!scheduledAt) return false;
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		return new Date(scheduledAt) < today;
+	}
+
 	const upcomingMatches = $derived(
 		data.matches
-			.filter((m) => m.status !== 'finished')
+			.filter((m) => m.status === 'live' || (m.status === 'upcoming' && !isDatePast(m.scheduledAt)))
 			.sort((a, b) => {
 				if (!a.scheduledAt && !b.scheduledAt) return 0;
 				if (!a.scheduledAt) return 1;
@@ -27,7 +34,7 @@
 
 	const pastMatches = $derived(
 		data.matches
-			.filter((m) => m.status === 'finished')
+			.filter((m) => m.status === 'finished' || (m.status === 'upcoming' && isDatePast(m.scheduledAt)))
 			.sort((a, b) => {
 				if (!a.scheduledAt && !b.scheduledAt) return 0;
 				if (!a.scheduledAt) return 1;
