@@ -6,6 +6,7 @@ import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { db } from '$lib/server/db';
 import { env } from '$env/dynamic/private';
 import { bootstrapKcOrgId, syncClientRedirectUri } from '$lib/server/keycloak-admin';
+import { getBillingStatus } from '$lib/server/billing';
 
 export async function init() {
 	await migrate(db, { migrationsFolder: 'drizzle' });
@@ -18,9 +19,10 @@ export const handleError: HandleServerError = ({ error, event }) => {
 	console.error('[500]', event.url.pathname, error);
 };
 
-const PUBLIC_PATHS = ['/auth', '/api/health', '/signin', '/signout'];
+const PUBLIC_PATHS = ['/auth', '/api/health', '/signin', '/signout', '/signup', '/api/billing/webhook'];
 const OVERLAY_PATTERN = /^\/matches\/[^/]+\/overlay/;
 const LEGACY_OVERLAY = /^\/overlay($|\/)/;
+const BILLING_EXEMPT = /^\/(billing|api\/billing)($|\/)(?!webhook)/;
 
 export const handle = sequence(authHandle, async ({ event, resolve }) => {
 	const path = event.url.pathname;
@@ -35,6 +37,11 @@ export const handle = sequence(authHandle, async ({ event, resolve }) => {
 		event.locals.session = session;
 		event.locals.orgId = session.user.orgId ?? 'default';
 		event.locals.isAdmin = (session.user.roles ?? []).includes('admin');
+
+		if (env.STRIPE_SECRET_KEY && !BILLING_EXEMPT.test(path)) {
+			const status = await getBillingStatus(event.locals.orgId);
+			if (status === 'blocked') redirect(307, '/billing');
+		}
 	}
 
 	return resolve(event);
