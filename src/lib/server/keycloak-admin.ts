@@ -16,13 +16,13 @@ let tokenCache: { token: string; expiresAt: number } | null = null;
 function getBaseUrl(): string {
 	const url = env.KEYCLOAK_ADMIN_URL;
 	if (!url) throw new Error('KEYCLOAK_ADMIN_URL not configured');
-	return `${url}/admin/realms/${env.KEYCLOAK_REALM ?? 'scoring'}`;
+	return `${url}/admin/realms/${env.KEYCLOAK_REALM ?? 'master'}`;
 }
 
 function getTokenUrl(): string {
 	const url = env.KEYCLOAK_ADMIN_URL;
 	if (!url) throw new Error('KEYCLOAK_ADMIN_URL not configured');
-	return `${url}/realms/${env.KEYCLOAK_REALM ?? 'scoring'}/protocol/openid-connect/token`;
+	return `${url}/realms/${env.KEYCLOAK_REALM ?? 'master'}/protocol/openid-connect/token`;
 }
 
 export async function getAdminToken(): Promise<string> {
@@ -32,13 +32,15 @@ export async function getAdminToken(): Promise<string> {
 
 	const secret = env.KEYCLOAK_ADMIN_CLIENT_SECRET;
 	if (!secret) throw new Error('KEYCLOAK_ADMIN_CLIENT_SECRET not configured');
+	const clientId = env.KEYCLOAK_ADMIN_CLIENT_ID;
+	if (!clientId) throw new Error('KEYCLOAK_ADMIN_CLIENT_ID not configured');
 
 	const res = await fetch(getTokenUrl(), {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
 			grant_type: 'client_credentials',
-			client_id: env.KEYCLOAK_ADMIN_CLIENT_ID ?? 'scoring-app',
+			client_id: clientId,
 			client_secret: secret
 		})
 	});
@@ -93,14 +95,19 @@ export async function getUserByEmail(email: string): Promise<KcUser | null> {
 	return users[0] ?? null;
 }
 
-export async function createUser(email: string): Promise<string> {
+export async function createUser(
+	email: string,
+	opts?: { firstName?: string; lastName?: string }
+): Promise<string> {
 	const res = await kcFetch('/users', {
 		method: 'POST',
 		body: JSON.stringify({
 			email,
 			username: email,
 			enabled: true,
-			emailVerified: true
+			emailVerified: true,
+			...(opts?.firstName ? { firstName: opts.firstName } : {}),
+			...(opts?.lastName ? { lastName: opts.lastName } : {})
 		})
 	});
 
@@ -116,6 +123,24 @@ export async function createUser(email: string): Promise<string> {
 	const location = res.headers.get('Location');
 	if (!location) throw new Error('No Location header in create user response');
 	return location.split('/').pop()!;
+}
+
+export async function createOrganization(name: string): Promise<string> {
+	const res = await kcFetch('/organizations', {
+		method: 'POST',
+		body: JSON.stringify({ name, enabled: true })
+	});
+	if (!res.ok) throw new Error(`createOrganization ${res.status}: ${await kcErrorBody(res)}`);
+	const location = res.headers.get('Location');
+	if (!location) throw new Error('No Location header');
+	return location.split('/').pop()!;
+}
+
+export async function deleteOrganization(kcOrgId: string): Promise<void> {
+	const res = await kcFetch(`/organizations/${kcOrgId}`, { method: 'DELETE' });
+	if (!res.ok && res.status !== 404) {
+		throw new Error(`deleteOrganization ${res.status}: ${await kcErrorBody(res)}`);
+	}
 }
 
 export async function addToOrg(userId: string, kcOrgId: string): Promise<void> {
