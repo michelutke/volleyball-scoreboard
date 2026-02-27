@@ -144,6 +144,25 @@ export async function assignAdminRole(userId: string): Promise<void> {
 	}
 }
 
+export async function listUsersWithRole(roleName: string): Promise<KcUser[]> {
+	const res = await kcFetch(`/roles/${roleName}/users`);
+	if (!res.ok) {
+		return [];
+	}
+	return res.json() as Promise<KcUser[]>;
+}
+
+export async function revokeAdminRole(userId: string): Promise<void> {
+	const rolesRes = await kcFetch('/roles/admin');
+	if (!rolesRes.ok) throw new Error(`Failed to get admin role: ${rolesRes.status}`);
+	const role: { id: string; name: string } = await rolesRes.json();
+	const res = await kcFetch(`/users/${userId}/role-mappings/realm`, {
+		method: 'DELETE',
+		body: JSON.stringify([role])
+	});
+	if (!res.ok && res.status !== 404) throw new Error(`Failed to revoke admin role: ${res.status}`);
+}
+
 export async function sendSetPasswordEmail(userId: string): Promise<void> {
 	const res = await kcFetch(`/users/${userId}/execute-actions-email`, {
 		method: 'PUT',

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import type { PageData } from './$types.js';
 
 	let { data }: { data: PageData } = $props();
@@ -27,7 +28,7 @@
 				return;
 			}
 			const user: { id: string; email: string; emailSent: boolean } = await res.json();
-			users = [...users, { id: user.id, email: user.email, enabled: true }];
+			users = [...users, { id: user.id, email: user.email, enabled: true, isAdmin: false }];
 			email = '';
 			showInvite = false;
 			feedback = {
@@ -36,6 +37,30 @@
 					? 'Einladung gesendet'
 					: 'Nutzer erstellt — kein SMTP konfiguriert, E-Mail nicht gesendet'
 			};
+		} catch {
+			feedback = { type: 'error', message: 'Netzwerkfehler' };
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function toggleRole(userId: string, currentIsAdmin: boolean) {
+		if (!confirm(currentIsAdmin ? 'Admin-Rechte entziehen?' : 'Zum Admin ernennen?')) return;
+		loading = true;
+		feedback = null;
+		try {
+			const res = await fetch(`/api/users/${userId}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ isAdmin: !currentIsAdmin })
+			});
+			if (!res.ok) {
+				const err = await res.json();
+				feedback = { type: 'error', message: err.error ?? 'Rollenänderung fehlgeschlagen' };
+				return;
+			}
+			users = users.map((u) => u.id === userId ? { ...u, isAdmin: !currentIsAdmin } : u);
+			feedback = { type: 'success', message: currentIsAdmin ? 'Zu Scorer geändert' : 'Zu Admin ernannt' };
 		} catch {
 			feedback = { type: 'error', message: 'Netzwerkfehler' };
 		} finally {
@@ -91,20 +116,37 @@
 		{:else}
 			<div class="space-y-2">
 				{#each users as user}
-					<div class="flex items-center justify-between bg-bg-panel-alt rounded-xl p-4">
-						<div>
-							<span class="text-text-primary">{user.email}</span>
-							{#if !user.enabled}
-								<span class="ml-2 text-xs bg-red-900/30 text-red-300 px-2 py-0.5 rounded">Deaktiviert</span>
-							{/if}
+					<div class="flex items-center justify-between bg-bg-panel-alt rounded-xl p-4 gap-4">
+						<div class="flex flex-col gap-1 min-w-0">
+							<span class="text-text-primary truncate">{user.email}</span>
+							<div class="flex items-center gap-2">
+								{#if user.isAdmin}
+									<span class="text-xs bg-accent-deepest/30 text-accent px-2 py-0.5 rounded font-medium">Admin</span>
+								{:else}
+									<span class="text-xs bg-bg-base text-text-tertiary px-2 py-0.5 rounded font-medium border border-border-subtle">Scorer</span>
+								{/if}
+								{#if !user.enabled}
+									<span class="text-xs bg-red-900/30 text-red-300 px-2 py-0.5 rounded">Deaktiviert</span>
+								{/if}
+							</div>
 						</div>
-						<button
-							onclick={() => removeUser(user.id)}
-							disabled={loading}
-							class="text-sm text-red-400 hover:text-red-300 disabled:opacity-50"
-						>
-							Entfernen
-						</button>
+						<div class="flex items-center gap-3 flex-shrink-0">
+							<button
+								onclick={() => toggleRole(user.id, user.isAdmin)}
+								disabled={loading || user.email === page.data.session?.user?.email}
+								class="text-sm text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed"
+								title={user.isAdmin ? 'Zu Scorer machen' : 'Zum Admin machen'}
+							>
+								{user.isAdmin ? '→ Scorer' : '→ Admin'}
+							</button>
+							<button
+								onclick={() => removeUser(user.id)}
+								disabled={loading}
+								class="text-sm text-red-400 hover:text-red-300 disabled:opacity-50"
+							>
+								Entfernen
+							</button>
+						</div>
 					</div>
 				{/each}
 			</div>

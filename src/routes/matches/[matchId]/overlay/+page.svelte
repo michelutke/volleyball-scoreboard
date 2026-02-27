@@ -22,6 +22,16 @@
 	let timeoutTimer = $state<ReturnType<typeof setTimeout> | null>(null);
 	let setScoresExpanded = $derived(match?.showSetScores || match?.status === 'finished' || !!timeoutTeam);
 
+	function isAtSetPoint(pts: number, other: number, setNum: number): boolean {
+		const target = setNum === 5 ? 15 : 25;
+		return pts >= target - 1 && pts > other;
+	}
+
+	const homeSetPoint = $derived(!!match && isAtSetPoint(match.homePoints, match.guestPoints, match.currentSet));
+	const guestSetPoint = $derived(!!match && isAtSetPoint(match.guestPoints, match.homePoints, match.currentSet));
+	const homeMatchPoint = $derived(!!match && match.homeSets === 2 && homeSetPoint);
+	const guestMatchPoint = $derived(!!match && match.guestSets === 2 && guestSetPoint);
+
 	function darkenHex(hex: string, amount = 16): string {
 		const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - amount);
 		const g = Math.max(0, parseInt(hex.slice(3, 5), 16) - amount);
@@ -141,7 +151,11 @@
 					<div class="timeout-box" class:taken={homeTimeoutsUsed >= 1} style:background-color={homeTimeoutsUsed < 1 ? match.homeJerseyColor : undefined}></div>
 				</div>
 				{#if timeoutTeam === 'home'}
-					<div class="timeout">TIME OUT</div>
+					<div class="alert timeout">TIME OUT</div>
+				{:else if homeMatchPoint}
+					<div class="alert matchpoint">MATCH POINT</div>
+				{:else if homeSetPoint}
+					<div class="alert setpoint">SET POINT</div>
 				{/if}
 			</div>
 
@@ -170,7 +184,11 @@
 					<div class="timeout-box" class:taken={guestTimeoutsUsed >= 1} style:background-color={guestTimeoutsUsed < 1 ? match.guestJerseyColor : undefined}></div>
 				</div>
 				{#if timeoutTeam === 'guest'}
-					<div class="timeout">TIME OUT</div>
+					<div class="alert timeout">TIME OUT</div>
+				{:else if guestMatchPoint}
+					<div class="alert matchpoint">MATCH POINT</div>
+				{:else if guestSetPoint}
+					<div class="alert setpoint">SET POINT</div>
 				{/if}
 			</div>
 		</div>
@@ -278,7 +296,7 @@
 	.scoreboard.rounded:not(.with-jersey) .guest-row .team-name { border-radius: 0 0 0 8px; }
 	.scoreboard.rounded.with-jersey .guest-row .jersey { border-radius: 0 0 0 8px; }
 	.scoreboard.rounded .guest-row .timeout-boxes { border-radius: 0 0 8px 0; }
-	.scoreboard.rounded .timeout { border-radius: 3px; }
+	.scoreboard.rounded .alert { border-radius: 3px; }
 
 	.set-scores-container {
 		display: flex;
@@ -291,19 +309,17 @@
 
 	.set-scores-container.expanded { max-width: 500px; opacity: 1; }
 
-	.timeout-boxes { display: flex; flex-direction: column; gap: 0; justify-content: center; border-left: 1px solid var(--overlay-text, white); overflow: hidden; }
+	.timeout-boxes { display: flex; flex-direction: column; gap: 0; justify-content: center; border-left: 1px solid var(--overlay-border); overflow: hidden; }
 	.timeout-box { width: 10px; height: 50%; }
-	.timeout-box:first-child { border-bottom: 1px solid var(--overlay-text, white); }
+	.timeout-box:first-child { border-bottom: 1px solid var(--overlay-border); }
 	.scoreboard.rounded .home-row .timeout-box:first-child { border-radius: 0 4px 0 0; }
 	.scoreboard.rounded .home-row .timeout-box:last-child { border-radius: 0 0 0 0; }
 	.scoreboard.rounded .guest-row .timeout-box:first-child { border-radius: 0 0 0 0; }
 	.scoreboard.rounded .guest-row .timeout-box:last-child { border-radius: 0 0 4px 0; }
 	.timeout-box.taken { background: transparent; border: 1px solid var(--jersey-color); border-left: none; }
 
-	.timeout {
+	.alert {
 		margin-left: 3px;
-		background: rgba(234, 179, 8, 0.95);
-		color: black;
 		padding: 0 20px;
 		display: flex;
 		align-items: center;
@@ -313,7 +329,12 @@
 		letter-spacing: 1px;
 		white-space: nowrap;
 		animation: fadeIn 0.3s ease;
+		color: black;
 	}
+
+	.alert.timeout   { background: rgba(234, 179, 8, 0.95); }
+	.alert.matchpoint { background: rgba(239, 68, 68, 0.95); color: white; }
+	.alert.setpoint   { background: rgba(14, 165, 233, 0.85); color: white; }
 
 	@keyframes fadeIn {
 		from { opacity: 0; transform: translateX(-10px); }
