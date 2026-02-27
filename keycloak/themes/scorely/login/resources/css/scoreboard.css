@@ -133,3 +133,37 @@ button[type="submit"]:hover { opacity: 0.88; }
 .forgot { text-align: center; }
 .forgot a { font-size: 0.8125rem; color: #888; text-decoration: none; }
 .forgot a:hover { color: #aaa; }
+
+.guest-label {
+    font-size: 22px; font-weight: 300;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase; letter-spacing: 0.12em;
+}
+
+.change-user { text-align: center; }
+.change-user a { font-size: 0.75rem; color: #666; text-decoration: none; }
+.change-user a:hover { color: #888; }
+
+@media (max-width: 560px) {
+  body {
+    padding: 1rem 0.75rem;
+    justify-content: flex-start;
+    padding-top: 2rem;
+  }
+
+  .title { margin-bottom: 1.25rem; }
+
+  .scoreboard { min-width: 0; }
+  .scoreboard-wrap { overflow-x: hidden; }
+
+  .row {
+    grid-template-columns: 8px 1fr 52px 60px 14px;
+    height: 56px;
+  }
+
+  .row > .set-cell { display: none; }
+
+  .name-input { font-size: 18px; }
+
+  .actions { max-width: 100%; }
+}

@@ -69,6 +69,12 @@
 				<h1 class="text-2xl font-bold text-text-primary">{data.clubName ?? 'Teams'}</h1>
 				<p class="text-text-secondary text-sm">Teams verwalten</p>
 			</div>
+			<button
+				onclick={() => { showCreate = !showCreate; }}
+				class="bg-accent-mid hover:bg-accent-dark text-white font-semibold rounded-lg px-4 py-2 text-sm"
+			>
+				+ Team erstellen
+			</button>
 		</div>
 
 		{#if data.teams.length === 0}
@@ -89,6 +95,9 @@
 								{#if team.swissVolleyTeamId}
 									<span class="ml-2 text-xs bg-accent-deepest/30 text-accent px-2 py-0.5 rounded">SV</span>
 								{/if}
+								{#if isPinned(team.id)}
+									<span class="ml-2 text-xs bg-accent-deepest/30 text-accent px-2 py-0.5 rounded">📌 Gepinnt</span>
+								{/if}
 							</div>
 							<span class="text-text-tertiary">&rarr;</span>
 						</a>
@@ -97,7 +106,7 @@
 							class="p-2 rounded-lg text-lg {isFav(team.id) ? 'text-yellow-400' : 'text-text-tertiary hover:text-text-secondary'}"
 							title={isFav(team.id) ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
 						>
-							★
+							{isFav(team.id) ? '★' : '☆'}
 						</button>
 						{#if page.data.isAdmin}
 							<button
@@ -113,8 +122,8 @@
 			</div>
 		{/if}
 
-		<div class="mt-4">
-			{#if showCreate}
+		{#if showCreate}
+			<div class="mt-4">
 				<form onsubmit={(e) => { e.preventDefault(); createTeam(); }} class="bg-bg-panel-alt rounded-xl p-4 flex gap-2">
 					<input
 						type="text"
@@ -129,12 +138,8 @@
 						&times;
 					</button>
 				</form>
-			{:else}
-				<button onclick={() => { showCreate = true; }} class="w-full bg-bg-panel-alt hover:bg-bg-panel-hover text-text-secondary rounded-xl p-4 transition-colors">
-					+ Team manuell erstellen
-				</button>
-			{/if}
-		</div>
+			</div>
+		{/if}
 
 		<div class="mt-6 pt-4 border-t border-border-default">
 			<a href="/control" class="text-sm text-text-tertiary hover:text-text-primary">Legacy Control Panel &rarr;</a>

@@ -30,17 +30,16 @@ export async function getAdminToken(): Promise<string> {
 		return tokenCache.token;
 	}
 
+	const secret = env.KEYCLOAK_ADMIN_CLIENT_SECRET;
+	if (!secret) throw new Error('KEYCLOAK_ADMIN_CLIENT_SECRET not configured');
+
 	const res = await fetch(getTokenUrl(), {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
 			grant_type: 'client_credentials',
 			client_id: env.KEYCLOAK_ADMIN_CLIENT_ID ?? 'scoring-app',
-			client_secret: (() => {
-			const s = env.KEYCLOAK_ADMIN_CLIENT_SECRET;
-			if (!s) throw new Error('KEYCLOAK_ADMIN_CLIENT_SECRET not configured');
-			return s;
-		})()
+			client_secret: secret
 		})
 	});
 
@@ -143,6 +142,25 @@ export async function assignAdminRole(userId: string): Promise<void> {
 	if (!res.ok) {
 		throw new Error(`Failed to assign admin role: ${res.status}`);
 	}
+}
+
+export async function listUsersWithRole(roleName: string): Promise<KcUser[]> {
+	const res = await kcFetch(`/roles/${roleName}/users`);
+	if (!res.ok) {
+		return [];
+	}
+	return res.json() as Promise<KcUser[]>;
+}
+
+export async function revokeAdminRole(userId: string): Promise<void> {
+	const rolesRes = await kcFetch('/roles/admin');
+	if (!rolesRes.ok) throw new Error(`Failed to get admin role: ${rolesRes.status}`);
+	const role: { id: string; name: string } = await rolesRes.json();
+	const res = await kcFetch(`/users/${userId}/role-mappings/realm`, {
+		method: 'DELETE',
+		body: JSON.stringify([role])
+	});
+	if (!res.ok && res.status !== 404) throw new Error(`Failed to revoke admin role: ${res.status}`);
 }
 
 export async function sendSetPasswordEmail(userId: string): Promise<void> {

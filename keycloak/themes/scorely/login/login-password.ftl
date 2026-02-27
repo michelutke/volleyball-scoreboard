@@ -7,11 +7,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap"/>
     <link rel="stylesheet" href="${url.resourcesPath}/css/scoreboard.css"/>
-    <style>
-        .change-user { text-align: center; }
-        .change-user a { font-size: 0.75rem; color: #666; text-decoration: none; }
-        .change-user a:hover { color: #888; }
-    </style>
 </head>
 <body>
     <div class="title">SCORELY</div>

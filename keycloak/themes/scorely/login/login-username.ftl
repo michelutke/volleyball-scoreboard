@@ -7,13 +7,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap"/>
     <link rel="stylesheet" href="${url.resourcesPath}/css/scoreboard.css"/>
-    <style>
-        .guest-label {
-            font-size: 22px; font-weight: 300;
-            color: rgba(255,255,255,0.3);
-            text-transform: uppercase; letter-spacing: 0.12em;
-        }
-    </style>
 </head>
 <body>
     <div class="title">SCORELY</div>

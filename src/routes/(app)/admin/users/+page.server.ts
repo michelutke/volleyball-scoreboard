@@ -2,8 +2,10 @@ import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import { settings } from '$lib/server/db/schema.js';
 import { and, eq } from 'drizzle-orm';
-import { listOrgMembers } from '$lib/server/keycloak-admin.js';
+import { listOrgMembers, listUsersWithRole } from '$lib/server/keycloak-admin.js';
 import type { PageServerLoad } from './$types.js';
+
+type UserRow = { id: string; email: string; enabled: boolean; isAdmin: boolean };
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.isAdmin) redirect(303, '/teams');
@@ -21,16 +23,20 @@ export const load: PageServerLoad = async ({ locals }) => {
 		kcOrgId = fallback?.value;
 	}
 
-	if (!kcOrgId) return { users: [], kcOrgIdMissing: true };
+	if (!kcOrgId) return { users: [] as UserRow[], kcOrgIdMissing: true };
 
 	try {
-		const members = await listOrgMembers(kcOrgId);
+		const [members, adminUsers] = await Promise.all([
+			listOrgMembers(kcOrgId),
+			listUsersWithRole('admin')
+		]);
+		const adminIds = new Set(adminUsers.map((u) => u.id));
 		return {
-			users: members.map((u) => ({ id: u.id, email: u.email, enabled: u.enabled })),
+			users: members.map((u) => ({ id: u.id, email: u.email, enabled: u.enabled, isAdmin: adminIds.has(u.id) })),
 			kcOrgIdMissing: false
 		};
 	} catch (err) {
 		console.error('listOrgMembers failed:', err);
-		return { users: [], kcOrgIdMissing: false, listError: String(err) };
+		return { users: [] as UserRow[], kcOrgIdMissing: false, listError: String(err) };
 	}
 };

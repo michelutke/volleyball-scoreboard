@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { listOrgMembers, createUser, addToOrg, sendSetPasswordEmail, disableUser, getKcOrgId } from '$lib/server/keycloak-admin.js';
+import { listOrgMembers, listUsersWithRole, createUser, addToOrg, sendSetPasswordEmail, disableUser, getKcOrgId } from '$lib/server/keycloak-admin.js';
 import type { RequestHandler } from './$types.js';
 
 export const GET: RequestHandler = async ({ locals }) => {
@@ -8,8 +8,18 @@ export const GET: RequestHandler = async ({ locals }) => {
 	const kcOrgId = await getKcOrgId(locals.orgId);
 	if (!kcOrgId) return json([]);
 
-	const members = await listOrgMembers(kcOrgId);
-	return json(members.map((u) => ({ id: u.id, email: u.email, enabled: u.enabled })));
+	const [members, adminUsers] = await Promise.all([
+		listOrgMembers(kcOrgId),
+		listUsersWithRole('admin')
+	]);
+
+	const adminIds = new Set(adminUsers.map((u) => u.id));
+	return json(members.map((u) => ({
+		id: u.id,
+		email: u.email,
+		enabled: u.enabled,
+		isAdmin: adminIds.has(u.id)
+	})));
 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {
