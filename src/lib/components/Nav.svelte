@@ -33,16 +33,16 @@
 	<button class="burger" onclick={() => menuOpen = !menuOpen} aria-label="Menü">
 		{menuOpen ? '✕' : '☰'}
 	</button>
+	{#if menuOpen}
+		<div class="mobile-menu">
+			{#each links as link}
+				{#if !link.adminOnly || isAdmin}
+					<a href={link.href} class:active={isActive(link.href)} onclick={closeMenu}>{link.label}</a>
+				{/if}
+			{/each}
+		</div>
+	{/if}
 </nav>
-{#if menuOpen}
-	<div class="mobile-menu">
-		{#each links as link}
-			{#if !link.adminOnly || isAdmin}
-				<a href={link.href} class:active={isActive(link.href)} onclick={closeMenu}>{link.label}</a>
-			{/if}
-		{/each}
-	</div>
-{/if}
 
 <style>
 	nav {
