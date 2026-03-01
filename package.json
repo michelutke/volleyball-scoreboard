@@ -29,7 +29,7 @@
 	},
 	"dependencies": {
 		"@auth/sveltekit": "^1.11.1",
-		"@sveltejs/adapter-node": "^5.5.3",
+		"@sveltejs/adapter-node": "^5.5.4",
 		"drizzle-orm": "^0.45.1",
 		"lru-cache": "^11.2.6",
 		"postgres": "^3.4.8",
