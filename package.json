@@ -21,7 +21,7 @@
 		"drizzle-kit": "^0.31.9",
 		"husky": "^9.1.7",
 		"svelte": "^5.53.6",
-		"svelte-check": "^4.4.3",
+		"svelte-check": "^4.4.4",
 		"tailwindcss": "^4.2.1",
 		"typescript": "^5.9.3",
 		"vite": "^7.3.1",
