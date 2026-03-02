@@ -27,7 +27,7 @@ const BILLING_EXEMPT = /^\/(billing|api\/billing)($|\/)(?!webhook)/;
 export const handle = sequence(authHandle, async ({ event, resolve }) => {
 	const path = event.url.pathname;
 	const isPublic =
-		PUBLIC_PATHS.some((p) => path.startsWith(p)) ||
+		PUBLIC_PATHS.some((p) => (p === '/' ? path === '/' : path.startsWith(p))) ||
 		OVERLAY_PATTERN.test(path) ||
 		LEGACY_OVERLAY.test(path);
 
