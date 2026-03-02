@@ -48,6 +48,7 @@
 	nav {
 		width: 100%;
 		display: flex;
+		flex-wrap: wrap;
 		justify-content: space-between;
 		align-items: center;
 		padding: 0.75rem 1.5rem;
@@ -70,7 +71,7 @@
 
 	.links a {
 		color: var(--color-text-primary);
-		text-decoration: underline;
+		text-decoration: none;
 		padding: 0.25rem 0.5rem;
 		border-radius: 4px;
 		outline: 2px solid transparent;
@@ -98,25 +99,21 @@
 	}
 
 	.mobile-menu {
-		position: absolute;
-		top: 100%;
-		left: 0;
-		right: 0;
+		width: 100%;
 		background: var(--color-bg-base);
 		border-bottom: 1px solid var(--color-border-subtle);
 		display: flex;
 		flex-direction: column;
 		padding: 0.5rem 1.5rem 1rem;
 		gap: 0.25rem;
-		z-index: 50;
 	}
 
 	.mobile-menu a {
 		color: var(--color-text-primary);
 		text-decoration: none;
 		padding: 0.75rem 0.5rem;
-		border-bottom: 1px solid var(--color-border-subtle);
-		font-weight: 500;
+		font-size: 1.1rem;
+		font-weight: 600;
 	}
 
 	.mobile-menu a.active {
@@ -126,5 +123,9 @@
 	@media (max-width: 640px) {
 		.links { display: none; }
 		.burger { display: block; }
+	}
+
+	@media (min-width: 641px) {
+		.mobile-menu { display: none; }
 	}
 </style>
