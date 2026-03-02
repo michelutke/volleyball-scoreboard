@@ -101,7 +101,6 @@
 	.mobile-menu {
 		width: 100%;
 		background: var(--color-bg-base);
-		border-bottom: 1px solid var(--color-border-subtle);
 		display: flex;
 		flex-direction: column;
 		padding: 0.5rem 1.5rem 1rem;
