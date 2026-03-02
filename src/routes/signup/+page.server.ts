@@ -10,7 +10,7 @@ import {
 	sendSetPasswordEmail,
 	deleteUser
 } from '$lib/server/keycloak-admin';
-import { stripe } from '$lib/server/stripe';
+import { getStripe } from '$lib/server/stripe';
 import { db } from '$lib/server/db';
 import { settings } from '$lib/server/db/schema';
 import { env } from '$env/dynamic/private';
@@ -47,7 +47,7 @@ export const actions: Actions = {
 			await assignAdminRole(userId);
 			await sendSetPasswordEmail(userId);
 
-			const customer = await stripe.customers.create({
+			const customer = await getStripe().customers.create({
 				email,
 				name: `${firstName} ${lastName}`,
 				metadata: { orgId: kcOrgId }
@@ -66,7 +66,7 @@ export const actions: Actions = {
 			console.error('[signup] provisioning failed, rolling back', err);
 			// LIFO rollback: Stripe → KC org → KC user
 			if (stripeCustomerId) {
-				try { await stripe.customers.del(stripeCustomerId); } catch (e) { console.error('[signup] stripe cleanup failed', e); }
+				try { await getStripe().customers.del(stripeCustomerId); } catch (e) { console.error('[signup] stripe cleanup failed', e); }
 			}
 			if (kcOrgId) {
 				try { await deleteOrganization(kcOrgId); } catch (e) { console.error('[signup] KC org cleanup failed', e); }

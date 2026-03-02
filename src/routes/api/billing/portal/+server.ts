@@ -1,6 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { stripe } from '$lib/server/stripe';
+import { getStripe } from '$lib/server/stripe';
 import { getStripeCustomerId } from '$lib/server/billing';
 import { env } from '$env/dynamic/private';
 
@@ -11,7 +11,7 @@ export const POST: RequestHandler = async ({ locals, url }) => {
 	const customerId = await getStripeCustomerId(locals.orgId);
 	if (!customerId) throw error(404, 'No billing account');
 
-	const session = await stripe.billingPortal.sessions.create({
+	const session = await getStripe().billingPortal.sessions.create({
 		customer: customerId,
 		return_url: `${url.origin}/billing`
 	});

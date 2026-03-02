@@ -1,6 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { stripe } from '$lib/server/stripe';
+import { getStripe } from '$lib/server/stripe';
 import { getOrgByStripeCustomer, upsertBillingSetting } from '$lib/server/billing';
 import { env } from '$env/dynamic/private';
 import type Stripe from 'stripe';
@@ -14,7 +14,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	const rawBody = await request.text();
 	let event: Stripe.Event;
 	try {
-		event = stripe.webhooks.constructEvent(rawBody, sig, env.STRIPE_WEBHOOK_SECRET);
+		event = getStripe().webhooks.constructEvent(rawBody, sig, env.STRIPE_WEBHOOK_SECRET);
 	} catch {
 		throw error(400, 'Invalid signature');
 	}

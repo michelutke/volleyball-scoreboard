@@ -1,6 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { stripe } from '$lib/server/stripe';
+import { getStripe } from '$lib/server/stripe';
 import { getStripeCustomerId } from '$lib/server/billing';
 import { env } from '$env/dynamic/private';
 
@@ -10,7 +10,7 @@ export const POST: RequestHandler = async ({ locals, url }) => {
 
 	const customerId = await getStripeCustomerId(locals.orgId);
 
-	const session = await stripe.checkout.sessions.create({
+	const session = await getStripe().checkout.sessions.create({
 		mode: 'subscription',
 		line_items: [{ price: env.STRIPE_PRICE_ID, quantity: 1 }],
 		customer: customerId ?? undefined,
