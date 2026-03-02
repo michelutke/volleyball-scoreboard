@@ -16,13 +16,13 @@
 	function closeMenu() { menuOpen = false; }
 
 	function isActive(href: string): boolean {
-		if (href === '/') return page.url.pathname === '/';
+		if (href === '/dashboard') return page.url.pathname === '/dashboard';
 		return page.url.pathname.startsWith(href);
 	}
 </script>
 
 <nav>
-	<a href="/" class="club-name">{clubName}</a>
+	<a href="/dashboard" class="club-name">{clubName}</a>
 	<div class="links">
 		{#each links as link}
 			{#if !link.adminOnly || isAdmin}

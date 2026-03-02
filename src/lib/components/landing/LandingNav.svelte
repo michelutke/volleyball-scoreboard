@@ -1,0 +1,126 @@
+<script lang="ts">
+	import { t } from '$lib/i18n/landing.js';
+	import type { Lang } from '$lib/i18n/landing.js';
+
+	interface Props {
+		lang: Lang;
+		onLangToggle: () => void;
+	}
+
+	let { lang, onLangToggle }: Props = $props();
+
+	let menuOpen = $state(false);
+
+	function closeMenu() {
+		menuOpen = false;
+	}
+</script>
+
+<nav class="fixed top-0 left-0 right-0 z-50 border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-base)]">
+	<div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-8">
+		<!-- Logo -->
+		<a href="/" class="text-xl font-bold text-[var(--color-text-primary)] tracking-tight">
+			Scorely
+		</a>
+
+		<!-- Desktop center links -->
+		<div class="hidden items-center gap-8 md:flex">
+			<a
+				href="#features"
+				class="text-sm text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
+			>
+				{t[lang].nav.features}
+			</a>
+			<a
+				href="#pricing"
+				class="text-sm text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
+			>
+				{t[lang].nav.pricing}
+			</a>
+		</div>
+
+		<!-- Desktop right actions -->
+		<div class="hidden items-center gap-3 md:flex">
+			<button
+				onclick={onLangToggle}
+				class="rounded px-2 py-1 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)] border border-[var(--color-border-subtle)]"
+			>
+				{lang.toUpperCase()}
+			</button>
+			<a
+				href="/signin"
+				class="rounded-lg border border-[var(--color-border-subtle)] px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-accent-mid)] hover:text-[var(--color-accent-mid)]"
+			>
+				{t[lang].nav.signin}
+			</a>
+			<a
+				href="/signup"
+				class="rounded-lg bg-[var(--color-accent-mid)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+			>
+				{t[lang].nav.cta}
+			</a>
+		</div>
+
+		<!-- Mobile: lang toggle + hamburger -->
+		<div class="flex items-center gap-2 md:hidden">
+			<button
+				onclick={onLangToggle}
+				class="rounded px-2 py-1 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)]"
+			>
+				{lang.toUpperCase()}
+			</button>
+			<button
+				onclick={() => (menuOpen = !menuOpen)}
+				class="rounded p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+				aria-label="Menu"
+			>
+				{#if menuOpen}
+					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+					</svg>
+				{:else}
+					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+					</svg>
+				{/if}
+			</button>
+		</div>
+	</div>
+
+	<!-- Mobile menu -->
+	{#if menuOpen}
+		<div class="border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-base)] px-4 pb-4 pt-3 md:hidden">
+			<div class="flex flex-col gap-3">
+				<a
+					href="#features"
+					onclick={closeMenu}
+					class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+				>
+					{t[lang].nav.features}
+				</a>
+				<a
+					href="#pricing"
+					onclick={closeMenu}
+					class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+				>
+					{t[lang].nav.pricing}
+				</a>
+				<hr class="border-[var(--color-border-subtle)]" />
+				<a
+					href="/signin"
+					onclick={closeMenu}
+					class="rounded-lg border border-[var(--color-border-subtle)] px-4 py-2 text-center text-sm font-medium text-[var(--color-text-primary)]"
+				>
+					{t[lang].nav.signin}
+				</a>
+				<a
+					href="/signup"
+					onclick={closeMenu}
+					class="rounded-lg bg-[var(--color-accent-mid)] px-4 py-2 text-center text-sm font-medium text-white"
+				>
+					{t[lang].nav.cta}
+				</a>
+			</div>
+		</div>
+	{/if}
+</nav>
