@@ -126,9 +126,10 @@ export async function createUser(
 }
 
 export async function createOrganization(name: string): Promise<string> {
+	const alias = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 	const res = await kcFetch('/organizations', {
 		method: 'POST',
-		body: JSON.stringify({ name, enabled: true })
+		body: JSON.stringify({ name, alias, enabled: true })
 	});
 	if (!res.ok) throw new Error(`createOrganization ${res.status}: ${await kcErrorBody(res)}`);
 	const location = res.headers.get('Location');
