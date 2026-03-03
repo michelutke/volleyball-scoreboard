@@ -60,7 +60,7 @@
 	function doAddPoint(team: Team) {
 		if (match.status === 'finished') return;
 		const prevSet = match.currentSet;
-		match = addPoint(match, team);
+		match = addPoint($state.snapshot(match), team);
 		if (match.currentSet !== prevSet) {
 			homeTimeouts = 0;
 			guestTimeouts = 0;
@@ -71,7 +71,7 @@
 
 	function doRemovePoint(team: Team) {
 		if (match.status === 'finished') return;
-		match = removePoint(match, team);
+		match = removePoint($state.snapshot(match), team);
 	}
 
 	function doTimeout(team: Team) {
@@ -110,13 +110,6 @@
 				{tr.title}
 			</h2>
 			<p class="text-base" style="color: var(--color-text-secondary);">{tr.subtitle}</p>
-
-			<!-- Swiss Volley import badge -->
-			<div class="mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm"
-				style="border-color: var(--color-border-subtle); color: var(--color-text-secondary);">
-				<span>📥</span>
-				<span>{tr.svBadge}</span>
-			</div>
 		</div>
 
 		<!-- OBS Preview Frame -->

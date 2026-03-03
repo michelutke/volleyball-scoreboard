@@ -23,8 +23,8 @@
 			Scorely
 		</a>
 
-		<!-- Desktop center links -->
-		<div class="hidden items-center gap-8 md:flex">
+		<!-- Desktop right actions -->
+		<div class="hidden items-center gap-6 md:flex">
 			<a
 				href="#features"
 				class="text-sm text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
@@ -37,28 +37,18 @@
 			>
 				{t[lang].nav.pricing}
 			</a>
-		</div>
-
-		<!-- Desktop right actions -->
-		<div class="hidden items-center gap-3 md:flex">
+			<a
+				href="/signin"
+				class="text-sm text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
+			>
+				{t[lang].nav.signin}
+			</a>
 			<button
 				onclick={onLangToggle}
 				class="rounded px-2 py-1 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)] border border-[var(--color-border-subtle)]"
 			>
 				{lang.toUpperCase()}
 			</button>
-			<a
-				href="/signin"
-				class="rounded-lg border border-[var(--color-border-subtle)] px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-accent-mid)] hover:text-[var(--color-accent-mid)]"
-			>
-				{t[lang].nav.signin}
-			</a>
-			<a
-				href="/signup"
-				class="rounded-lg bg-[var(--color-accent-mid)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
-			>
-				{t[lang].nav.cta}
-			</a>
 		</div>
 
 		<!-- Mobile: lang toggle + hamburger -->
@@ -109,16 +99,9 @@
 				<a
 					href="/signin"
 					onclick={closeMenu}
-					class="rounded-lg border border-[var(--color-border-subtle)] px-4 py-2 text-center text-sm font-medium text-[var(--color-text-primary)]"
+					class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
 				>
 					{t[lang].nav.signin}
-				</a>
-				<a
-					href="/signup"
-					onclick={closeMenu}
-					class="rounded-lg bg-[var(--color-accent-mid)] px-4 py-2 text-center text-sm font-medium text-white"
-				>
-					{t[lang].nav.cta}
 				</a>
 			</div>
 		</div>
