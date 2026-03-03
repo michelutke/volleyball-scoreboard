@@ -18,8 +18,6 @@ import { isRateLimited } from '$lib/server/rate-limit';
 
 export const actions: Actions = {
 	default: async ({ request, getClientAddress }) => {
-		if (!env.STRIPE_SECRET_KEY) return fail(404, { error: 'Not found' });
-
 		if (isRateLimited(getClientAddress())) {
 			return fail(429, { error: 'Zu viele Anfragen. Bitte versuche es später erneut.' });
 		}
@@ -47,19 +45,25 @@ export const actions: Actions = {
 			await assignAdminRole(userId);
 			await sendSetPasswordEmail(userId);
 
-			const customer = await getStripe().customers.create({
-				email,
-				name: `${firstName} ${lastName}`,
-				metadata: { orgId: kcOrgId }
-			});
-			stripeCustomerId = customer.id;
-
-			await db.insert(settings).values([
+			const settingsRows: { orgId: string; key: string; value: string }[] = [
 				{ orgId: kcOrgId, key: 'kcOrgId', value: kcOrgId },
-				{ orgId: kcOrgId, key: 'trialStartedAt', value: new Date().toISOString() },
-				{ orgId: kcOrgId, key: 'stripeCustomerId', value: stripeCustomerId },
-				{ orgId: kcOrgId, key: 'subscriptionStatus', value: 'trialing' }
-			]).onConflictDoNothing();
+				{ orgId: kcOrgId, key: 'trialStartedAt', value: new Date().toISOString() }
+			];
+
+			if (env.STRIPE_SECRET_KEY) {
+				const customer = await getStripe().customers.create({
+					email,
+					name: `${firstName} ${lastName}`,
+					metadata: { orgId: kcOrgId }
+				});
+				stripeCustomerId = customer.id;
+				settingsRows.push(
+					{ orgId: kcOrgId, key: 'stripeCustomerId', value: stripeCustomerId },
+					{ orgId: kcOrgId, key: 'subscriptionStatus', value: 'trialing' }
+				);
+			}
+
+			await db.insert(settings).values(settingsRows).onConflictDoNothing();
 
 			return { success: true };
 		} catch (err) {
