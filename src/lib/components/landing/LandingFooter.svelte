@@ -13,16 +13,14 @@
 			links: [
 				{ label: 'Datenschutz', href: '/privacy' },
 				{ label: 'Impressum', href: '/imprint' }
-			],
-			cta: 'Kostenlos testen'
+			]
 		},
 		en: {
 			copyright: '© 2026 Scorely',
 			links: [
 				{ label: 'Privacy', href: '/privacy' },
 				{ label: 'Imprint', href: '/imprint' }
-			],
-			cta: 'Try for free'
+			]
 		}
 	} as const;
 
@@ -50,11 +48,5 @@
 			{/each}
 		</div>
 
-		<a
-			href="/signup"
-			class="rounded-xl bg-[var(--color-accent-mid)] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-		>
-			{tr.cta}
-		</a>
 	</div>
 </footer>
