@@ -1,27 +1,15 @@
 import { db } from '$lib/server/db';
 import { settings } from '$lib/server/db/schema';
-import { and, eq, inArray } from 'drizzle-orm';
-
-export const TRIAL_DAYS = 3;
+import { and, eq } from 'drizzle-orm';
 
 export async function getBillingStatus(orgId: string): Promise<'allowed' | 'blocked'> {
 	const rows = await db
 		.select()
 		.from(settings)
-		.where(and(eq(settings.orgId, orgId), inArray(settings.key, ['subscriptionStatus', 'trialStartedAt'])));
+		.where(and(eq(settings.orgId, orgId), eq(settings.key, 'subscriptionStatus')));
 
-	const byKey = Object.fromEntries(rows.map((r) => [r.key, r.value]));
-	const status = byKey['subscriptionStatus'];
-
-	if (status === 'active') return 'allowed';
-
-	if (status === 'trialing') {
-		const trialStartedAt = byKey['trialStartedAt'];
-		if (!trialStartedAt) return 'blocked';
-		const ageDays = (Date.now() - new Date(trialStartedAt).getTime()) / (1000 * 60 * 60 * 24);
-		return ageDays <= TRIAL_DAYS ? 'allowed' : 'blocked';
-	}
-
+	const status = rows[0]?.value;
+	if (status === 'active' || status === 'trialing') return 'allowed';
 	return 'blocked';
 }
 

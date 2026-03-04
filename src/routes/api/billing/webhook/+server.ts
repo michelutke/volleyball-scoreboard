@@ -22,10 +22,16 @@ export const POST: RequestHandler = async ({ request }) => {
 	const resolveCustomerId = (customer: string | Stripe.Customer | Stripe.DeletedCustomer | null): string | null =>
 		typeof customer === 'string' ? customer : (customer?.id ?? null);
 
-	if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
+	if (
+		event.type === 'customer.subscription.created' ||
+		event.type === 'customer.subscription.updated' ||
+		event.type === 'customer.subscription.deleted'
+	) {
 		const sub = event.data.object as Stripe.Subscription;
-		const orgId = await getOrgByStripeCustomer(resolveCustomerId(sub.customer)!);
-		if (orgId) {
+		const customerId = resolveCustomerId(sub.customer);
+		const orgId = sub.metadata?.orgId ?? (customerId ? await getOrgByStripeCustomer(customerId) : null);
+		if (orgId && customerId) {
+			await upsertBillingSetting(orgId, 'stripeCustomerId', customerId);
 			const status = event.type === 'customer.subscription.deleted' ? 'canceled' : sub.status;
 			await upsertBillingSetting(orgId, 'subscriptionStatus', status);
 		}
