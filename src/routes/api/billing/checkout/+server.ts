@@ -20,9 +20,9 @@ export const POST: RequestHandler = async ({ locals, url }) => {
 			metadata: { orgId: locals.orgId }
 		},
 		payment_method_collection: 'always',
-		success_url: `${url.origin}/billing`,
-		cancel_url: `${url.origin}/billing`
+		ui_mode: 'embedded',
+		return_url: `${url.origin}/billing`
 	});
 
-	return json({ url: session.url });
+	return json({ clientSecret: session.client_secret, sessionId: session.id });
 };

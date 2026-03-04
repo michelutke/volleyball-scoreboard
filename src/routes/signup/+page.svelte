@@ -1,5 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import { onMount, onDestroy } from 'svelte';
+	import { loadStripe } from '@stripe/stripe-js';
+	import { env } from '$env/dynamic/public';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
@@ -7,28 +11,73 @@
 	let password = $state('');
 	let confirmPassword = $state('');
 	let passwordMismatch = $derived(confirmPassword.length > 0 && password !== confirmPassword);
+
+	let step = $state<'form' | 'checkout'>('form');
+	let clientSecret = $state('');
+	let sessionId = $state('');
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let checkout = $state<any>(null);
+
+	async function mountCheckout(secret: string) {
+		const publishableKey = env.PUBLIC_STRIPE_PUBLISHABLE_KEY;
+		if (!publishableKey) return;
+		const stripe = await loadStripe(publishableKey);
+		if (!stripe) return;
+		checkout = await stripe.initEmbeddedCheckout({
+			clientSecret: secret,
+			onComplete: async () => {
+				await fetch('/api/billing/verify-session', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ sessionId })
+				});
+				await goto('/signin?callbackUrl=/dashboard');
+			}
+		});
+		checkout.mount('#stripe-checkout');
+	}
+
+	$effect(() => {
+		if (step === 'checkout' && clientSecret) {
+			mountCheckout(clientSecret);
+		}
+	});
+
+	onDestroy(() => {
+		checkout?.destroy();
+	});
 </script>
 
 <div class="min-h-screen bg-bg-base flex items-center justify-center p-4">
-	<div class="w-full max-w-md">
-		<div class="mb-8 text-center">
-			<h1 class="text-3xl font-bold text-text-primary">Konto erstellen</h1>
-			<p class="text-text-secondary mt-2">3 Tage kostenlos testen</p>
-		</div>
-
-		{#if form?.success}
-			<div class="bg-bg-panel-alt rounded-xl p-8 text-center">
-				<p class="text-text-primary font-semibold text-lg">Konto erstellt</p>
-				<p class="text-text-secondary mt-2 text-sm">Sie werden weitergeleitet...</p>
+	<div class="w-full {step === 'checkout' ? 'max-w-2xl' : 'max-w-md'}">
+		{#if step === 'checkout'}
+			<div class="mb-6 text-center">
+				<h1 class="text-2xl font-bold text-text-primary">Zahlungsdetails eingeben</h1>
+				<p class="text-text-secondary mt-1 text-sm">3 Tage kostenlos — danach CHF/Monat</p>
+			</div>
+			<div class="bg-bg-panel-alt rounded-xl p-4">
+				<div id="stripe-checkout"></div>
 			</div>
 		{:else}
+			<div class="mb-8 text-center">
+				<h1 class="text-3xl font-bold text-text-primary">Konto erstellen</h1>
+				<p class="text-text-secondary mt-2">3 Tage kostenlos testen</p>
+			</div>
+
 			<form
 				method="POST"
 				use:enhance={() => {
 					loading = true;
 					return async ({ result, update }) => {
-						if (result.type === 'success' && result.data?.checkoutUrl) {
-							window.location.href = result.data.checkoutUrl as string;
+						if (result.type === 'success' && result.data?.clientSecret) {
+							clientSecret = result.data.clientSecret as string;
+							sessionId = result.data.sessionId as string;
+							step = 'checkout';
+							loading = false;
+							return;
+						}
+						if (result.type === 'success' && !result.data?.clientSecret) {
+							await goto('/signin?callbackUrl=/dashboard');
 							return;
 						}
 						await update();

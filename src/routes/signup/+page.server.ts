@@ -80,10 +80,10 @@ export const actions: Actions = {
 						metadata: { orgId: kcOrgId }
 					},
 					payment_method_collection: 'always',
-					success_url: `${url.origin}/signin?callbackUrl=/dashboard`,
-					cancel_url: `${url.origin}/signin`
+					ui_mode: 'embedded',
+					return_url: `${url.origin}/signin?callbackUrl=/dashboard`
 				});
-				return { checkoutUrl: session.url };
+				return { clientSecret: session.client_secret, sessionId: session.id };
 			}
 
 			return { success: true };

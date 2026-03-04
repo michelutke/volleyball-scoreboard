@@ -1,16 +1,47 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
+	import { onDestroy } from 'svelte';
+	import { loadStripe } from '@stripe/stripe-js';
+	import { env } from '$env/dynamic/public';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 	let loading = $state(false);
+	let showCheckout = $state(false);
+	let sessionId = $state('');
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let checkout = $state<any>(null);
 
 	async function startCheckout() {
 		loading = true;
 		try {
 			const res = await fetch('/api/billing/checkout', { method: 'POST' });
 			if (!res.ok) return;
-			const { url } = await res.json();
-			if (url) window.location.href = url;
+			const { clientSecret, sessionId: sid } = await res.json();
+			if (!clientSecret) return;
+			sessionId = sid;
+			showCheckout = true;
+
+			const publishableKey = env.PUBLIC_STRIPE_PUBLISHABLE_KEY;
+			if (!publishableKey) return;
+			const stripe = await loadStripe(publishableKey);
+			if (!stripe) return;
+
+			checkout = await stripe.initEmbeddedCheckout({
+				clientSecret,
+				onComplete: async () => {
+					await fetch('/api/billing/verify-session', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ sessionId })
+					});
+					checkout?.destroy();
+					checkout = null;
+					showCheckout = false;
+					await invalidateAll();
+				}
+			});
+			checkout.mount('#stripe-checkout');
 		} finally {
 			loading = false;
 		}
@@ -27,15 +58,29 @@
 			loading = false;
 		}
 	}
+
+	onDestroy(() => {
+		checkout?.destroy();
+	});
 </script>
 
 <div class="min-h-screen bg-bg-base p-4">
-	<div class="max-w-md mx-auto">
+	<div class="max-w-2xl mx-auto">
 		<div class="mb-6">
 			<h1 class="text-2xl font-bold text-text-primary">Abonnement</h1>
 		</div>
 
-		{#if data.subscriptionStatus === 'active'}
+		{#if showCheckout}
+			<div class="bg-bg-panel-alt rounded-xl p-4 mb-4">
+				<div id="stripe-checkout"></div>
+			</div>
+			<button
+				onclick={() => { checkout?.destroy(); checkout = null; showCheckout = false; }}
+				class="text-text-tertiary text-sm hover:text-text-secondary"
+			>
+				← Abbrechen
+			</button>
+		{:else if data.subscriptionStatus === 'active'}
 			<div class="bg-bg-panel-alt rounded-xl p-6 mb-4">
 				<div class="flex items-center gap-3 mb-4">
 					<span class="text-xs bg-green-900/30 text-green-300 px-3 py-1 rounded-full font-medium">Aktiv</span>
