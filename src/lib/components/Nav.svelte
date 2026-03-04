@@ -22,7 +22,7 @@
 </script>
 
 <nav>
-	<a href="/dashboard" class="club-name">{clubName}</a>
+	<a href="/dashboard" class="club-name">Scorely</a>
 	<div class="links">
 		{#each links as link}
 			{#if !link.adminOnly || isAdmin}
