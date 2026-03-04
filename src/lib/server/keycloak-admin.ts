@@ -256,6 +256,49 @@ export async function bootstrapKcOrgId(): Promise<void> {
 	}
 }
 
+export async function ensureOrganizationMapper(): Promise<void> {
+	if (!env.KEYCLOAK_ADMIN_URL || !env.KEYCLOAK_ADMIN_CLIENT_SECRET) return;
+	try {
+		const clientId = env.KEYCLOAK_CLIENT_ID ?? 'scoring-app';
+		const searchRes = await kcFetch(`/clients?clientId=${encodeURIComponent(clientId)}`);
+		if (!searchRes.ok) return;
+		const clients: { id: string }[] = await searchRes.json();
+		if (clients.length === 0) return;
+		const uuid = clients[0].id;
+
+		const mappersRes = await kcFetch(`/clients/${uuid}/protocol-mappers/models`);
+		if (!mappersRes.ok) return;
+		const mappers: { protocolMapper: string }[] = await mappersRes.json();
+		if (mappers.some((m) => m.protocolMapper === 'oidc-organization-membership-mapper')) {
+			console.log('[keycloak] organization mapper already present');
+			return;
+		}
+
+		const addRes = await kcFetch(`/clients/${uuid}/protocol-mappers/models`, {
+			method: 'POST',
+			body: JSON.stringify({
+				name: 'organization',
+				protocol: 'openid-connect',
+				protocolMapper: 'oidc-organization-membership-mapper',
+				consentRequired: false,
+				config: {
+					'access.token.claim': 'true',
+					'id.token.claim': 'false',
+					'lightweight.claim': 'false',
+					'introspection.token.claim': 'true'
+				}
+			})
+		});
+		if (!addRes.ok) {
+			console.warn('[keycloak] ensureOrganizationMapper add failed:', addRes.status);
+			return;
+		}
+		console.log('[keycloak] organization mapper ensured');
+	} catch (e) {
+		console.warn('[keycloak] ensureOrganizationMapper failed (non-fatal):', e);
+	}
+}
+
 export async function syncClientRedirectUri(origin: string): Promise<void> {
 	if (!env.KEYCLOAK_ADMIN_URL || !env.KEYCLOAK_ADMIN_CLIENT_SECRET) return;
 	try {
