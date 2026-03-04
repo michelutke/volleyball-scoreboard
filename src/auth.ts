@@ -49,8 +49,8 @@ const baseConfig: SvelteKitAuthConfig = {
 					headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 					body: new URLSearchParams({
 						grant_type: 'password',
-						client_id: env.KEYCLOAK_CLIENT_ID,
-						client_secret: env.KEYCLOAK_CLIENT_SECRET,
+						client_id: env.KEYCLOAK_CLIENT_ID ?? '',
+						client_secret: env.KEYCLOAK_CLIENT_SECRET ?? '',
 						username: credentials.email as string,
 						password: credentials.password as string,
 						scope: 'openid'
