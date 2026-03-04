@@ -22,7 +22,15 @@ export const POST: RequestHandler = async ({ request }) => {
 	const resolveCustomerId = (customer: string | Stripe.Customer | Stripe.DeletedCustomer | null): string | null =>
 		typeof customer === 'string' ? customer : (customer?.id ?? null);
 
-	if (
+	if (event.type === 'checkout.session.completed') {
+		const session = event.data.object as Stripe.Checkout.Session;
+		const orgId = session.metadata?.orgId ?? null;
+		const customerId = resolveCustomerId(session.customer ?? null);
+		if (orgId && customerId) {
+			await upsertBillingSetting(orgId, 'stripeCustomerId', customerId);
+			await upsertBillingSetting(orgId, 'subscriptionStatus', 'trialing');
+		}
+	} else if (
 		event.type === 'customer.subscription.created' ||
 		event.type === 'customer.subscription.updated' ||
 		event.type === 'customer.subscription.deleted'
