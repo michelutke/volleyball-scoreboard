@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
-	import { onMount, onDestroy } from 'svelte';
+	import { onDestroy } from 'svelte';
+	import { signIn } from '@auth/sveltekit/client';
 	import { loadStripe } from '@stripe/stripe-js';
 	import { env } from '$env/dynamic/public';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
 	let loading = $state(false);
+	let email = $state('');
 	let password = $state('');
 	let confirmPassword = $state('');
 	let passwordMismatch = $derived(confirmPassword.length > 0 && password !== confirmPassword);
@@ -15,12 +17,16 @@
 	let step = $state<'form' | 'checkout'>('form');
 	let clientSecret = $state('');
 	let sessionId = $state('');
+	let checkoutError = $state('');
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let checkout = $state<any>(null);
 
 	async function mountCheckout(secret: string) {
 		const publishableKey = env.PUBLIC_STRIPE_PUBLISHABLE_KEY;
-		if (!publishableKey) return;
+		if (!publishableKey) {
+			checkoutError = 'Stripe publishable key not configured.';
+			return;
+		}
 		const stripe = await loadStripe(publishableKey);
 		if (!stripe) return;
 		checkout = await stripe.initEmbeddedCheckout({
@@ -31,7 +37,7 @@
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ sessionId })
 				});
-				await goto('/signin?callbackUrl=/dashboard');
+				await signIn('credentials', { email, password, callbackUrl: '/dashboard' });
 			}
 		});
 		checkout.mount('#stripe-checkout');
@@ -56,7 +62,11 @@
 				<p class="text-text-secondary mt-1 text-sm">3 Tage kostenlos — danach CHF/Monat</p>
 			</div>
 			<div class="bg-bg-panel-alt rounded-xl p-4">
-				<div id="stripe-checkout"></div>
+				{#if checkoutError}
+					<div class="bg-red-900/30 text-red-300 rounded-lg px-4 py-2 text-sm">{checkoutError}</div>
+				{:else}
+					<div id="stripe-checkout"></div>
+				{/if}
 			</div>
 		{:else}
 			<div class="mb-8 text-center">
@@ -122,6 +132,7 @@
 						type="email"
 						required
 						autocomplete="email"
+						bind:value={email}
 						class="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent"
 					/>
 				</div>

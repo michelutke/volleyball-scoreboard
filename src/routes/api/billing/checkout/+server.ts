@@ -21,7 +21,7 @@ export const POST: RequestHandler = async ({ locals, url }) => {
 		},
 		payment_method_collection: 'always',
 		ui_mode: 'embedded',
-		return_url: `${url.origin}/billing`
+		redirect_on_completion: 'never'
 	});
 
 	return json({ clientSecret: session.client_secret, sessionId: session.id });
