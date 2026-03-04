@@ -54,19 +54,28 @@
 				<div class="mb-4">
 					<p class="text-text-primary font-semibold">Testphase aktiv</p>
 					<p class="text-text-secondary text-sm mt-1">
-						{#if (data.daysLeft ?? 0) > 0}
-							Noch {data.daysLeft} {data.daysLeft === 1 ? 'Tag' : 'Tage'} verbleibend
-						{:else}
-							Testphase abgelaufen
-						{/if}
+						Dein Abo startet automatisch nach Ablauf der Testphase. Du kannst jederzeit kündigen.
 					</p>
+				</div>
+				<button
+					onclick={openPortal}
+					disabled={loading}
+					class="w-full bg-bg-base hover:bg-bg-panel-hover disabled:opacity-50 text-text-secondary rounded-lg px-4 py-2 transition-colors text-sm"
+				>
+					Abo verwalten
+				</button>
+			</div>
+		{:else if data.subscriptionStatus === null}
+			<div class="bg-bg-panel-alt rounded-xl p-6 mb-4">
+				<div class="mb-4">
+					<p class="text-text-primary font-semibold">Starte deine 3-Tage Gratis-Testphase</p>
 				</div>
 				<button
 					onclick={startCheckout}
 					disabled={loading}
 					class="w-full bg-accent-mid hover:bg-accent-dark disabled:opacity-50 text-white font-semibold rounded-lg px-4 py-3 transition-colors"
 				>
-					{loading ? '...' : 'Abonnieren'}
+					{loading ? '...' : 'Kostenlos testen — Keine Kosten für 3 Tage'}
 				</button>
 			</div>
 		{:else}
@@ -80,6 +89,9 @@
 						Abonnement gekündigt.
 					</div>
 				{/if}
+				<p class="text-text-secondary text-sm mb-4">
+					Deine Testphase ist abgelaufen. Um Scorely weiter zu nutzen, schliesse ein Abo ab.
+				</p>
 				<button
 					onclick={startCheckout}
 					disabled={loading}

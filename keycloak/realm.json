@@ -2,6 +2,7 @@
   "realm": "scoring",
   "displayName": "Volleyball Scoreboard",
   "loginTheme": "scorely",
+  "emailTheme": "scorely",
   "enabled": true,
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,

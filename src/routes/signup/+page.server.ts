@@ -46,8 +46,7 @@ export const actions: Actions = {
 			await sendSetPasswordEmail(userId);
 
 			const settingsRows: { orgId: string; key: string; value: string }[] = [
-				{ orgId: kcOrgId, key: 'kcOrgId', value: kcOrgId },
-				{ orgId: kcOrgId, key: 'trialStartedAt', value: new Date().toISOString() }
+				{ orgId: kcOrgId, key: 'kcOrgId', value: kcOrgId }
 			];
 
 			if (env.STRIPE_SECRET_KEY) {
@@ -57,10 +56,7 @@ export const actions: Actions = {
 					metadata: { orgId: kcOrgId }
 				});
 				stripeCustomerId = customer.id;
-				settingsRows.push(
-					{ orgId: kcOrgId, key: 'stripeCustomerId', value: stripeCustomerId },
-					{ orgId: kcOrgId, key: 'subscriptionStatus', value: 'trialing' }
-				);
+				settingsRows.push({ orgId: kcOrgId, key: 'stripeCustomerId', value: stripeCustomerId });
 			}
 
 			await db.insert(settings).values(settingsRows).onConflictDoNothing();

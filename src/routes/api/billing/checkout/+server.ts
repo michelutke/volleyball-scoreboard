@@ -15,6 +15,11 @@ export const POST: RequestHandler = async ({ locals, url }) => {
 		line_items: [{ price: env.STRIPE_PRICE_ID, quantity: 1 }],
 		customer: customerId ?? undefined,
 		metadata: { orgId: locals.orgId },
+		subscription_data: {
+			trial_period_days: 3,
+			metadata: { orgId: locals.orgId }
+		},
+		payment_method_collection: 'always',
 		success_url: `${url.origin}/billing`,
 		cancel_url: `${url.origin}/billing`
 	});
