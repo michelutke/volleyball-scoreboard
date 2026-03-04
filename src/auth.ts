@@ -1,6 +1,7 @@
 import { SvelteKitAuth, type SvelteKitAuthConfig } from '@auth/sveltekit';
 import { Auth, createActionURL, raw, skipCSRFCheck, setEnvDefaults } from '@auth/core';
 import Keycloak from '@auth/sveltekit/providers/keycloak';
+import Credentials from '@auth/core/providers/credentials';
 import { base } from '$app/paths';
 import { env } from '$env/dynamic/private';
 import { redirect } from '@sveltejs/kit';
@@ -16,6 +17,10 @@ declare module '@auth/core/types' {
 			roles?: string[];
 			idToken?: string;
 		};
+	}
+	interface User {
+		orgId?: string;
+		roles?: string[];
 	}
 }
 
@@ -34,10 +39,44 @@ const baseConfig: SvelteKitAuthConfig = {
 			clientId: env.KEYCLOAK_CLIENT_ID,
 			clientSecret: env.KEYCLOAK_CLIENT_SECRET,
 			issuer: env.KEYCLOAK_ISSUER
+		}),
+		Credentials({
+			credentials: { email: {}, password: {} },
+			async authorize(credentials) {
+				if (!credentials?.email || !credentials?.password) return null;
+				const tokenRes = await fetch(`${env.KEYCLOAK_ISSUER}/protocol/openid-connect/token`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+					body: new URLSearchParams({
+						grant_type: 'password',
+						client_id: env.KEYCLOAK_CLIENT_ID,
+						client_secret: env.KEYCLOAK_CLIENT_SECRET,
+						username: credentials.email as string,
+						password: credentials.password as string,
+						scope: 'openid'
+					})
+				});
+				if (!tokenRes.ok) return null;
+				const tokens: { access_token: string } = await tokenRes.json();
+				try {
+					const payload = JSON.parse(Buffer.from(tokens.access_token.split('.')[1], 'base64url').toString());
+					const orgsMap = payload.organizations as Record<string, { id?: string }> | undefined;
+					const firstOrgId = orgsMap ? Object.values(orgsMap)[0]?.id : undefined;
+					return {
+						id: payload.sub,
+						email: payload.email,
+						name: payload.name,
+						orgId: (payload.org_id as string | undefined) ?? firstOrgId,
+						roles: (payload.realm_access?.roles as string[]) ?? []
+					};
+				} catch {
+					return null;
+				}
+			}
 		})
 	],
 	callbacks: {
-		jwt({ token, account }) {
+		jwt({ token, account, user }) {
 			if (account?.access_token) {
 				try {
 					const payload = JSON.parse(
@@ -52,6 +91,9 @@ const baseConfig: SvelteKitAuthConfig = {
 				}
 			}
 			if (account?.id_token) token.idToken = account.id_token;
+			// Credentials flow: user object carries orgId + roles
+			if (user?.orgId) token.orgId = user.orgId;
+			if (user?.roles) token.roles = user.roles;
 			return token;
 		},
 		session({ session, token }) {

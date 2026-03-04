@@ -81,7 +81,7 @@ export const actions: Actions = {
 					},
 					payment_method_collection: 'always',
 					ui_mode: 'embedded',
-					return_url: `${url.origin}/signin?callbackUrl=/dashboard`
+					redirect_on_completion: 'never'
 				});
 				return { clientSecret: session.client_secret, sessionId: session.id };
 			}

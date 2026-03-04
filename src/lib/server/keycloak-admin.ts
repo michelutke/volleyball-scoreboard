@@ -307,6 +307,41 @@ export async function ensureOrganizationMapper(): Promise<void> {
 	}
 }
 
+export async function ensureDirectAccessGrants(): Promise<void> {
+	if (!env.KEYCLOAK_ADMIN_URL) return;
+	try {
+		// scoring-admin lacks manage-clients; use master realm admin-cli
+		const masterTokenRes = await fetch(`${env.KEYCLOAK_ADMIN_URL}/realms/master/protocol/openid-connect/token`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+			body: new URLSearchParams({ grant_type: 'password', client_id: 'admin-cli', username: 'admin', password: 'admin' })
+		});
+		if (!masterTokenRes.ok) return;
+		const { access_token } = await masterTokenRes.json() as { access_token: string };
+		const realm = env.KEYCLOAK_REALM ?? 'master';
+		const base = `${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}`;
+		const headers = { Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json' };
+		const clientId = env.KEYCLOAK_CLIENT_ID ?? 'scoring-app';
+		const searchRes = await fetch(`${base}/clients?clientId=${encodeURIComponent(clientId)}`, { headers });
+		if (!searchRes.ok) return;
+		const clients: { id: string; directAccessGrantsEnabled: boolean }[] = await searchRes.json();
+		if (clients.length === 0) return;
+		const client = clients[0];
+		if (client.directAccessGrantsEnabled) return;
+		const res = await fetch(`${base}/clients/${client.id}`, {
+			method: 'PUT', headers,
+			body: JSON.stringify({ ...client, directAccessGrantsEnabled: true })
+		});
+		if (!res.ok) {
+			console.warn('[keycloak] ensureDirectAccessGrants failed:', res.status);
+			return;
+		}
+		console.log('[keycloak] direct access grants enabled');
+	} catch (e) {
+		console.warn('[keycloak] ensureDirectAccessGrants failed (non-fatal):', e);
+	}
+}
+
 export async function syncClientRedirectUri(origin: string): Promise<void> {
 	if (!env.KEYCLOAK_ADMIN_URL || !env.KEYCLOAK_ADMIN_CLIENT_SECRET) return;
 	try {
