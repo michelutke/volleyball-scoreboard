@@ -17,7 +17,7 @@ import { env } from '$env/dynamic/private';
 import { isRateLimited } from '$lib/server/rate-limit';
 
 export const actions: Actions = {
-	default: async ({ request, getClientAddress }) => {
+	default: async ({ request, getClientAddress, url }) => {
 		if (isRateLimited(getClientAddress())) {
 			return fail(429, { error: 'Zu viele Anfragen. Bitte versuche es später erneut.' });
 		}
@@ -43,7 +43,11 @@ export const actions: Actions = {
 			kcOrgId = await createOrganization(`${firstName}'s Club`);
 			await addToOrg(userId, kcOrgId);
 			await assignAdminRole(userId);
-			await sendSetPasswordEmail(userId);
+			try {
+				await sendSetPasswordEmail(userId);
+			} catch (e) {
+				console.warn('[signup] sendSetPasswordEmail failed (SMTP not configured?):', e);
+			}
 
 			const settingsRows: { orgId: string; key: string; value: string }[] = [
 				{ orgId: kcOrgId, key: 'kcOrgId', value: kcOrgId }
@@ -60,6 +64,23 @@ export const actions: Actions = {
 			}
 
 			await db.insert(settings).values(settingsRows).onConflictDoNothing();
+
+			if (env.STRIPE_SECRET_KEY && env.STRIPE_PRICE_ID && stripeCustomerId && kcOrgId) {
+				const session = await getStripe().checkout.sessions.create({
+					mode: 'subscription',
+					line_items: [{ price: env.STRIPE_PRICE_ID, quantity: 1 }],
+					customer: stripeCustomerId,
+					metadata: { orgId: kcOrgId },
+					subscription_data: {
+						trial_period_days: 3,
+						metadata: { orgId: kcOrgId }
+					},
+					payment_method_collection: 'always',
+					success_url: `${url.origin}/signin`,
+					cancel_url: `${url.origin}/signin`
+				});
+				return { checkoutUrl: session.url };
+			}
 
 			return { success: true };
 		} catch (err) {

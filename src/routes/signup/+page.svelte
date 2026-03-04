@@ -24,7 +24,11 @@
 				method="POST"
 				use:enhance={() => {
 					loading = true;
-					return async ({ update }) => {
+					return async ({ result, update }) => {
+						if (result.type === 'success' && result.data?.checkoutUrl) {
+							window.location.href = result.data.checkoutUrl as string;
+							return;
+						}
 						await update();
 						loading = false;
 					};
