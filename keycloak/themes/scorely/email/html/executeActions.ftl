@@ -25,10 +25,10 @@
       <h2>Willkommen bei Scorely!</h2>
       <p>Dein Admin hat dir Zugang zu Scorely eingerichtet. Klicke auf den Button unten, um dein Passwort festzulegen und loszulegen.</p>
       <a href="${link}" class="cta">Passwort festlegen</a>
-      <p style="font-size:13px;color:#4a5a7a;">Dieser Link ist ${linkExpirationFormatter(linkExpiration)} gültig. Falls du diese E-Mail nicht erwartet hast, kannst du sie ignorieren.</p>
+      <p style="font-size:13px;color:#4a5a7a;">Falls du diese E-Mail nicht erwartet hast, kannst du sie ignorieren.</p>
     </div>
     <div class="footer">
-      <p>Scorely — Volleyball Live-Scoring</p>
+      <p>Scorely &mdash; Volleyball Live-Scoring</p>
     </div>
   </div>
 </body>
