@@ -26,9 +26,12 @@ export const POST: RequestHandler = async ({ request }) => {
 		const session = event.data.object as Stripe.Checkout.Session;
 		const orgId = session.metadata?.orgId ?? null;
 		const customerId = resolveCustomerId(session.customer ?? null);
+		console.log('[webhook] checkout.session.completed', { orgId, customerId });
 		if (orgId && customerId) {
 			await upsertBillingSetting(orgId, 'stripeCustomerId', customerId);
 			await upsertBillingSetting(orgId, 'subscriptionStatus', 'trialing');
+		} else {
+			console.warn('[webhook] checkout.session.completed: missing orgId or customerId, skipping');
 		}
 	} else if (
 		event.type === 'customer.subscription.created' ||
@@ -37,11 +40,16 @@ export const POST: RequestHandler = async ({ request }) => {
 	) {
 		const sub = event.data.object as Stripe.Subscription;
 		const customerId = resolveCustomerId(sub.customer);
-		const orgId = sub.metadata?.orgId ?? (customerId ? await getOrgByStripeCustomer(customerId) : null);
+		const orgIdFromMeta = sub.metadata?.orgId ?? null;
+		const orgIdFromDb = customerId ? await getOrgByStripeCustomer(customerId) : null;
+		const orgId = orgIdFromMeta ?? orgIdFromDb;
+		console.log('[webhook]', event.type, { customerId, orgIdFromMeta, orgIdFromDb, orgId, status: sub.status });
 		if (orgId && customerId) {
 			await upsertBillingSetting(orgId, 'stripeCustomerId', customerId);
 			const status = event.type === 'customer.subscription.deleted' ? 'canceled' : sub.status;
 			await upsertBillingSetting(orgId, 'subscriptionStatus', status);
+		} else {
+			console.warn('[webhook]', event.type, ': missing orgId or customerId, skipping');
 		}
 	} else if (event.type === 'invoice.payment_failed') {
 		const invoice = event.data.object as Stripe.Invoice;
