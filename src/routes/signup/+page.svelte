@@ -4,6 +4,9 @@
 
 	let { form }: { form: ActionData } = $props();
 	let loading = $state(false);
+	let password = $state('');
+	let confirmPassword = $state('');
+	let passwordMismatch = $derived(confirmPassword.length > 0 && password !== confirmPassword);
 </script>
 
 <div class="min-h-screen bg-bg-base flex items-center justify-center p-4">
@@ -15,9 +18,8 @@
 
 		{#if form?.success}
 			<div class="bg-bg-panel-alt rounded-xl p-8 text-center">
-				<p class="text-2xl mb-2">✉️</p>
-				<p class="text-text-primary font-semibold text-lg">E-Mail gesendet</p>
-				<p class="text-text-secondary mt-2 text-sm">Prüfe dein Postfach und setze dein Passwort.</p>
+				<p class="text-text-primary font-semibold text-lg">Konto erstellt</p>
+				<p class="text-text-secondary mt-2 text-sm">Sie werden weitergeleitet...</p>
 			</div>
 		{:else}
 			<form
@@ -75,9 +77,39 @@
 					/>
 				</div>
 
+				<div>
+					<label class="block text-xs text-text-tertiary mb-1" for="password">Passwort</label>
+					<input
+						id="password"
+						name="password"
+						type="password"
+						required
+						minlength="8"
+						autocomplete="new-password"
+						bind:value={password}
+						class="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent"
+					/>
+				</div>
+
+				<div>
+					<label class="block text-xs text-text-tertiary mb-1" for="confirmPassword">Passwort bestätigen</label>
+					<input
+						id="confirmPassword"
+						name="confirmPassword"
+						type="password"
+						required
+						autocomplete="new-password"
+						bind:value={confirmPassword}
+						class="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent {passwordMismatch ? 'border-red-500' : ''}"
+					/>
+					{#if passwordMismatch}
+						<p class="text-red-400 text-xs mt-1">Passwörter stimmen nicht überein</p>
+					{/if}
+				</div>
+
 				<button
 					type="submit"
-					disabled={loading}
+					disabled={loading || passwordMismatch}
 					class="w-full bg-accent-mid hover:bg-accent-dark disabled:opacity-50 text-white font-semibold rounded-lg px-4 py-3 transition-colors"
 				>
 					{loading ? '...' : 'Kostenlos starten'}

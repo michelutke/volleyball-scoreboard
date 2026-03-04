@@ -7,7 +7,7 @@ import {
 	deleteOrganization,
 	addToOrg,
 	assignAdminRole,
-	sendSetPasswordEmail,
+	setUserPassword,
 	deleteUser
 } from '$lib/server/keycloak-admin';
 import { getStripe } from '$lib/server/stripe';
@@ -26,9 +26,17 @@ export const actions: Actions = {
 		const email = (data.get('email') as string | null)?.trim();
 		const firstName = (data.get('firstName') as string | null)?.trim();
 		const lastName = (data.get('lastName') as string | null)?.trim();
+		const password = data.get('password') as string | null;
+		const confirmPassword = data.get('confirmPassword') as string | null;
 
-		if (!email || !firstName || !lastName) {
+		if (!email || !firstName || !lastName || !password || !confirmPassword) {
 			return fail(400, { error: 'Alle Felder sind erforderlich' });
+		}
+		if (password.length < 8) {
+			return fail(400, { error: 'Passwort muss mindestens 8 Zeichen haben' });
+		}
+		if (password !== confirmPassword) {
+			return fail(400, { error: 'Passwörter stimmen nicht überein' });
 		}
 
 		const existing = await getUserByEmail(email);
@@ -40,14 +48,10 @@ export const actions: Actions = {
 
 		try {
 			userId = await createUser(email, { firstName, lastName });
+			await setUserPassword(userId, password);
 			kcOrgId = await createOrganization(`${firstName}'s Club`);
 			await addToOrg(userId, kcOrgId);
 			await assignAdminRole(userId);
-			try {
-				await sendSetPasswordEmail(userId);
-			} catch (e) {
-				console.warn('[signup] sendSetPasswordEmail failed (SMTP not configured?):', e);
-			}
 
 			const settingsRows: { orgId: string; key: string; value: string }[] = [
 				{ orgId: kcOrgId, key: 'kcOrgId', value: kcOrgId }
@@ -76,7 +80,7 @@ export const actions: Actions = {
 						metadata: { orgId: kcOrgId }
 					},
 					payment_method_collection: 'always',
-					success_url: `${url.origin}/signin`,
+					success_url: `${url.origin}/signin?callbackUrl=/dashboard`,
 					cancel_url: `${url.origin}/signin`
 				});
 				return { checkoutUrl: session.url };

@@ -189,6 +189,14 @@ export async function revokeAdminRole(userId: string): Promise<void> {
 	if (!res.ok && res.status !== 404) throw new Error(`Failed to revoke admin role: ${res.status}`);
 }
 
+export async function setUserPassword(userId: string, password: string): Promise<void> {
+	const res = await kcFetch(`/users/${userId}/reset-password`, {
+		method: 'PUT',
+		body: JSON.stringify({ type: 'password', temporary: false, value: password })
+	});
+	if (!res.ok) throw new Error(`KC setUserPassword failed: ${res.status}`);
+}
+
 export async function sendSetPasswordEmail(userId: string): Promise<void> {
 	const res = await kcFetch(`/users/${userId}/execute-actions-email`, {
 		method: 'PUT',
