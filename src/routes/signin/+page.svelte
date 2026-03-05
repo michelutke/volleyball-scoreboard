@@ -12,6 +12,7 @@
 	let errorMsg = $state(
 		untrack(() => (data.error === 'CredentialsSignin' ? 'Ungültige E-Mail oder Passwort.' : ''))
 	);
+	let successMsg = $state(untrack(() => (data.registered ? 'Konto erstellt — bitte melden Sie sich an.' : '')));
 
 	async function handleSubmit(e: SubmitEvent) {
 		e.preventDefault();
@@ -36,6 +37,9 @@
 	<img src="/vbcthun-ball.svg" alt="Scorely" class="logo" />
 	<h1 class="title">SCORELY</h1>
 
+	{#if successMsg}
+		<div class="alert alert-success">{successMsg}</div>
+	{/if}
 	{#if errorMsg}
 		<div class="alert alert-error">{errorMsg}</div>
 	{/if}
@@ -149,6 +153,11 @@
 		background: rgba(239, 68, 68, 0.12);
 		border: 1px solid rgba(239, 68, 68, 0.3);
 		color: #f87171;
+	}
+	.alert-success {
+		background: rgba(34, 197, 94, 0.12);
+		border: 1px solid rgba(34, 197, 94, 0.3);
+		color: #86efac;
 	}
 
 	form {

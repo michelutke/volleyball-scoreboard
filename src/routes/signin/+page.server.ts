@@ -7,6 +7,7 @@ export const load: PageServerLoad = ({ url }) => {
 	return {
 		callbackUrl,
 		error: url.searchParams.get('error') ?? null,
+		registered: url.searchParams.has('registered'),
 		kcIssuer: env.KEYCLOAK_ISSUER ?? ''
 	};
 };
