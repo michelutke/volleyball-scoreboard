@@ -308,32 +308,28 @@ export async function ensureOrganizationMapper(): Promise<void> {
 }
 
 export async function ensureDirectAccessGrants(): Promise<void> {
-	if (!env.KEYCLOAK_ADMIN_URL) return;
+	if (!env.KEYCLOAK_ADMIN_URL || !env.KEYCLOAK_ADMIN_CLIENT_SECRET) return;
 	try {
-		// scoring-admin lacks manage-clients; use master realm admin-cli
-		const masterTokenRes = await fetch(`${env.KEYCLOAK_ADMIN_URL}/realms/master/protocol/openid-connect/token`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-			body: new URLSearchParams({ grant_type: 'password', client_id: 'admin-cli', username: 'admin', password: env.KEYCLOAK_ADMIN_PASSWORD ?? 'admin' })
-		});
-		if (!masterTokenRes.ok) return;
-		const { access_token } = await masterTokenRes.json() as { access_token: string };
-		const realm = env.KEYCLOAK_REALM ?? 'master';
-		const base = `${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}`;
-		const headers = { Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json' };
 		const clientId = env.KEYCLOAK_CLIENT_ID ?? 'scoring-app';
-		const searchRes = await fetch(`${base}/clients?clientId=${encodeURIComponent(clientId)}`, { headers });
-		if (!searchRes.ok) return;
+		const searchRes = await kcFetch(`/clients?clientId=${encodeURIComponent(clientId)}`);
+		if (!searchRes.ok) {
+			console.warn('[keycloak] ensureDirectAccessGrants: client search failed:', searchRes.status);
+			return;
+		}
 		const clients: { id: string; directAccessGrantsEnabled: boolean }[] = await searchRes.json();
 		if (clients.length === 0) return;
 		const client = clients[0];
-		if (client.directAccessGrantsEnabled) return;
-		const res = await fetch(`${base}/clients/${client.id}`, {
-			method: 'PUT', headers,
+		if (client.directAccessGrantsEnabled) {
+			console.log('[keycloak] direct access grants already enabled');
+			return;
+		}
+		const res = await kcFetch(`/clients/${client.id}`, {
+			method: 'PUT',
 			body: JSON.stringify({ ...client, directAccessGrantsEnabled: true })
 		});
 		if (!res.ok) {
-			console.warn('[keycloak] ensureDirectAccessGrants failed:', res.status);
+			const body = await kcErrorBody(res);
+			console.warn('[keycloak] ensureDirectAccessGrants failed:', res.status, body);
 			return;
 		}
 		console.log('[keycloak] direct access grants enabled');
