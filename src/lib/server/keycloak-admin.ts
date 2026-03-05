@@ -314,7 +314,7 @@ export async function ensureDirectAccessGrants(): Promise<void> {
 		const masterTokenRes = await fetch(`${env.KEYCLOAK_ADMIN_URL}/realms/master/protocol/openid-connect/token`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-			body: new URLSearchParams({ grant_type: 'password', client_id: 'admin-cli', username: 'admin', password: 'admin' })
+			body: new URLSearchParams({ grant_type: 'password', client_id: 'admin-cli', username: 'admin', password: env.KEYCLOAK_ADMIN_PASSWORD ?? 'admin' })
 		});
 		if (!masterTokenRes.ok) return;
 		const { access_token } = await masterTokenRes.json() as { access_token: string };

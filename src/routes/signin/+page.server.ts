@@ -1,8 +1,12 @@
-import { serverSignIn } from '../../auth';
 import type { PageServerLoad } from './$types';
+import { env } from '$env/dynamic/private';
 
-export const load: PageServerLoad = async (event) => {
-	const raw = event.url.searchParams.get('callbackUrl') ?? '/';
-	const callbackUrl = raw.startsWith('/') && !raw.startsWith('/signin') ? raw : '/';
-	await serverSignIn(event, 'keycloak', callbackUrl);
+export const load: PageServerLoad = ({ url }) => {
+	const raw = url.searchParams.get('callbackUrl') ?? '/dashboard';
+	const callbackUrl = raw.startsWith('/') && !raw.startsWith('/signin') ? raw : '/dashboard';
+	return {
+		callbackUrl,
+		error: url.searchParams.get('error') ?? null,
+		kcIssuer: env.KEYCLOAK_ISSUER ?? ''
+	};
 };
