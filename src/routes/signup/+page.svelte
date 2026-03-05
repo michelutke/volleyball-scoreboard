@@ -2,7 +2,6 @@
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { onDestroy } from 'svelte';
-	import { signIn } from '@auth/sveltekit/client';
 	import { loadStripe } from '@stripe/stripe-js';
 	import { env } from '$env/dynamic/public';
 	import type { ActionData } from './$types';
@@ -32,12 +31,17 @@
 		checkout = await stripe.initEmbeddedCheckout({
 			clientSecret: secret,
 			onComplete: async () => {
-				await fetch('/api/billing/verify-session', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ sessionId })
-				});
-				await signIn('credentials', { email, password, callbackUrl: '/dashboard' });
+				try {
+					const res = await fetch('/api/auth/auto-login', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ email, password, sessionId })
+					});
+					const data: { ok: boolean; redirectUrl: string } = await res.json();
+					await goto(data.ok ? '/dashboard' : `/signin?registered=1`);
+				} catch {
+					await goto('/signin?registered=1');
+				}
 			}
 		});
 		checkout.mount('#stripe-checkout');

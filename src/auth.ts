@@ -57,7 +57,11 @@ const baseConfig: SvelteKitAuthConfig = {
 						scope: 'openid'
 					})
 				});
-				if (!tokenRes.ok) return null;
+				if (!tokenRes.ok) {
+					const errBody = await tokenRes.text();
+					console.error('[auth] KC ROPC failed:', tokenRes.status, errBody);
+					return null;
+				}
 				const tokens: { access_token: string } = await tokenRes.json();
 				try {
 					const payload = JSON.parse(Buffer.from(tokens.access_token.split('.')[1], 'base64url').toString());
@@ -107,6 +111,38 @@ const baseConfig: SvelteKitAuthConfig = {
 };
 
 export const { handle, signIn, signOut } = SvelteKitAuth(baseConfig);
+
+export async function serverCredentialsSignIn(
+	event: RequestEvent,
+	email: string,
+	password: string,
+	redirectTo: string
+): Promise<{ ok: boolean; redirectUrl: string }> {
+	const config: SvelteKitAuthConfig = { ...baseConfig, basePath: `${base}/auth` };
+	config.skipCSRFCheck = skipCSRFCheck;
+	setEnvDefaults(env, config);
+
+	const headers = new Headers(event.request.headers);
+	const authUrl = env.AUTH_URL ?? env.ORIGIN;
+	const protocol = authUrl ? new URL(authUrl).protocol : event.url.protocol;
+	const signinURL = createActionURL('signin', protocol, headers, env, config);
+	headers.set('Content-Type', 'application/x-www-form-urlencoded');
+	const body = new URLSearchParams({ email, password, callbackUrl: redirectTo });
+	const req = new Request(`${signinURL}/credentials`, { method: 'POST', headers, body });
+
+	const configWithRaw: SvelteKitAuthConfig & { raw: typeof raw } = config as SvelteKitAuthConfig & { raw: typeof raw };
+	configWithRaw.raw = raw;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const res = await Auth(req, configWithRaw) as any;
+
+	for (const c of res?.cookies ?? []) {
+		event.cookies.set(c.name, c.value, { path: '/', ...c.options });
+	}
+
+	const redirectUrl: string = res?.redirect ?? redirectTo;
+	const ok = !redirectUrl.includes('error=');
+	return { ok, redirectUrl: ok ? redirectTo : redirectUrl };
+}
 
 /**
  * Server-side OAuth initiation for use in `load` functions.
