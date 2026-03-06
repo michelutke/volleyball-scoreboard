@@ -65,8 +65,8 @@ const baseConfig: SvelteKitAuthConfig = {
 				const tokens: { access_token: string } = await tokenRes.json();
 				try {
 					const payload = JSON.parse(Buffer.from(tokens.access_token.split('.')[1], 'base64url').toString());
-					const orgsMap = payload.organizations as Record<string, { id?: string }> | undefined;
-					const firstOrgId = orgsMap ? Object.values(orgsMap)[0]?.id : undefined;
+					const orgsMap = (payload.organization ?? payload.organizations) as Record<string, unknown> | undefined;
+					const firstOrgId = orgsMap ? Object.keys(orgsMap)[0] : undefined;
 					return {
 						id: payload.sub,
 						email: payload.email,
@@ -87,8 +87,8 @@ const baseConfig: SvelteKitAuthConfig = {
 					const payload = JSON.parse(
 						Buffer.from(account.access_token.split('.')[1], 'base64url').toString()
 					);
-					const orgsMap = payload.organizations as Record<string, { id?: string }> | undefined;
-					const firstOrgId = orgsMap ? Object.values(orgsMap)[0]?.id : undefined;
+					const orgsMap = (payload.organization ?? payload.organizations) as Record<string, unknown> | undefined;
+					const firstOrgId = orgsMap ? Object.keys(orgsMap)[0] : undefined;
 					token.orgId = (payload.org_id as string | undefined) ?? firstOrgId;
 					token.roles = (payload.realm_access?.roles as string[]) ?? [];
 				} catch (err) {
