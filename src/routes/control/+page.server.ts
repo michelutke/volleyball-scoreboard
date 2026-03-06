@@ -5,8 +5,10 @@ import { eq, desc, asc, and } from 'drizzle-orm';
 import type { MatchState } from '$lib/types.js';
 import type { PageServerLoad } from './$types.js';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	const { orgId } = locals;
 	const allMatches = await db.query.matches.findMany({
+		where: eq(matches.orgId, orgId),
 		orderBy: desc(matches.createdAt)
 	});
 
