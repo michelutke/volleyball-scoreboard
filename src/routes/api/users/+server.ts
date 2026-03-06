@@ -31,6 +31,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const body: { email?: string } = await request.json();
 	if (!body.email?.trim()) return json({ error: 'E-Mail erforderlich' }, { status: 400 });
 
+	const currentMembers = await listOrgMembers(kcOrgId);
+	if (currentMembers.length >= 5) {
+		return json({ error: 'Maximale Nutzerzahl erreicht (5 Nutzer pro Organisation)' }, { status: 400 });
+	}
+
 	let userId: string;
 	try {
 		userId = await createUser(body.email.trim());

@@ -33,7 +33,7 @@
 				body: JSON.stringify(payload)
 			});
 			if (!res.ok) throw new Error('Speichern fehlgeschlagen');
-			window.location.href = '/';
+			window.location.href = isEdit ? '/' : '/teams';
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Unbekannter Fehler';
 			saving = false;
@@ -62,6 +62,25 @@
 				/>
 			</div>
 
+			{#if data.isAdmin}
+				<div>
+					<label for="svApiKey" class="block text-sm font-medium text-text-primary mb-1">Swiss Volley API-Key</label>
+					{#if data.swissVolleyApiKeySet}
+						<p class="text-xs text-text-tertiary mb-1">API-Key ist konfiguriert</p>
+					{:else if !isEdit}
+						<p class="text-xs text-text-tertiary mb-1">Optional — Mannschaften automatisch aus Swiss Volley importieren</p>
+					{/if}
+					<input
+						id="svApiKey"
+						type="password"
+						bind:value={swissVolleyApiKey}
+						placeholder={data.swissVolleyApiKeySet ? '••••••••' : 'API-Key eingeben'}
+						autocomplete="off"
+						class="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2.5 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent"
+					/>
+				</div>
+			{/if}
+
 			{#if isEdit}
 				<div>
 					<label for="accentColor" class="block text-sm font-medium text-text-primary mb-1">Akzentfarbe</label>
@@ -84,23 +103,6 @@
 						{/if}
 					</div>
 				</div>
-
-				{#if data.isAdmin}
-					<div>
-						<label for="svApiKey" class="block text-sm font-medium text-text-primary mb-1">Swiss Volley API-Key</label>
-						{#if data.swissVolleyApiKeySet}
-							<p class="text-xs text-text-tertiary mb-1">API-Key ist konfiguriert</p>
-						{/if}
-						<input
-							id="svApiKey"
-							type="password"
-							bind:value={swissVolleyApiKey}
-							placeholder={data.swissVolleyApiKeySet ? '••••••••' : 'API-Key eingeben'}
-							autocomplete="off"
-							class="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2.5 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent"
-						/>
-					</div>
-				{/if}
 			{/if}
 
 			<button
