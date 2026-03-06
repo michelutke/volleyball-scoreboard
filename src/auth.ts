@@ -33,6 +33,25 @@ declare module '@auth/core/jwt' {
 	}
 }
 
+/**
+ * KC 26 serializes the `organization` claim as either:
+ *   object: { "alias": { "id": "uuid" } }          (older format)
+ *   array:  ["alias", { "alias": { "id": "uuid" } }]  (KC 26 multivalued)
+ */
+function extractOrgIdFromClaim(claim: unknown): string | undefined {
+	if (!claim) return undefined;
+	if (Array.isArray(claim)) {
+		for (const item of claim) {
+			if (item && typeof item === 'object') {
+				const id = Object.values(item as Record<string, { id?: string }>)[0]?.id;
+				if (id) return id;
+			}
+		}
+		return undefined;
+	}
+	return Object.values(claim as Record<string, { id?: string }>)[0]?.id;
+}
+
 const baseConfig: SvelteKitAuthConfig = {
 	trustHost: true,
 	pages: { signIn: '/signin', error: '/signin' },
@@ -66,9 +85,8 @@ const baseConfig: SvelteKitAuthConfig = {
 				const tokens: { access_token: string } = await tokenRes.json();
 				try {
 					const payload = JSON.parse(Buffer.from(tokens.access_token.split('.')[1], 'base64url').toString());
-					const orgMap = (payload.organization ?? payload.organizations) as Record<string, { id?: string }> | undefined;
 					let orgId: string | undefined = (payload.org_id as string | undefined) ??
-						(orgMap ? Object.values(orgMap)[0]?.id : undefined);
+						extractOrgIdFromClaim(payload.organization ?? payload.organizations);
 					// Fallback: KC admin API — reliable when token lacks org claims (ROPC may omit organization scope)
 					if (!orgId && payload.sub) {
 						try { orgId = await getKcOrgIdForUser(payload.sub as string); } catch { /* non-fatal */ }
@@ -97,9 +115,8 @@ const baseConfig: SvelteKitAuthConfig = {
 					const payload = JSON.parse(
 						Buffer.from(account.access_token.split('.')[1], 'base64url').toString()
 					);
-					const orgMap = (payload.organization ?? payload.organizations) as Record<string, { id?: string }> | undefined;
 					let orgId: string | undefined = (payload.org_id as string | undefined) ??
-						(orgMap ? Object.values(orgMap)[0]?.id : undefined);
+						extractOrgIdFromClaim(payload.organization ?? payload.organizations);
 					// Fallback: KC admin API — reliable when OIDC token lacks org scope
 					if (!orgId && payload.sub) {
 						try { orgId = await getKcOrgIdForUser(payload.sub as string); } catch { /* non-fatal */ }

@@ -416,15 +416,24 @@ export async function ensureDirectAccessGrants(): Promise<void> {
 }
 
 export async function getKcOrgIdForUser(userId: string): Promise<string | undefined> {
+	// try service account first; fall back to master admin (service account may lack view-users)
 	const res = await kcFetch(`/users/${userId}/organizations`);
-	if (!res.ok) {
-		console.warn('[keycloak] getKcOrgIdForUser failed:', res.status, 'userId:', userId);
+	if (res.ok) {
+		const orgs: { id: string }[] = await res.json();
+		return orgs[0]?.id;
+	}
+	console.warn('[keycloak] getKcOrgIdForUser SA failed:', res.status, 'userId:', userId, '— trying master admin');
+	const masterToken = await getMasterAdminToken();
+	if (!masterToken) return undefined;
+	const realm = env.KEYCLOAK_REALM ?? 'master';
+	const fallback = await fetch(`${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}/users/${userId}/organizations`, {
+		headers: { Authorization: `Bearer ${masterToken}` }
+	});
+	if (!fallback.ok) {
+		console.warn('[keycloak] getKcOrgIdForUser master fallback failed:', fallback.status, 'userId:', userId);
 		return undefined;
 	}
-	const orgs: { id: string }[] = await res.json();
-	if (!orgs[0]?.id) {
-		console.warn('[keycloak] getKcOrgIdForUser: no orgs found for userId:', userId);
-	}
+	const orgs: { id: string }[] = await fallback.json();
 	return orgs[0]?.id;
 }
 
