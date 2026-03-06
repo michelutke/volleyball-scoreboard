@@ -73,6 +73,10 @@ const baseConfig: SvelteKitAuthConfig = {
 					if (!orgId && payload.sub) {
 						try { orgId = await getKcOrgIdForUser(payload.sub as string); } catch { /* non-fatal */ }
 					}
+					if (!orgId) {
+						console.error('[auth] ROPC: orgId extraction failed for user:', payload.email, payload.sub);
+						return null;
+					}
 					return {
 						id: payload.sub,
 						email: payload.email,
@@ -100,6 +104,9 @@ const baseConfig: SvelteKitAuthConfig = {
 					if (!orgId && payload.sub) {
 						try { orgId = await getKcOrgIdForUser(payload.sub as string); } catch { /* non-fatal */ }
 					}
+					if (!orgId) {
+						console.error('[auth] OIDC: orgId extraction failed for sub:', payload.sub);
+					}
 					token.orgId = orgId;
 					token.roles = (payload.realm_access?.roles as string[]) ?? [];
 				} catch (err) {
@@ -110,6 +117,13 @@ const baseConfig: SvelteKitAuthConfig = {
 			// Credentials flow: user object carries orgId + roles
 			if (user?.orgId) token.orgId = user.orgId;
 			if (user?.roles) token.roles = user.roles;
+			// Token refresh: re-attempt admin API if orgId still missing
+			if (!token.orgId && token.sub) {
+				try { token.orgId = await getKcOrgIdForUser(token.sub); } catch { /* non-fatal */ }
+				if (!token.orgId) {
+					console.error('[auth] jwt refresh: orgId still missing for sub:', token.sub);
+				}
+			}
 			return token;
 		},
 		session({ session, token }) {

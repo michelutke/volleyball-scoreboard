@@ -10,7 +10,13 @@
 	let password = $state('');
 	let loading = $state(false);
 	let errorMsg = $state(
-		untrack(() => (data.error === 'CredentialsSignin' ? 'Ungültige E-Mail oder Passwort.' : ''))
+		untrack(() =>
+			data.error === 'CredentialsSignin'
+				? 'Ungültige E-Mail oder Passwort.'
+				: data.error === 'OrgNotFound'
+					? 'Organisation konnte nicht geladen werden. Bitte erneut anmelden.'
+					: ''
+		)
 	);
 	let successMsg = $state(untrack(() => (data.registered ? 'Konto erstellt — bitte melden Sie sich an.' : '')));
 

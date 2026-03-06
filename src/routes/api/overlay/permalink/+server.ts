@@ -16,7 +16,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 	const matchId = parseInt(row.value);
 	const match = await db.query.matches.findFirst({
-		where: eq(matches.id, matchId)
+		where: and(eq(matches.id, matchId), eq(matches.orgId, orgId))
 	});
 
 	if (!match) {
@@ -51,7 +51,7 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
 
 	const matchId = parseInt(value);
 	const match = await db.query.matches.findFirst({
-		where: eq(matches.id, matchId)
+		where: and(eq(matches.id, matchId), eq(matches.orgId, orgId))
 	});
 
 	return json({
