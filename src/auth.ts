@@ -6,6 +6,7 @@ import { base } from '$app/paths';
 import { env } from '$env/dynamic/private';
 import { redirect } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
+import { getKcOrgIdForUser } from '$lib/server/keycloak-admin';
 
 declare module '@auth/core/types' {
 	interface Session {
@@ -54,7 +55,7 @@ const baseConfig: SvelteKitAuthConfig = {
 						client_secret: env.KEYCLOAK_CLIENT_SECRET ?? '',
 						username: credentials.email as string,
 						password: credentials.password as string,
-						scope: 'openid'
+						scope: 'openid organization:*'
 					})
 				});
 				if (!tokenRes.ok) {
@@ -65,13 +66,18 @@ const baseConfig: SvelteKitAuthConfig = {
 				const tokens: { access_token: string } = await tokenRes.json();
 				try {
 					const payload = JSON.parse(Buffer.from(tokens.access_token.split('.')[1], 'base64url').toString());
-					const orgsMap = (payload.organization ?? payload.organizations) as Record<string, unknown> | undefined;
-					const firstOrgId = orgsMap ? Object.keys(orgsMap)[0] : undefined;
+					const orgMap = (payload.organization ?? payload.organizations) as Record<string, { id?: string }> | undefined;
+					let orgId: string | undefined = (payload.org_id as string | undefined) ??
+						(orgMap ? Object.values(orgMap)[0]?.id : undefined);
+					// Fallback: KC admin API — reliable when token lacks org claims (ROPC may omit organization scope)
+					if (!orgId && payload.sub) {
+						try { orgId = await getKcOrgIdForUser(payload.sub as string); } catch { /* non-fatal */ }
+					}
 					return {
 						id: payload.sub,
 						email: payload.email,
 						name: payload.name,
-						orgId: (payload.org_id as string | undefined) ?? firstOrgId,
+						orgId,
 						roles: (payload.realm_access?.roles as string[]) ?? []
 					};
 				} catch {
@@ -81,15 +87,20 @@ const baseConfig: SvelteKitAuthConfig = {
 		})
 	],
 	callbacks: {
-		jwt({ token, account, user }) {
+		async jwt({ token, account, user }) {
 			if (account?.access_token) {
 				try {
 					const payload = JSON.parse(
 						Buffer.from(account.access_token.split('.')[1], 'base64url').toString()
 					);
-					const orgsMap = (payload.organization ?? payload.organizations) as Record<string, unknown> | undefined;
-					const firstOrgId = orgsMap ? Object.keys(orgsMap)[0] : undefined;
-					token.orgId = (payload.org_id as string | undefined) ?? firstOrgId;
+					const orgMap = (payload.organization ?? payload.organizations) as Record<string, { id?: string }> | undefined;
+					let orgId: string | undefined = (payload.org_id as string | undefined) ??
+						(orgMap ? Object.values(orgMap)[0]?.id : undefined);
+					// Fallback: KC admin API — reliable when OIDC token lacks org scope
+					if (!orgId && payload.sub) {
+						try { orgId = await getKcOrgIdForUser(payload.sub as string); } catch { /* non-fatal */ }
+					}
+					token.orgId = orgId;
 					token.roles = (payload.realm_access?.roles as string[]) ?? [];
 				} catch (err) {
 					console.error('KC token decode failed', err);

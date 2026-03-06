@@ -353,6 +353,13 @@ export async function ensureDirectAccessGrants(): Promise<void> {
 	}
 }
 
+export async function getKcOrgIdForUser(userId: string): Promise<string | undefined> {
+	const res = await kcFetch(`/users/${userId}/organizations`);
+	if (!res.ok) return undefined;
+	const orgs: { id: string }[] = await res.json();
+	return orgs[0]?.id;
+}
+
 export async function syncClientRedirectUri(origin: string): Promise<void> {
 	if (!env.KEYCLOAK_ADMIN_URL || !env.KEYCLOAK_ADMIN_CLIENT_SECRET) return;
 	try {
