@@ -415,6 +415,30 @@ export async function ensureDirectAccessGrants(): Promise<void> {
 	}
 }
 
+/**
+ * Resolve a KC org alias to its UUID using the service account.
+ * The `organization` token claim always contains the alias as a key — even when
+ * `addOrganizationId` is not configured. This requires only org-list permission
+ * (which the service account has) and no master admin credentials.
+ */
+export async function getKcOrgIdFromAlias(alias: string): Promise<string | undefined> {
+	try {
+		const res = await kcFetch(`/organizations?search=${encodeURIComponent(alias)}&exact=true`);
+		if (res.ok) {
+			const orgs: { id: string; alias: string }[] = await res.json();
+			const match = orgs.find((o) => o.alias === alias);
+			return match?.id;
+		}
+		// KC may not support ?exact=true — fall back to unfiltered search
+		const res2 = await kcFetch(`/organizations?search=${encodeURIComponent(alias)}`);
+		if (!res2.ok) return undefined;
+		const orgs: { id: string; alias: string }[] = await res2.json();
+		return orgs.find((o) => o.alias === alias)?.id;
+	} catch {
+		return undefined;
+	}
+}
+
 export async function getKcOrgIdForUser(userId: string): Promise<string | undefined> {
 	// try service account first; fall back to master admin (service account may lack view-users)
 	const res = await kcFetch(`/users/${userId}/organizations`);

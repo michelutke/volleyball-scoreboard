@@ -6,7 +6,7 @@ import { base } from '$app/paths';
 import { env } from '$env/dynamic/private';
 import { redirect } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
-import { getKcOrgIdForUser } from '$lib/server/keycloak-admin';
+import { getKcOrgIdForUser, getKcOrgIdFromAlias } from '$lib/server/keycloak-admin';
 
 declare module '@auth/core/types' {
 	interface Session {
@@ -52,6 +52,25 @@ function extractOrgIdFromClaim(claim: unknown): string | undefined {
 	return Object.values(claim as Record<string, { id?: string }>)[0]?.id;
 }
 
+/**
+ * Extract the org alias string from the `organization` claim.
+ * The alias is always present even when `addOrganizationId` is not configured.
+ * Array format: ["alias", {...}] — first string element is the alias.
+ * Object format: { "alias": {...} } — first key is the alias.
+ */
+function extractOrgAlias(claim: unknown): string | undefined {
+	if (!claim) return undefined;
+	if (Array.isArray(claim)) {
+		const alias = claim.find((item) => typeof item === 'string');
+		return alias as string | undefined;
+	}
+	if (typeof claim === 'object') {
+		const key = Object.keys(claim as object)[0];
+		return key || undefined;
+	}
+	return undefined;
+}
+
 const baseConfig: SvelteKitAuthConfig = {
 	trustHost: true,
 	pages: { signIn: '/signin', error: '/signin' },
@@ -85,9 +104,17 @@ const baseConfig: SvelteKitAuthConfig = {
 				const tokens: { access_token: string } = await tokenRes.json();
 				try {
 					const payload = JSON.parse(Buffer.from(tokens.access_token.split('.')[1], 'base64url').toString());
+					const orgClaim = payload.organization ?? payload.organizations;
 					let orgId: string | undefined = (payload.org_id as string | undefined) ??
-						extractOrgIdFromClaim(payload.organization ?? payload.organizations);
-					// Fallback: KC admin API — reliable when token lacks org claims (ROPC may omit organization scope)
+						extractOrgIdFromClaim(orgClaim);
+					// Fallback 1: resolve alias via service account (works without manage-clients/view-users)
+					if (!orgId) {
+						const alias = extractOrgAlias(orgClaim);
+						if (alias) {
+							try { orgId = await getKcOrgIdFromAlias(alias); } catch { /* non-fatal */ }
+						}
+					}
+					// Fallback 2: KC admin API user→organizations lookup
 					if (!orgId && payload.sub) {
 						try { orgId = await getKcOrgIdForUser(payload.sub as string); } catch { /* non-fatal */ }
 					}
@@ -115,9 +142,17 @@ const baseConfig: SvelteKitAuthConfig = {
 					const payload = JSON.parse(
 						Buffer.from(account.access_token.split('.')[1], 'base64url').toString()
 					);
+					const orgClaim = payload.organization ?? payload.organizations;
 					let orgId: string | undefined = (payload.org_id as string | undefined) ??
-						extractOrgIdFromClaim(payload.organization ?? payload.organizations);
-					// Fallback: KC admin API — reliable when OIDC token lacks org scope
+						extractOrgIdFromClaim(orgClaim);
+					// Fallback 1: resolve alias via service account (works without manage-clients/view-users)
+					if (!orgId) {
+						const alias = extractOrgAlias(orgClaim);
+						if (alias) {
+							try { orgId = await getKcOrgIdFromAlias(alias); } catch { /* non-fatal */ }
+						}
+					}
+					// Fallback 2: KC admin API user→organizations lookup
 					if (!orgId && payload.sub) {
 						try { orgId = await getKcOrgIdForUser(payload.sub as string); } catch { /* non-fatal */ }
 					}
