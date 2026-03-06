@@ -276,9 +276,33 @@ export async function ensureOrganizationMapper(): Promise<void> {
 
 		const mappersRes = await kcFetch(`/clients/${uuid}/protocol-mappers/models`);
 		if (!mappersRes.ok) return;
-		const mappers: { protocolMapper: string }[] = await mappersRes.json();
-		if (mappers.some((m) => m.protocolMapper === 'oidc-organization-membership-mapper')) {
-			console.log('[keycloak] organization mapper already present');
+		const mappers: { id: string; protocolMapper: string; config: Record<string, string> }[] = await mappersRes.json();
+		const existing = mappers.find((m) => m.protocolMapper === 'oidc-organization-membership-mapper');
+
+		// org ID must be included in the token so orgId extraction doesn't need admin API fallback
+		const desiredConfig = {
+			'access.token.claim': 'true',
+			'id.token.claim': 'false',
+			'lightweight.claim': 'false',
+			'introspection.token.claim': 'true',
+			'add.org.id.to.token': 'true'
+		};
+
+		if (existing) {
+			if (existing.config?.['add.org.id.to.token'] === 'true') {
+				console.log('[keycloak] organization mapper already configured correctly');
+				return;
+			}
+			// mapper exists but missing org ID — update it
+			const updateRes = await kcFetch(`/clients/${uuid}/protocol-mappers/models/${existing.id}`, {
+				method: 'PUT',
+				body: JSON.stringify({ ...existing, config: { ...existing.config, ...desiredConfig } })
+			});
+			if (!updateRes.ok) {
+				console.warn('[keycloak] ensureOrganizationMapper update failed:', updateRes.status);
+			} else {
+				console.log('[keycloak] organization mapper updated to include org ID in token');
+			}
 			return;
 		}
 
@@ -289,19 +313,14 @@ export async function ensureOrganizationMapper(): Promise<void> {
 				protocol: 'openid-connect',
 				protocolMapper: 'oidc-organization-membership-mapper',
 				consentRequired: false,
-				config: {
-					'access.token.claim': 'true',
-					'id.token.claim': 'false',
-					'lightweight.claim': 'false',
-					'introspection.token.claim': 'true'
-				}
+				config: desiredConfig
 			})
 		});
 		if (!addRes.ok) {
 			console.warn('[keycloak] ensureOrganizationMapper add failed:', addRes.status);
 			return;
 		}
-		console.log('[keycloak] organization mapper ensured');
+		console.log('[keycloak] organization mapper ensured with org ID');
 	} catch (e) {
 		console.warn('[keycloak] ensureOrganizationMapper failed (non-fatal):', e);
 	}
@@ -355,8 +374,14 @@ export async function ensureDirectAccessGrants(): Promise<void> {
 
 export async function getKcOrgIdForUser(userId: string): Promise<string | undefined> {
 	const res = await kcFetch(`/users/${userId}/organizations`);
-	if (!res.ok) return undefined;
+	if (!res.ok) {
+		console.warn('[keycloak] getKcOrgIdForUser failed:', res.status, 'userId:', userId);
+		return undefined;
+	}
 	const orgs: { id: string }[] = await res.json();
+	if (!orgs[0]?.id) {
+		console.warn('[keycloak] getKcOrgIdForUser: no orgs found for userId:', userId);
+	}
 	return orgs[0]?.id;
 }
 
