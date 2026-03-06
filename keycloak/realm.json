@@ -76,7 +76,8 @@
             "access.token.claim": "true",
             "id.token.claim": "false",
             "lightweight.claim": "false",
-            "introspection.token.claim": "true"
+            "introspection.token.claim": "true",
+            "addOrganizationId": "true"
           }
         }
       ]
