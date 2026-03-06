@@ -94,7 +94,7 @@
 		<div class="flex items-center justify-between mb-6">
 			<div>
 				<h1 class="text-2xl font-bold text-text-primary">Nutzerverwaltung</h1>
-				<p class="text-text-secondary text-sm">Scorer einladen und verwalten</p>
+				<p class="text-text-secondary text-sm">Scorer einladen und verwalten · <span class="{users.length >= 5 ? 'text-red-400' : 'text-text-tertiary'}">{users.length} / 5 Nutzer</span></p>
 			</div>
 		</div>
 
@@ -168,6 +168,10 @@
 						&times;
 					</button>
 				</form>
+			{:else if users.length >= 5}
+				<div class="w-full bg-bg-panel-alt rounded-xl p-4 text-center text-text-tertiary text-sm">
+					Maximale Anzahl Nutzer erreicht (5 / 5)
+				</div>
 			{:else}
 				<button onclick={() => { showInvite = true; }} class="w-full bg-bg-panel-alt hover:bg-bg-panel-hover text-text-secondary rounded-xl p-4 transition-colors">
 					+ Scorer einladen
