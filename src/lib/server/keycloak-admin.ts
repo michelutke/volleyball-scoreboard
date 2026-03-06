@@ -439,6 +439,27 @@ export async function getKcOrgIdFromAlias(alias: string): Promise<string | undef
 	}
 }
 
+/**
+ * Last-resort: enumerate all KC orgs via service account, scan members for userId.
+ * Works with zero master admin credentials — service account has org-list + member-list.
+ */
+export async function getKcOrgIdByScanningMembers(userId: string): Promise<string | undefined> {
+	try {
+		const orgsRes = await kcFetch('/organizations?max=200');
+		if (!orgsRes.ok) return undefined;
+		const orgs: { id: string }[] = await orgsRes.json();
+		for (const org of orgs) {
+			const membersRes = await kcFetch(`/organizations/${org.id}/members?max=200`);
+			if (!membersRes.ok) continue;
+			const members: { id: string }[] = await membersRes.json();
+			if (members.some((m) => m.id === userId)) return org.id;
+		}
+		return undefined;
+	} catch {
+		return undefined;
+	}
+}
+
 export async function getKcOrgIdForUser(userId: string): Promise<string | undefined> {
 	// try service account first; fall back to master admin (service account may lack view-users)
 	const res = await kcFetch(`/users/${userId}/organizations`);

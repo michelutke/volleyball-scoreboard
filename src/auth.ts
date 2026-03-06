@@ -6,7 +6,7 @@ import { base } from '$app/paths';
 import { env } from '$env/dynamic/private';
 import { redirect } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
-import { getKcOrgIdForUser, getKcOrgIdFromAlias } from '$lib/server/keycloak-admin';
+import { getKcOrgIdForUser, getKcOrgIdFromAlias, getKcOrgIdByScanningMembers } from '$lib/server/keycloak-admin';
 
 declare module '@auth/core/types' {
 	interface Session {
@@ -118,6 +118,10 @@ const baseConfig: SvelteKitAuthConfig = {
 					if (!orgId && payload.sub) {
 						try { orgId = await getKcOrgIdForUser(payload.sub as string); } catch { /* non-fatal */ }
 					}
+					// Fallback 3: scan all org member lists (SA only, no master admin needed)
+					if (!orgId && payload.sub) {
+						try { orgId = await getKcOrgIdByScanningMembers(payload.sub as string); } catch { /* non-fatal */ }
+					}
 					if (!orgId) {
 						console.error('[auth] ROPC: orgId extraction failed for user:', payload.email, payload.sub);
 						return null;
@@ -155,6 +159,10 @@ const baseConfig: SvelteKitAuthConfig = {
 					// Fallback 2: KC admin API user→organizations lookup
 					if (!orgId && payload.sub) {
 						try { orgId = await getKcOrgIdForUser(payload.sub as string); } catch { /* non-fatal */ }
+					}
+					// Fallback 3: scan all org member lists (SA only, no master admin needed)
+					if (!orgId && payload.sub) {
+						try { orgId = await getKcOrgIdByScanningMembers(payload.sub as string); } catch { /* non-fatal */ }
 					}
 					if (!orgId) {
 						console.error('[auth] OIDC: orgId extraction failed for sub:', payload.sub);
