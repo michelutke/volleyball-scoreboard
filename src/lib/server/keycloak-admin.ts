@@ -264,50 +264,96 @@ export async function bootstrapKcOrgId(): Promise<void> {
 	}
 }
 
+async function getMasterAdminToken(): Promise<string | null> {
+	if (!env.KEYCLOAK_ADMIN_URL) return null;
+	try {
+		const res = await fetch(`${env.KEYCLOAK_ADMIN_URL}/realms/master/protocol/openid-connect/token`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+			body: new URLSearchParams({
+				grant_type: 'password',
+				client_id: 'admin-cli',
+				username: 'admin',
+				password: env.KEYCLOAK_ADMIN_PASSWORD ?? 'admin'
+			})
+		});
+		if (!res.ok) return null;
+		const data: { access_token: string } = await res.json();
+		return data.access_token;
+	} catch {
+		return null;
+	}
+}
+
 export async function ensureOrganizationMapper(): Promise<void> {
-	if (!env.KEYCLOAK_ADMIN_URL || !env.KEYCLOAK_ADMIN_CLIENT_SECRET) return;
+	if (!env.KEYCLOAK_ADMIN_URL) return;
 	try {
 		const clientId = env.KEYCLOAK_CLIENT_ID ?? 'scoring-app';
-		const searchRes = await kcFetch(`/clients?clientId=${encodeURIComponent(clientId)}`);
-		if (!searchRes.ok) return;
-		const clients: { id: string }[] = await searchRes.json();
+		const realm = env.KEYCLOAK_REALM ?? 'master';
+		const base = `${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}`;
+
+		// service account may lack manage-clients — try it first, fall back to master admin
+		let authHeader: string | null = null;
+		const saRes = await kcFetch(`/clients?clientId=${encodeURIComponent(clientId)}`);
+		if (saRes.ok) {
+			authHeader = `Bearer ${await getAdminToken()}`; // service account works
+		} else {
+			const masterToken = await getMasterAdminToken();
+			if (!masterToken) {
+				console.warn('[keycloak] ensureOrganizationMapper: no usable credentials');
+				return;
+			}
+			authHeader = `Bearer ${masterToken}`;
+		}
+
+		const headers = { Authorization: authHeader, 'Content-Type': 'application/json' };
+
+		// look up client UUID
+		const clientsRes = await fetch(`${base}/clients?clientId=${encodeURIComponent(clientId)}`, { headers });
+		if (!clientsRes.ok) { console.warn('[keycloak] ensureOrganizationMapper: clients lookup failed', clientsRes.status); return; }
+		const clients: { id: string }[] = await clientsRes.json();
 		if (clients.length === 0) return;
 		const uuid = clients[0].id;
 
-		const mappersRes = await kcFetch(`/clients/${uuid}/protocol-mappers/models`);
-		if (!mappersRes.ok) return;
-		const mappers: { id: string; protocolMapper: string; config: Record<string, string> }[] = await mappersRes.json();
-		const existing = mappers.find((m) => m.protocolMapper === 'oidc-organization-membership-mapper');
+		const mappersUrl = `${base}/clients/${uuid}/protocol-mappers/models`;
+		const mappersRes = await fetch(mappersUrl, { headers });
+		if (!mappersRes.ok) { console.warn('[keycloak] ensureOrganizationMapper: mappers lookup failed', mappersRes.status); return; }
+		const mappers: { id: string; name: string; protocolMapper: string; config: Record<string, string> }[] = await mappersRes.json();
 
-		// org ID must be included in the token so orgId extraction doesn't need admin API fallback
+		// delete hardcoded org_id mapper if present — it assigns a static org UUID to all users
+		const hardcoded = mappers.find((m) => m.protocolMapper === 'oidc-hardcoded-claim-mapper' && m.name === 'org_id');
+		if (hardcoded) {
+			const delRes = await fetch(`${mappersUrl}/${hardcoded.id}`, { method: 'DELETE', headers });
+			if (delRes.ok) console.log('[keycloak] deleted hardcoded org_id mapper');
+			else console.warn('[keycloak] failed to delete hardcoded org_id mapper:', delRes.status);
+		}
+
+		// org ID must be in token — KC 26 uses addOrganizationId key
 		const desiredConfig = {
 			'access.token.claim': 'true',
 			'id.token.claim': 'false',
 			'lightweight.claim': 'false',
 			'introspection.token.claim': 'true',
-			'add.org.id.to.token': 'true'
+			'addOrganizationId': 'true'
 		};
 
+		const existing = mappers.find((m) => m.protocolMapper === 'oidc-organization-membership-mapper');
 		if (existing) {
-			if (existing.config?.['add.org.id.to.token'] === 'true') {
+			if (existing.config?.['addOrganizationId'] === 'true') {
 				console.log('[keycloak] organization mapper already configured correctly');
 				return;
 			}
-			// mapper exists but missing org ID — update it
-			const updateRes = await kcFetch(`/clients/${uuid}/protocol-mappers/models/${existing.id}`, {
-				method: 'PUT',
+			const updateRes = await fetch(`${mappersUrl}/${existing.id}`, {
+				method: 'PUT', headers,
 				body: JSON.stringify({ ...existing, config: { ...existing.config, ...desiredConfig } })
 			});
-			if (!updateRes.ok) {
-				console.warn('[keycloak] ensureOrganizationMapper update failed:', updateRes.status);
-			} else {
-				console.log('[keycloak] organization mapper updated to include org ID in token');
-			}
+			if (!updateRes.ok) console.warn('[keycloak] ensureOrganizationMapper update failed:', updateRes.status);
+			else console.log('[keycloak] organization mapper updated to include org ID in token');
 			return;
 		}
 
-		const addRes = await kcFetch(`/clients/${uuid}/protocol-mappers/models`, {
-			method: 'POST',
+		const addRes = await fetch(mappersUrl, {
+			method: 'POST', headers,
 			body: JSON.stringify({
 				name: 'organization',
 				protocol: 'openid-connect',
@@ -316,11 +362,8 @@ export async function ensureOrganizationMapper(): Promise<void> {
 				config: desiredConfig
 			})
 		});
-		if (!addRes.ok) {
-			console.warn('[keycloak] ensureOrganizationMapper add failed:', addRes.status);
-			return;
-		}
-		console.log('[keycloak] organization mapper ensured with org ID');
+		if (!addRes.ok) console.warn('[keycloak] ensureOrganizationMapper add failed:', addRes.status);
+		else console.log('[keycloak] organization mapper ensured with org ID in token');
 	} catch (e) {
 		console.warn('[keycloak] ensureOrganizationMapper failed (non-fatal):', e);
 	}
