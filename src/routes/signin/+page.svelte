@@ -58,10 +58,10 @@
 					<div class="name-cell">
 						<input
 							class="name-input"
-							type="email"
+							type="text"
 							bind:value={email}
-							placeholder="E-Mail"
-							autocomplete="email"
+							placeholder="E-Mail / Benutzername"
+							autocomplete="username"
 							required
 						/>
 					</div>

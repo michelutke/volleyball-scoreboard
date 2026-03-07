@@ -129,6 +129,18 @@
 				</div>
 
 				<div>
+					<label class="block text-xs text-text-tertiary mb-1" for="username">Benutzername</label>
+					<input
+						id="username"
+						name="username"
+						type="text"
+						required
+						autocomplete="username"
+						class="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent"
+					/>
+				</div>
+
+				<div>
 					<label class="block text-xs text-text-tertiary mb-1" for="email">E-Mail</label>
 					<input
 						id="email"

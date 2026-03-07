@@ -5,7 +5,7 @@ import type { HandleServerError } from '@sveltejs/kit';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { db } from '$lib/server/db';
 import { env } from '$env/dynamic/private';
-import { bootstrapKcOrgId, ensureOrganizationMapper, ensureDirectAccessGrants, syncClientRedirectUri } from '$lib/server/keycloak-admin';
+import { bootstrapKcOrgId, ensureOrganizationMapper, ensureDirectAccessGrants, ensureRealmSettings, syncClientRedirectUri } from '$lib/server/keycloak-admin';
 import { getBillingStatus } from '$lib/server/billing';
 
 export async function init() {
@@ -14,6 +14,7 @@ export async function init() {
 	await bootstrapKcOrgId();
 	await ensureOrganizationMapper();
 	await ensureDirectAccessGrants();
+	await ensureRealmSettings();
 	if (env.ORIGIN) await syncClientRedirectUri(env.ORIGIN);
 }
 

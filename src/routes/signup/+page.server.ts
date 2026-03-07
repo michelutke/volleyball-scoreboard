@@ -2,6 +2,7 @@ import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import {
 	getUserByEmail,
+	getUserByUsername,
 	createUser,
 	createOrganization,
 	deleteOrganization,
@@ -26,11 +27,15 @@ export const actions: Actions = {
 		const email = (data.get('email') as string | null)?.trim();
 		const firstName = (data.get('firstName') as string | null)?.trim();
 		const lastName = (data.get('lastName') as string | null)?.trim();
+		const username = (data.get('username') as string | null)?.trim().toLowerCase();
 		const password = data.get('password') as string | null;
 		const confirmPassword = data.get('confirmPassword') as string | null;
 
-		if (!email || !firstName || !lastName || !password || !confirmPassword) {
+		if (!email || !firstName || !lastName || !username || !password || !confirmPassword) {
 			return fail(400, { error: 'Alle Felder sind erforderlich' });
+		}
+		if (!/^[a-z0-9._-]{3,30}$/.test(username)) {
+			return fail(400, { error: 'Benutzername: 3–30 Zeichen, nur Buchstaben, Zahlen, ., _, -' });
 		}
 		if (password.length < 8) {
 			return fail(400, { error: 'Passwort muss mindestens 8 Zeichen haben' });
@@ -41,13 +46,15 @@ export const actions: Actions = {
 
 		const existing = await getUserByEmail(email);
 		if (existing) return fail(409, { error: 'E-Mail bereits registriert' });
+		const existingUsername = await getUserByUsername(username);
+		if (existingUsername) return fail(409, { error: 'Benutzername bereits vergeben' });
 
 		let userId: string | null = null;
 		let kcOrgId: string | null = null;
 		let stripeCustomerId: string | null = null;
 
 		try {
-			userId = await createUser(email, { firstName, lastName });
+			userId = await createUser(email, { firstName, lastName, username });
 			await setUserPassword(userId, password);
 			kcOrgId = await createOrganization(`${firstName}'s Club`);
 			await addToOrg(userId, kcOrgId);
