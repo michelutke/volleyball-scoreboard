@@ -14,6 +14,7 @@
 		guestTimeoutsUsed = data.timeouts?.guest ?? 0;
 		if (data.match) prevSet = data.match.currentSet;
 	});
+
 	let timeoutTeam = $state<string | null>(null);
 	let timeoutTimer = $state<ReturnType<typeof setTimeout> | null>(null);
 	let setScoresExpanded = $derived(match?.showSetScores || match?.status === 'finished' || !!timeoutTeam);
@@ -82,12 +83,6 @@
 		}
 	</style>
 </svelte:head>
-
-{#if !match}
-	<div class="idle-hint">
-		Bitte verwende die vereinsspezifische URL: <code>/overlay/[dein-slug]</code>
-	</div>
-{/if}
 
 {#if match}
 	<div class="overlay">
@@ -184,23 +179,6 @@
 {/if}
 
 <style>
-	.idle-hint {
-		position: fixed;
-		top: 30px;
-		left: 30px;
-		font-family: 'Montserrat', 'Arial', sans-serif;
-		font-size: 16px;
-		color: rgba(255, 255, 255, 0.6);
-		background: rgba(0, 0, 0, 0.5);
-		padding: 10px 16px;
-		border-radius: 6px;
-	}
-
-	.idle-hint code {
-		font-family: monospace;
-		color: rgba(255, 255, 255, 0.85);
-	}
-
 	.overlay {
 		position: fixed;
 		top: 30px;
@@ -308,6 +286,7 @@
 		border-left: 1px solid var(--color-overlay-border);
 		border-bottom: 3px solid transparent;
 	}
+
 
 	.set-score-winner {
 		border-bottom-color: var(--winner-color);

@@ -68,6 +68,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		scoreHistory,
 		timeoutHistory,
 		teamId: match.teamId,
-		permalinkOverlayMatchId
+		permalinkOverlayMatchId,
+		controlToken: match.controlToken ?? null
 	};
 };

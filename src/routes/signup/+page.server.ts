@@ -56,12 +56,16 @@ export const actions: Actions = {
 		try {
 			userId = await createUser(email, { firstName, lastName, username });
 			await setUserPassword(userId, password);
-			kcOrgId = await createOrganization(`${firstName}'s Club`);
+			const randomId = Math.random().toString(36).slice(2, 8).toUpperCase();
+			const orgName = `${username}-${randomId}`;
+			const orgAlias = orgName.toLowerCase();
+			kcOrgId = await createOrganization(orgName);
 			await addToOrg(userId, kcOrgId);
 			await assignAdminRole(userId);
 
 			const settingsRows: { orgId: string; key: string; value: string }[] = [
-				{ orgId: kcOrgId, key: 'kcOrgId', value: kcOrgId }
+				{ orgId: kcOrgId, key: 'kcOrgId', value: kcOrgId },
+				{ orgId: kcOrgId, key: 'overlaySlug', value: orgAlias }
 			];
 
 			if (env.STRIPE_SECRET_KEY) {

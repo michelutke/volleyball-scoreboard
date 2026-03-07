@@ -3,6 +3,9 @@
 	import { goto } from '$app/navigation';
 	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
+	import LandingNav from '$lib/components/landing/LandingNav.svelte';
+
+	let lang = $state<'de' | 'en'>('de');
 
 	let { data }: { data: PageData } = $props();
 
@@ -38,6 +41,8 @@
 		}
 	}
 </script>
+
+<LandingNav {lang} onLangToggle={() => { lang = lang === 'de' ? 'en' : 'de'; }} />
 
 <div class="page-bg">
 	<img src="/vbcthun-ball.svg" alt="Scorely" class="logo" />
@@ -126,7 +131,7 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		padding: 2rem 1rem;
+		padding: 5rem 1rem 2rem;
 		color: #f0f0f0;
 	}
 

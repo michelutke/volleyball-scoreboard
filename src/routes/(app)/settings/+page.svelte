@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { page } from '$app/state';
 	import { DEFAULT_ACCENT } from '$lib/theme.js';
 	import type { PageData } from './$types.js';
 
@@ -101,6 +102,28 @@
 								Standard
 							</button>
 						{/if}
+					</div>
+				</div>
+			{/if}
+
+			{#if isEdit && data.overlaySlug}
+				<div>
+					<label for="overlayUrl" class="block text-sm font-medium text-text-primary mb-1">Permalink-Overlay URL</label>
+					<div class="flex items-center gap-2">
+						<input
+							id="overlayUrl"
+							type="text"
+							readonly
+							value="{page.url.origin}/overlay/{data.overlaySlug}"
+							class="flex-1 bg-bg-base border border-border-subtle rounded-lg px-4 py-2.5 text-text-secondary font-mono text-sm focus:outline-none cursor-default select-all"
+						/>
+						<button
+							type="button"
+							onclick={() => navigator.clipboard.writeText(`${page.url.origin}/overlay/${data.overlaySlug}`)}
+							class="px-3 py-2.5 bg-bg-panel-alt border border-border-subtle rounded-lg text-text-secondary hover:text-text-primary text-sm transition-colors whitespace-nowrap"
+						>
+							Kopieren
+						</button>
 					</div>
 				</div>
 			{/if}
