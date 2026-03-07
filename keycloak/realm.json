@@ -6,6 +6,7 @@
   "enabled": true,
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
+  "registrationEmailAsUsername": false,
   "duplicateEmailsAllowed": false,
   "resetPasswordAllowed": true,
   "editUsernameAllowed": false,

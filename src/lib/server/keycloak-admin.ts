@@ -95,15 +95,22 @@ export async function getUserByEmail(email: string): Promise<KcUser | null> {
 	return users[0] ?? null;
 }
 
+export async function getUserByUsername(username: string): Promise<KcUser | null> {
+	const res = await kcFetch(`/users?username=${encodeURIComponent(username)}&exact=true`);
+	if (!res.ok) throw new Error(`getUserByUsername ${res.status}: ${await kcErrorBody(res)}`);
+	const users: KcUser[] = await res.json();
+	return users[0] ?? null;
+}
+
 export async function createUser(
 	email: string,
-	opts?: { firstName?: string; lastName?: string }
+	opts?: { firstName?: string; lastName?: string; username?: string }
 ): Promise<string> {
 	const res = await kcFetch('/users', {
 		method: 'POST',
 		body: JSON.stringify({
 			email,
-			username: email,
+			username: opts?.username ?? email,
 			enabled: true,
 			emailVerified: true,
 			...(opts?.firstName ? { firstName: opts.firstName } : {}),
@@ -366,6 +373,27 @@ export async function ensureOrganizationMapper(): Promise<void> {
 		else console.log('[keycloak] organization mapper ensured with org ID in token');
 	} catch (e) {
 		console.warn('[keycloak] ensureOrganizationMapper failed (non-fatal):', e);
+	}
+}
+
+export async function ensureRealmSettings(): Promise<void> {
+	if (!env.KEYCLOAK_ADMIN_URL) return;
+	try {
+		const masterToken = await getMasterAdminToken();
+		if (!masterToken) {
+			console.warn('[keycloak] ensureRealmSettings: no master admin token');
+			return;
+		}
+		const realm = env.KEYCLOAK_REALM ?? 'master';
+		const res = await fetch(`${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}`, {
+			method: 'PUT',
+			headers: { Authorization: `Bearer ${masterToken}`, 'Content-Type': 'application/json' },
+			body: JSON.stringify({ registrationEmailAsUsername: false })
+		});
+		if (!res.ok) console.warn('[keycloak] ensureRealmSettings failed:', res.status);
+		else console.log('[keycloak] realm settings ensured: registrationEmailAsUsername=false');
+	} catch (e) {
+		console.warn('[keycloak] ensureRealmSettings failed (non-fatal):', e);
 	}
 }
 
