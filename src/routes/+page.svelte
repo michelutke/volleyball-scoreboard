@@ -34,7 +34,7 @@
 <style>
 	.landing {
 		min-height: 100vh;
-		background: var(--color-bg-base);
+		background: radial-gradient(ellipse at 20% 0%, #3d0000 0%, #0a0a0a 55%);
 		color: var(--color-text-primary);
 	}
 </style>

@@ -69,7 +69,12 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 				if (body.team === 'home' && state.homeSets > 0) newState.homeSets--;
 				else if (body.team === 'guest' && state.guestSets > 0) newState.guestSets--;
 				break;
-			case 'undo': {
+			case 'generateControlToken': {
+			const token = crypto.randomUUID();
+			await db.update(matches).set({ controlToken: token, updatedAt: new Date() }).where(and(eq(matches.orgId, orgId), eq(matches.id, matchId)));
+			return json({ controlToken: token });
+		}
+		case 'undo': {
 				const allScores = await db.query.scores.findMany({
 					where: eq(scores.matchId, matchId),
 					orderBy: desc(scores.createdAt)

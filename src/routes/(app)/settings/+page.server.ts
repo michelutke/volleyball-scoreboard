@@ -13,20 +13,26 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const isSetup = url.searchParams.get('setup') === 'true' || !clubNameSetting;
 
 	if (clubNameSetting) {
-		const accentSetting = await db.query.settings.findFirst({
-			where: and(eq(settings.orgId, orgId), eq(settings.key, 'accentColor'))
-		});
-		const apiKeySetting = await db.query.settings.findFirst({
-			where: and(eq(settings.orgId, orgId), eq(settings.key, 'swissVolleyApiKey'))
-		});
+		const [accentSetting, apiKeySetting, slugSetting] = await Promise.all([
+			db.query.settings.findFirst({
+				where: and(eq(settings.orgId, orgId), eq(settings.key, 'accentColor'))
+			}),
+			db.query.settings.findFirst({
+				where: and(eq(settings.orgId, orgId), eq(settings.key, 'swissVolleyApiKey'))
+			}),
+			db.query.settings.findFirst({
+				where: and(eq(settings.orgId, orgId), eq(settings.key, 'overlaySlug'))
+			})
+		]);
 		return {
 			clubName: clubNameSetting.value,
 			accentColor: accentSetting?.value ?? null,
 			isAdmin: locals.isAdmin ?? false,
 			swissVolleyApiKeySet: !!apiKeySetting,
+			overlaySlug: slugSetting?.value ?? null,
 			isSetup
 		};
 	}
 
-	return { isAdmin: locals.isAdmin ?? false, swissVolleyApiKeySet: false, isSetup: true };
+	return { isAdmin: locals.isAdmin ?? false, swissVolleyApiKeySet: false, overlaySlug: null, isSetup: true };
 };
