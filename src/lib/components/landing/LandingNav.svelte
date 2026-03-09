@@ -5,9 +5,10 @@
 	interface Props {
 		lang: Lang;
 		onLangToggle: () => void;
+		basePath?: string;
 	}
 
-	let { lang, onLangToggle }: Props = $props();
+	let { lang, onLangToggle, basePath = '' }: Props = $props();
 
 	let menuOpen = $state(false);
 
@@ -26,13 +27,13 @@
 		<!-- Desktop right actions -->
 		<div class="hidden items-center gap-6 md:flex">
 			<a
-				href="#features"
+				href="{basePath}#features"
 				class="text-sm text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
 			>
 				{t[lang].nav.features}
 			</a>
 			<a
-				href="#pricing"
+				href="{basePath}#pricing"
 				class="text-sm text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
 			>
 				{t[lang].nav.pricing}
@@ -82,14 +83,14 @@
 		<div class="border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-base)] px-4 pb-4 pt-3 md:hidden">
 			<div class="flex flex-col gap-3">
 				<a
-					href="#features"
+					href="{basePath}#features"
 					onclick={closeMenu}
 					class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
 				>
 					{t[lang].nav.features}
 				</a>
 				<a
-					href="#pricing"
+					href="{basePath}#pricing"
 					onclick={closeMenu}
 					class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
 				>

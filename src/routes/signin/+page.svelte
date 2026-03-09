@@ -42,7 +42,7 @@
 	}
 </script>
 
-<LandingNav {lang} onLangToggle={() => { lang = lang === 'de' ? 'en' : 'de'; }} />
+<LandingNav {lang} onLangToggle={() => { lang = lang === 'de' ? 'en' : 'de'; }} basePath="/" />
 
 <div class="page-bg">
 	<img src="/vbcthun-ball.svg" alt="Scorely" class="logo" />
