@@ -43,7 +43,8 @@
 	}
 </script>
 
-<div class="{isEdit ? 'max-w-2xl' : 'max-w-xl'} mx-auto px-4 py-8">
+<div class="min-h-screen bg-bg-base p-4">
+<div class="{isEdit ? 'max-w-2xl' : 'max-w-xl'} mx-auto">
 	<h1 class="text-2xl font-bold text-text-primary mb-6">{isEdit ? 'Einstellungen' : 'Einrichten'}</h1>
 
 	{#if !isEdit}
@@ -160,6 +161,7 @@
 			{saving ? 'Speichern...' : isEdit ? 'Speichern' : 'Einrichten'}
 		</button>
 	</form>
+</div>
 </div>
 
 <style>

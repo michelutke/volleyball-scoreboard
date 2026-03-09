@@ -510,19 +510,21 @@ export async function getKcOrgIdForUser(userId: string): Promise<string | undefi
 	return orgs[0]?.id;
 }
 
-/** Invite user via KC org invite endpoint (KC creates user if needed + sends invitation email) */
 export async function inviteUserByEmail(email: string, kcOrgId: string): Promise<string> {
-	const res = await kcFetch(`/organizations/${kcOrgId}/members/invite-user`, {
-		method: 'POST',
-		body: JSON.stringify({ email })
-	});
-	if (!res.ok && res.status !== 204) {
-		const text = await kcErrorBody(res);
-		throw new Error(`KC invite-user failed: ${res.status} ${text}`);
+	let userId: string;
+	const existing = await getUserByEmail(email);
+	if (existing) {
+		userId = existing.id;
+	} else {
+		userId = await createUser(email);
 	}
-	const user = await getUserByEmail(email);
-	if (!user) throw new Error(`User not found after invite: ${email}`);
-	return user.id;
+	await addToOrg(userId, kcOrgId);
+	try {
+		await sendSetPasswordEmail(userId);
+	} catch {
+		// Email failure is non-fatal — user can still be resent later
+	}
+	return userId;
 }
 
 export interface KcUserWithStatus {
@@ -561,12 +563,8 @@ export async function listOrgMembersWithStatus(kcOrgId: string): Promise<KcUserW
 	return enriched;
 }
 
-/** Resend invitation email by re-calling invite-user */
-export async function resendInvite(userId: string, kcOrgId: string): Promise<void> {
-	const res = await kcFetch(`/users/${userId}`);
-	if (!res.ok) throw new Error(`KC get user failed: ${res.status}`);
-	const user: { email: string } = await res.json();
-	await inviteUserByEmail(user.email, kcOrgId);
+export async function resendInvite(userId: string, _kcOrgId: string): Promise<void> {
+	await sendSetPasswordEmail(userId);
 }
 
 export async function syncClientRedirectUri(origin: string): Promise<void> {
