@@ -25,6 +25,7 @@ export const handleError: HandleServerError = ({ error, event }) => {
 const PUBLIC_PATHS = ['/', '/auth', '/api/health', '/signin', '/signout', '/signup', '/privacy', '/imprint', '/api/billing/webhook', '/api/auth/auto-login'];
 const OVERLAY_PATTERN = /^\/matches\/[^/]+\/overlay/;
 const LEGACY_OVERLAY = /^\/overlay($|\/)/;
+const SHARE_CONTROL = /^\/(c|api\/c)\//;
 const BILLING_EXEMPT = /^\/(billing|api\/billing)($|\/)(?!webhook)/;
 
 export const handle = sequence(authHandle, async ({ event, resolve }) => {
@@ -32,7 +33,8 @@ export const handle = sequence(authHandle, async ({ event, resolve }) => {
 	const isPublic =
 		PUBLIC_PATHS.some((p) => (p === '/' ? path === '/' : path.startsWith(p))) ||
 		OVERLAY_PATTERN.test(path) ||
-		LEGACY_OVERLAY.test(path);
+		LEGACY_OVERLAY.test(path) ||
+		SHARE_CONTROL.test(path);
 
 	if (!isPublic) {
 		const session = await event.locals.auth();
@@ -53,7 +55,7 @@ export const handle = sequence(authHandle, async ({ event, resolve }) => {
 		event.locals.orgId = session.user.orgId;
 		event.locals.isAdmin = (session.user.roles ?? []).includes('admin');
 
-		if (env.STRIPE_SECRET_KEY && !BILLING_EXEMPT.test(path)) {
+		if (env.STRIPE_SECRET_KEY && !BILLING_EXEMPT.test(path) && !SHARE_CONTROL.test(path)) {
 			const status = await getBillingStatus(event.locals.orgId);
 			if (status === 'blocked') redirect(307, '/billing');
 		}

@@ -66,15 +66,15 @@
 	<!-- Home Team Row -->
 	<div class="team-row home-row">
 		{#if match.showJerseyColors}
-			<div class="jersey" style:background-color={match.homeJerseyColor}>
-				{#if match.homeTeamLogo}
-					<img
-						src="/api/image-proxy?url={encodeURIComponent(match.homeTeamLogo)}"
-						alt=""
-						class="jersey-logo"
-					/>
-				{/if}
-			</div>
+			{#if match.homeTeamLogo}
+				<img
+					src="/api/image-proxy?url={encodeURIComponent(match.homeTeamLogo)}"
+					class="team-logo"
+					alt=""
+				/>
+			{:else}
+				<div class="jersey" style:background-color={match.homeJerseyColor}></div>
+			{/if}
 		{/if}
 		<div class="team-name" style:background={overlayBgStyle(true)} style:color={match.overlayText}>
 			<span>{match.homeTeamName.toUpperCase()}</span>
@@ -128,15 +128,15 @@
 	<!-- Guest Team Row -->
 	<div class="team-row guest-row">
 		{#if match.showJerseyColors}
-			<div class="jersey" style:background-color={match.guestJerseyColor}>
-				{#if match.guestTeamLogo}
-					<img
-						src="/api/image-proxy?url={encodeURIComponent(match.guestTeamLogo)}"
-						alt=""
-						class="jersey-logo"
-					/>
-				{/if}
-			</div>
+			{#if match.guestTeamLogo}
+				<img
+					src="/api/image-proxy?url={encodeURIComponent(match.guestTeamLogo)}"
+					class="team-logo"
+					alt=""
+				/>
+			{:else}
+				<div class="jersey" style:background-color={match.guestJerseyColor}></div>
+			{/if}
 		{/if}
 		<div class="team-name" style:background={overlayBgStyle()} style:color={match.overlayText}>
 			<span>{match.guestTeamName.toUpperCase()}</span>
@@ -226,6 +226,14 @@
 		height: 100%;
 		object-fit: contain;
 		padding: 6px;
+	}
+
+	.team-logo {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		flex-shrink: 0;
 	}
 
 	.team-name {

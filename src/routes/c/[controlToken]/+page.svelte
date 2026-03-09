@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import { page } from '$app/state';
 	import type { MatchState, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
 
 	let { data } = $props();
 
-	const matchId = $derived(parseInt(page.params.matchId ?? '0'));
+	const controlToken = $derived(data.controlToken);
 	let match = $state<MatchState | null>(null);
 	let matchTimeouts = $state({ home: 0, guest: 0 });
 	let loading = $state(false);
@@ -15,49 +14,6 @@
 	// Dialog state
 	let advancedOpen = $state(false);
 	let advancedDialogEl = $state<HTMLDialogElement | null>(null);
-	let settingsOpen = $state(false);
-	let settingsDialogEl = $state<HTMLDialogElement | null>(null);
-
-	// Settings edit state
-	let editHomeName = $state('');
-	let editGuestName = $state('');
-	let editHomeJersey = $state('#000000');
-	let editGuestJersey = $state('#000000');
-	let editShowJerseyColors = $state(false);
-	let editOverlayBg = $state('#1a1a1a');
-	let editOverlayBg2 = $state('#1a1a1a');
-	let editOverlayBgGradient = $state(false);
-	let editOverlayText = $state('#ffffff');
-	let editOverlayRounded = $state(false);
-	let editOverlayDivider = $state('#2a2a2a');
-	let editOverlaySatsBg = $state('#1a1a1a');
-	let editOverlaySetScoreBg = $state('#1a1a1a');
-	let editHomeLogo = $state('');
-	let editGuestLogo = $state('');
-	let editScoreColor = $state('#1a1a1a');
-	let editScoreColor2 = $state('#1a1a1a');
-	let editScoreColorGradient = $state(false);
-
-	let settingsDirty = $derived(
-		editHomeName !== (match?.homeTeamName ?? '') ||
-			editGuestName !== (match?.guestTeamName ?? '') ||
-			editHomeJersey !== (match?.homeJerseyColor ?? '#000000') ||
-			editGuestJersey !== (match?.guestJerseyColor ?? '#000000') ||
-			editShowJerseyColors !== (match?.showJerseyColors ?? false) ||
-			editOverlayBg !== (match?.overlayBg ?? '#1a1a1a') ||
-			editOverlayBg2 !== (match?.overlayBg2 ?? '#1a1a1a') ||
-			editOverlayBgGradient !== (match?.overlayBgGradient ?? false) ||
-			editOverlayText !== (match?.overlayText ?? '#ffffff') ||
-			editOverlayRounded !== (match?.overlayRounded ?? false) ||
-			editOverlayDivider !== (match?.overlayDivider ?? '#2a2a2a') ||
-			editOverlaySatsBg !== (match?.overlaySatsBg ?? '#1a1a1a') ||
-			editOverlaySetScoreBg !== (match?.overlaySetScoreBg ?? '#1a1a1a') ||
-			editHomeLogo !== (match?.homeTeamLogo ?? '') ||
-			editGuestLogo !== (match?.guestTeamLogo ?? '') ||
-			editScoreColor !== (match?.scoreColor ?? '#1a1a1a') ||
-			editScoreColor2 !== (match?.scoreColor2 ?? '#1a1a1a') ||
-			editScoreColorGradient !== (match?.scoreColorGradient ?? false)
-	);
 
 	$effect(() => {
 		match = data.activeMatch;
@@ -71,17 +27,10 @@
 		}
 	});
 
-	$effect(() => {
-		if (settingsDialogEl) {
-			if (settingsOpen) settingsDialogEl.showModal();
-			else settingsDialogEl.close();
-		}
-	});
-
 	async function api(body: Record<string, unknown>) {
 		loading = true;
 		try {
-			const res = await fetch(`/api/matches/${matchId}`, {
+			const res = await fetch(`/api/c/${controlToken}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(body)
@@ -134,7 +83,7 @@
 
 	async function callTimeout(team: Team) {
 		if (!match || activeTimeout) return;
-		const res = await fetch(`/api/matches/${matchId}/timeout`, {
+		const res = await fetch(`/api/c/${controlToken}/timeout`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ team })
@@ -160,15 +109,10 @@
 		}
 	}
 
-	async function updateSettings(field: string, value: unknown) {
-		if (!match) return;
-		await api({ [field]: value });
-	}
-
 	async function cancelTimeout() {
 		if (!match || !activeTimeout) return;
 		if (!confirm('Auszeit falsch eingegeben?')) return;
-		const res = await fetch(`/api/matches/${matchId}/timeout`, {
+		const res = await fetch(`/api/c/${controlToken}/timeout`, {
 			method: 'DELETE',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ team: activeTimeout.team })
@@ -183,10 +127,6 @@
 			activeTimeout = null;
 			invalidateAll();
 		}
-	}
-
-	function copyOverlayLink() {
-		navigator.clipboard.writeText(`${window.location.origin}/matches/${matchId}/overlay`);
 	}
 
 	function darkenHex(hex: string, amount = 16): string {
@@ -220,139 +160,6 @@
 		return m.scoreColorGradient
 			? `linear-gradient(to bottom, ${m.scoreColor}, ${m.scoreColor2})`
 			: m.scoreColor;
-	}
-
-	function openSettings() {
-		editHomeName = match?.homeTeamName ?? '';
-		editGuestName = match?.guestTeamName ?? '';
-		editHomeJersey = match?.homeJerseyColor ?? '#000000';
-		editGuestJersey = match?.guestJerseyColor ?? '#000000';
-		editShowJerseyColors = match?.showJerseyColors ?? false;
-		editOverlayBg = match?.overlayBg ?? '#1a1a1a';
-		editOverlayBg2 = match?.overlayBg2 ?? '#1a1a1a';
-		editOverlayBgGradient = match?.overlayBgGradient ?? false;
-		editOverlayText = match?.overlayText ?? '#ffffff';
-		editOverlayRounded = match?.overlayRounded ?? false;
-		editOverlayDivider = match?.overlayDivider ?? '#2a2a2a';
-		editOverlaySatsBg = match?.overlaySatsBg ?? '#1a1a1a';
-		editOverlaySetScoreBg = match?.overlaySetScoreBg ?? '#1a1a1a';
-		editHomeLogo = match?.homeTeamLogo ?? '';
-		editGuestLogo = match?.guestTeamLogo ?? '';
-		editScoreColor = match?.scoreColor ?? '#1a1a1a';
-		editScoreColor2 = match?.scoreColor2 ?? '#1a1a1a';
-		editScoreColorGradient = match?.scoreColorGradient ?? false;
-		settingsOpen = true;
-	}
-
-	async function saveSettings() {
-		if (!match || !settingsDirty) return;
-		await api({
-			homeTeamName: editHomeName,
-			guestTeamName: editGuestName,
-			homeJerseyColor: editHomeJersey,
-			guestJerseyColor: editGuestJersey,
-			showJerseyColors: editShowJerseyColors,
-			overlayBg: editOverlayBg,
-			overlayBg2: editOverlayBg2,
-			overlayBgGradient: editOverlayBgGradient,
-			overlayText: editOverlayText,
-			overlayRounded: editOverlayRounded,
-			overlayDivider: editOverlayDivider,
-			overlaySatsBg: editOverlaySatsBg,
-			overlaySetScoreBg: editOverlaySetScoreBg,
-			homeTeamLogo: editHomeLogo || null,
-			guestTeamLogo: editGuestLogo || null,
-			scoreColor: editScoreColor,
-			scoreColor2: editScoreColor2,
-			scoreColorGradient: editScoreColorGradient
-		});
-		settingsOpen = false;
-	}
-
-	// Share control token
-	let controlToken = $state<string | null>(null);
-	let controlTokenLoading = $state(false);
-	let controlTokenCopied = $state(false);
-
-	$effect(() => {
-		controlToken = data.controlToken ?? null;
-	});
-
-	async function generateControlToken() {
-		controlTokenLoading = true;
-		try {
-			const res = await fetch(`/api/matches/${matchId}`, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ action: 'generateControlToken' })
-			});
-			if (res.ok) {
-				const result = await res.json();
-				controlToken = result.controlToken;
-			}
-		} finally {
-			controlTokenLoading = false;
-		}
-	}
-
-	function copyControlLink() {
-		if (!controlToken) return;
-		navigator.clipboard.writeText(`${window.location.origin}/c/${controlToken}`);
-		controlTokenCopied = true;
-		setTimeout(() => { controlTokenCopied = false; }, 2000);
-	}
-
-	// Permalink overlay
-	let permalinkMatchId = $state<number | null>(null);
-	let permalinkHome = $state<string | null>(null);
-	let permalinkGuest = $state<string | null>(null);
-	let permalinkLoading = $state(false);
-	let showPermalinkConfirm = $state(false);
-
-	$effect(() => {
-		permalinkMatchId = data.permalinkOverlayMatchId ?? null;
-	});
-
-	const isPermalinked = $derived(permalinkMatchId === matchId);
-
-	async function setPermalink(enable: boolean) {
-		permalinkLoading = true;
-		try {
-			const res = await fetch('/api/overlay/permalink', {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ matchId: enable ? matchId : null })
-			});
-			if (res.ok) {
-				const result = await res.json();
-				permalinkMatchId = result.matchId;
-				permalinkHome = result.homeTeamName;
-				permalinkGuest = result.guestTeamName;
-			}
-		} finally {
-			permalinkLoading = false;
-			showPermalinkConfirm = false;
-		}
-	}
-
-	async function handlePermalinkToggle() {
-		if (isPermalinked) {
-			await setPermalink(false);
-			return;
-		}
-		// Check if another match is currently on permalink
-		if (permalinkMatchId !== null && permalinkMatchId !== matchId) {
-			// Fetch current permalink info
-			const res = await fetch('/api/overlay/permalink');
-			if (res.ok) {
-				const result = await res.json();
-				permalinkHome = result.homeTeamName;
-				permalinkGuest = result.guestTeamName;
-			}
-			showPermalinkConfirm = true;
-			return;
-		}
-		await setPermalink(true);
 	}
 
 	let setScoresExpanded = $derived(match?.showSetScores || match?.status === 'finished' || !!activeTimeout);
@@ -423,19 +230,15 @@
 </script>
 
 <svelte:head>
-	<title>Scoring Control — Match #{matchId}</title>
+	<title>Scoring — Geteilter Zugriff</title>
 </svelte:head>
 
 <div class="control">
 	<!-- Nav bar -->
 	<div class="nav-bar">
-		{#if data.teamId}
-			<a href="/teams/{data.teamId}" class="nav-link">&larr; Team</a>
-		{:else}
-			<a href="/teams" class="nav-link">&larr; Teams</a>
-		{/if}
-		<button onclick={copyOverlayLink} class="nav-link" title="Overlay-Link kopieren">Overlay-Link</button>
-		<button onclick={openSettings} class="nav-link nav-link-right">&#9881; Einstellungen</button>
+		<div class="share-banner">
+			&#128279; Geteilter Zugriff — Nur für dieses Spiel
+		</div>
 	</div>
 
 	{#if !match}
@@ -444,22 +247,11 @@
 		</div>
 	{:else}
 		<div class="grid-layout">
-			<!-- Scoring Card (merged: preview + scoring) -->
+			<!-- Scoring Card -->
 			<div class="card col-span-full">
 				<div class="card-header">
 					<span class="card-icon">&#9878;</span>
 					<h2>Scoring</h2>
-					<label class="toggle-label">
-						Satzresultate
-						<button
-							class="toggle"
-							class:active={match.showSetScores}
-							onclick={() => updateSettings('showSetScores', !match?.showSetScores)}
-							aria-label="Satzresultate anzeigen"
-						>
-							<span class="toggle-knob"></span>
-						</button>
-					</label>
 				</div>
 				<div class="card-body flex items-center justify-center">
 					<div class="scoreboard-preview" class:with-jersey={match.showJerseyColors} class:has-logo={!!(match.homeTeamLogo || match.guestTeamLogo)} class:rounded={match.overlayRounded} style:--overlay-border={match.overlayDivider} style:color={match.overlayText}>
@@ -624,86 +416,6 @@
 					</div>
 				</div>
 			{/if}
-
-			<div class="card col-span-full">
-			<div class="card-header">
-				<span class="card-icon">&#128279;</span>
-				<h2>Link teilen</h2>
-			</div>
-			<div class="card-body">
-				{#if controlToken}
-					<p class="text-sm text-gray-400">Freigabe-Link für dieses Spiel:</p>
-					<div class="share-link-row">
-						<input
-							type="text"
-							readonly
-							value="{typeof window !== 'undefined' ? window.location.origin : ''}/c/{controlToken}"
-							class="field-input share-link-input"
-						/>
-						<button onclick={copyControlLink} class="btn-action btn-copy">
-							{controlTokenCopied ? '&#10003; Kopiert' : '&#128203; Kopieren'}
-						</button>
-					</div>
-				{:else}
-					<p class="text-sm text-gray-400">Erstelle einen Link, mit dem andere ohne Login dieses Spiel steuern können.</p>
-					<button onclick={generateControlToken} disabled={controlTokenLoading} class="btn-action">
-						{controlTokenLoading ? 'Wird erstellt…' : '&#128279; Freigabe-Link erstellen'}
-					</button>
-				{/if}
-			</div>
-		</div>
-
-	{#if page.data.isAdmin}
-			<div class="card col-span-full">
-				<div class="card-header">
-					<span class="card-icon">&#128250;</span>
-					<h2>Permalink-Overlay</h2>
-				</div>
-				<div class="card-body">
-					<div class="flex items-center justify-between">
-						<div>
-							<p class="text-sm text-text-secondary">Auf <code class="text-accent">/overlay</code> anzeigen</p>
-							{#if isPermalinked}
-								<p class="text-xs text-green-400 mt-1">Dieses Spiel wird aktuell auf /overlay angezeigt</p>
-							{:else if permalinkMatchId !== null}
-								<p class="text-xs text-text-tertiary mt-1">Anderes Spiel aktiv auf /overlay</p>
-							{/if}
-						</div>
-						<button
-							onclick={handlePermalinkToggle}
-							disabled={permalinkLoading}
-							class="toggle {isPermalinked ? 'active' : ''}"
-							aria-label="Auf /overlay anzeigen"
-						>
-							<span class="toggle-knob"></span>
-						</button>
-					</div>
-
-					{#if showPermalinkConfirm}
-						<div class="mt-3 bg-bg-base rounded-lg p-3 text-sm">
-							<p class="text-text-primary mb-2">
-								{permalinkHome ?? '?'} vs {permalinkGuest ?? '?'} wird gerade auf /overlay angezeigt. Ersetzen?
-							</p>
-							<div class="flex gap-2">
-								<button
-									onclick={() => setPermalink(true)}
-									disabled={permalinkLoading}
-									class="bg-accent-mid hover:bg-accent-dark disabled:opacity-50 text-white text-xs rounded-lg px-3 py-1.5"
-								>
-									Ersetzen
-								</button>
-								<button
-									onclick={() => { showPermalinkConfirm = false; }}
-									class="text-text-secondary hover:text-text-primary text-xs px-3 py-1.5"
-								>
-									Abbrechen
-								</button>
-							</div>
-						</div>
-					{/if}
-				</div>
-			</div>
-		{/if}
 		</div>
 
 		{#if match.status === 'finished'}
@@ -741,151 +453,6 @@
 				<button onclick={resetMatch} class="btn-action btn-action-danger">&#8635; Reset</button>
 			</div>
 		</dialog>
-
-		<!-- Settings Dialog -->
-		<dialog bind:this={settingsDialogEl} class="dialog" onclose={() => settingsOpen = false} onclick={(e) => { if (e.target === e.currentTarget) settingsOpen = false; }}>
-			<div class="dialog-header">
-				<h3>Einstellungen</h3>
-				<button class="dialog-close" onclick={() => settingsOpen = false}>&times;</button>
-			</div>
-			<div class="dialog-body">
-				<div class="dialog-section">
-					<h4 class="dialog-section-title">Teamnamen</h4>
-					<label class="field-label">
-						Heimteam
-						<input type="text" bind:value={editHomeName} class="field-input" />
-					</label>
-					<label class="field-label">
-						Gastteam
-						<input type="text" bind:value={editGuestName} class="field-input" />
-					</label>
-				</div>
-				<div class="dialog-section">
-					<div class="dialog-section-row">
-						<h4 class="dialog-section-title">Trikotfarben</h4>
-						<label class="toggle-label toggle-label-start">
-							Sichtbar
-							<button class="toggle" class:active={editShowJerseyColors} onclick={() => editShowJerseyColors = !editShowJerseyColors} aria-label="Trikotfarben sichtbar">
-								<span class="toggle-knob"></span>
-							</button>
-						</label>
-					</div>
-					<div class="color-row-compact">
-						<div class="color-field-inline">
-							<input type="color" bind:value={editHomeJersey} class="color-picker" />
-							<span class="text-sm text-gray-400">Heim</span>
-						</div>
-						<div class="color-field-inline">
-							<input type="color" bind:value={editGuestJersey} class="color-picker" />
-							<span class="text-sm text-gray-400">Gast</span>
-						</div>
-					</div>
-				</div>
-				<div class="dialog-section">
-					<h4 class="dialog-section-title">Team-Logos</h4>
-					<label class="field-label">
-						Heim-Logo (URL)
-						<input type="text" bind:value={editHomeLogo} class="field-input" placeholder="https://…" />
-					</label>
-					{#if editHomeLogo}
-						<img src="/api/image-proxy?url={encodeURIComponent(editHomeLogo)}" alt="" class="logo-preview" />
-					{/if}
-					<label class="field-label">
-						Gast-Logo (URL)
-						<input type="text" bind:value={editGuestLogo} class="field-input" placeholder="https://…" />
-					</label>
-					{#if editGuestLogo}
-						<img src="/api/image-proxy?url={encodeURIComponent(editGuestLogo)}" alt="" class="logo-preview" />
-					{/if}
-				</div>
-				<div class="dialog-section">
-					<h4 class="dialog-section-title">Overlay-Farben</h4>
-					<div class="dialog-section-row">
-						<span class="text-sm text-gray-400">Hintergrund</span>
-						<label class="toggle-label toggle-label-start">
-							Verlauf
-							<button class="toggle" class:active={editOverlayBgGradient} onclick={() => editOverlayBgGradient = !editOverlayBgGradient} aria-label="Verlauf">
-								<span class="toggle-knob"></span>
-							</button>
-						</label>
-						<label class="toggle-label toggle-label-start">
-							Abgerundet
-							<button class="toggle" class:active={editOverlayRounded} onclick={() => editOverlayRounded = !editOverlayRounded} aria-label="Abgerundet">
-								<span class="toggle-knob"></span>
-							</button>
-						</label>
-					</div>
-					<div class="color-row-compact">
-						<div class="color-field-inline">
-							<input type="color" bind:value={editOverlayBg} class="color-picker" />
-							<span class="color-hex">{editOverlayBg}</span>
-						</div>
-						{#if editOverlayBgGradient}
-							<div class="color-field-inline">
-								<input type="color" bind:value={editOverlayBg2} class="color-picker" />
-								<span class="color-hex">{editOverlayBg2}</span>
-							</div>
-						{/if}
-					</div>
-					<div class="color-row-compact">
-						<div class="color-field-inline">
-							<input type="color" bind:value={editOverlayText} class="color-picker" />
-							<span class="text-sm text-gray-400">Text</span>
-						</div>
-					</div>
-					<div class="color-row-compact">
-						<div class="color-field-inline">
-							<input type="color" bind:value={editOverlayDivider} class="color-picker" />
-							<span class="text-sm text-gray-400">Trennlinie</span>
-							<span class="color-hex">{editOverlayDivider}</span>
-						</div>
-					</div>
-					<div class="color-row-compact">
-						<div class="color-field-inline">
-							<input type="color" bind:value={editOverlaySatsBg} class="color-picker" />
-							<span class="text-sm text-gray-400">Satz</span>
-							<span class="color-hex">{editOverlaySatsBg}</span>
-						</div>
-					</div>
-					<div class="color-row-compact">
-						<div class="color-field-inline">
-							<input type="color" bind:value={editOverlaySetScoreBg} class="color-picker" />
-							<span class="text-sm text-gray-400">Satzresultate</span>
-							<span class="color-hex">{editOverlaySetScoreBg}</span>
-						</div>
-					</div>
-					<div class="dialog-section-row">
-						<span class="text-sm text-gray-400">Punktzahl</span>
-						<label class="toggle-label toggle-label-start">
-							Verlauf
-							<button class="toggle" class:active={editScoreColorGradient} onclick={() => editScoreColorGradient = !editScoreColorGradient} aria-label="Verlauf">
-								<span class="toggle-knob"></span>
-							</button>
-						</label>
-					</div>
-					<div class="color-row-compact">
-						<div class="color-field-inline">
-							<input type="color" bind:value={editScoreColor} class="color-picker" />
-							<span class="color-hex">{editScoreColor}</span>
-						</div>
-						{#if editScoreColorGradient}
-							<div class="color-field-inline">
-								<input type="color" bind:value={editScoreColor2} class="color-picker" />
-								<span class="color-hex">{editScoreColor2}</span>
-							</div>
-						{/if}
-					</div>
-				</div>
-			</div>
-			<div class="dialog-footer">
-				<button onclick={() => settingsOpen = false} class="btn-action">
-					{settingsDirty ? 'Abbrechen' : 'Schliessen'}
-				</button>
-				<button onclick={saveSettings} disabled={!settingsDirty} class="btn-primary">
-					&#128190; Speichern
-				</button>
-			</div>
-		</dialog>
 	{/if}
 </div>
 
@@ -906,18 +473,15 @@
 		margin: 0 auto 16px;
 	}
 
-	.nav-link {
-		color: var(--color-text-secondary);
+	.share-banner {
+		background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+		border: 1px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+		color: var(--color-accent);
+		border-radius: 8px;
+		padding: 8px 16px;
 		font-size: 13px;
-		text-decoration: none;
-		background: none;
-		border: none;
-		cursor: pointer;
-		padding: 0;
+		font-weight: 600;
 	}
-
-	.nav-link:hover { color: var(--color-text-primary); }
-	.nav-link-right { margin-left: auto; }
 
 	.start-screen {
 		display: flex;
@@ -963,45 +527,6 @@
 		gap: 12px;
 	}
 
-	/* Toggle */
-	.toggle-label {
-		margin-left: auto;
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		font-size: 13px;
-		color: var(--color-text-secondary);
-		font-weight: 400;
-	}
-
-	.toggle-label-start { margin-left: 0; }
-
-	.toggle {
-		position: relative;
-		width: 44px;
-		height: 24px;
-		background: var(--color-border-subtle);
-		border: none;
-		border-radius: 12px;
-		cursor: pointer;
-		transition: background 0.2s;
-	}
-
-	.toggle.active { background: var(--color-accent-mid); }
-
-	.toggle-knob {
-		position: absolute;
-		top: 2px;
-		left: 2px;
-		width: 20px;
-		height: 20px;
-		background: white;
-		border-radius: 50%;
-		transition: transform 0.2s;
-	}
-
-	.toggle.active .toggle-knob { transform: translateX(20px); }
-
 	/* Scoreboard preview */
 	.scoreboard-preview {
 		display: grid;
@@ -1039,7 +564,6 @@
 		object-fit: contain;
 		padding: 4px;
 	}
-	.logo-preview { height: 40px; margin: 4px 0; object-fit: contain; border-radius: 4px; background: #111; }
 
 	.preview-name {
 		padding: 0 16px;
@@ -1156,6 +680,7 @@
 		font-size: 16px;
 	}
 
+	.scoring-team-btns { display: flex; flex-direction: column; }
 	.scoring-team-icon { font-size: 18px; }
 
 	.btn-point {
@@ -1255,22 +780,6 @@
 		cursor: default;
 	}
 
-	.btn-primary {
-		padding: 10px 20px;
-		background: linear-gradient(135deg, var(--color-accent-mid), var(--color-accent-dark));
-		color: white;
-		border: none;
-		border-radius: 8px;
-		font-weight: 600;
-		font-size: 14px;
-		cursor: pointer;
-		transition: opacity 0.2s;
-		text-align: center;
-	}
-
-	.btn-primary:hover { opacity: 0.9; }
-	.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-
 	/* Dialogs */
 	.dialog {
 		background: var(--color-bg-panel);
@@ -1314,21 +823,6 @@
 		gap: 20px;
 	}
 
-	.dialog-section {
-		display: flex;
-		flex-direction: column;
-		gap: 12px;
-	}
-
-	.dialog-section-title {
-		margin: 0;
-		font-size: 13px;
-		color: var(--color-text-secondary);
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.5px;
-	}
-
 	.advanced-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
 	.advanced-team { display: flex; flex-direction: column; gap: 8px; padding: 0 12px; }
 	.advanced-team:first-child { border-right: 1px solid var(--color-border-default); }
@@ -1342,36 +836,6 @@
 		padding: 16px 20px;
 		border-top: 1px solid var(--color-border-default);
 	}
-
-	/* Form fields */
-	.field-label { display: block; font-size: 13px; color: var(--color-text-secondary); }
-
-	.field-input {
-		display: block;
-		width: 100%;
-		margin-top: 4px;
-		padding: 10px 14px;
-		background: var(--color-bg-input);
-		border: 1px solid var(--color-border-subtle);
-		border-radius: 8px;
-		color: var(--color-text-primary);
-		font-size: 15px;
-		outline: none;
-		transition: border-color 0.2s;
-	}
-
-	.field-input:focus { border-color: var(--color-accent); }
-
-	.dialog-section-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-	.color-row-compact { display: flex; align-items: center; gap: 16px; }
-	.color-field-inline { display: flex; align-items: center; gap: 8px; }
-	.color-picker { width: 40px; height: 40px; border: none; border-radius: 6px; cursor: pointer; padding: 0; }
-	.color-hex { font-family: monospace; font-size: 14px; color: var(--color-text-secondary); }
-
-	/* Share link */
-	.share-link-row { display: flex; gap: 8px; align-items: center; }
-	.share-link-input { flex: 1; font-size: 13px; font-family: monospace; }
-	.btn-copy { white-space: nowrap; flex-shrink: 0; }
 
 	/* Match finished */
 	.match-finished {
@@ -1463,74 +927,5 @@
 
 		.scoring-secondary { flex-direction: column; gap: 6px; }
 		.btn-action { padding: 8px 12px; font-size: 12px; }
-		.btn-service { padding: 8px 12px; font-size: 12px; }
-		.scoring-actions { padding: 10px 12px; gap: 8px; }
-	}
-
-	@media (max-height: 480px) and (orientation: landscape) {
-		.control { padding: 4px 8px; }
-		.nav-bar { margin-bottom: 4px; }
-		.card-header { padding: 6px 12px; }
-		.card-body { padding: 6px 10px; }
-
-		.scoreboard-preview { padding: 8px; grid-template-rows: 38px 38px; }
-		.scoreboard-preview:not(.with-jersey) {
-			grid-template-columns: minmax(0, 1fr) 34px auto 38px auto;
-		}
-		.scoreboard-preview.with-jersey {
-			grid-template-columns: 8px minmax(0, 1fr) 34px auto 38px auto;
-		}
-		.scoreboard-preview.with-jersey.has-logo {
-			grid-template-columns: 34px minmax(0, 1fr) 34px auto 38px auto;
-		}
-		.preview-name { font-size: 12px; padding: 0 6px; }
-		.preview-sets { width: 34px; font-size: 16px; }
-		.preview-points { width: 38px; font-size: 18px; }
-		.preview-set-scores.expanded { max-width: 110px; }
-		.preview-set-cell { width: 26px; font-size: 13px; }
-
-		.timeout-info { display: none; }
-
-		.set-scores { padding: 0 10px 6px; gap: 6px; }
-		.scoring-actions { padding: 6px 12px; gap: 8px; }
-		.timeout-banner { padding: 6px 12px; font-size: 13px; }
-
-		.scoring-team {
-			display: flex;
-			flex-direction: row;
-			align-items: stretch;
-			padding: 6px 8px;
-			gap: 6px;
-		}
-		.scoring-team-header {
-			writing-mode: vertical-rl;
-			transform: rotate(180deg);
-			margin-bottom: 0;
-			font-size: 11px;
-			align-self: stretch;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			gap: 0;
-			overflow: hidden;
-			max-width: 18px;
-		}
-		.scoring-team-icon { display: none; }
-		.scoring-team-header .font-bold {
-			overflow: hidden;
-			text-overflow: ellipsis;
-			white-space: nowrap;
-			max-height: 100px;
-		}
-		.scoring-team-btns {
-			display: flex;
-			flex-direction: column;
-			gap: 4px;
-			flex: 1;
-		}
-		.btn-point { height: 42px; font-size: 14px; margin-bottom: 0; }
-		.scoring-secondary { flex-direction: column; gap: 4px; }
-		.btn-action { padding: 5px 8px; font-size: 11px; }
-		.btn-service { padding: 5px 8px; font-size: 11px; }
 	}
 </style>
