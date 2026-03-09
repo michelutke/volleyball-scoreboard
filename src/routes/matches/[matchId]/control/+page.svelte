@@ -2,6 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { MatchState, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
+	import QRCode from 'qrcode';
 
 	let { data } = $props();
 
@@ -269,10 +270,25 @@
 		settingsOpen = false;
 	}
 
+	const homeWon = $derived(match?.status === 'finished' && (match?.homeSets ?? 0) > (match?.guestSets ?? 0));
+	const guestWon = $derived(match?.status === 'finished' && (match?.guestSets ?? 0) > (match?.homeSets ?? 0));
+
 	// Share control token
 	let controlToken = $state<string | null>(null);
 	let controlTokenLoading = $state(false);
 	let controlTokenCopied = $state(false);
+	let showQr = $state(false);
+	let qrDataUrl = $state<string | null>(null);
+
+	$effect(() => {
+		if (showQr && controlToken && typeof window !== 'undefined') {
+			const url = `${window.location.origin}/c/${controlToken}`;
+			QRCode.toDataURL(url, { width: 200, margin: 2, color: { dark: '#ffffff', light: '#131929' } })
+				.then(d => { qrDataUrl = d; });
+		} else if (!showQr) {
+			qrDataUrl = null;
+		}
+	});
 
 	$effect(() => {
 		controlToken = data.controlToken ?? null;
@@ -533,30 +549,46 @@
 							<span class="scoring-team-icon">&#9675;</span>
 							<span class="font-bold">{match.homeTeamName}</span>
 						</div>
-						<div class="scoring-team-btns">
-							<button onclick={() => addPoint('home')} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
-							<div class="scoring-secondary">
-								<button onclick={() => callTimeout('home')} disabled={matchTimeouts.home >= 2 || !!activeTimeout} class="btn-action">&#9201; Auszeit</button>
-								<button onclick={() => { if (match?.serviceTeam !== 'home') switchService(); }} class="btn-service" class:btn-service-active={match?.serviceTeam === 'home'} disabled={match?.serviceTeam === 'home'}>
-									&#127952; Service
-								</button>
+						{#if match?.status === 'finished'}
+							<div class="finished-banner {homeWon ? 'banner-winner' : 'banner-loser'}">
+								<div class="banner-icon">{homeWon ? '🏆' : ''}</div>
+								<div class="banner-result">{homeWon ? 'Sieger' : 'Verlierer'}</div>
+								<div class="banner-sets">{match.homeSets} {match.homeSets === 1 ? 'Satz' : 'Sätze'}</div>
 							</div>
-						</div>
+						{:else}
+							<div class="scoring-team-btns">
+								<button onclick={() => addPoint('home')} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
+								<div class="scoring-secondary">
+									<button onclick={() => callTimeout('home')} disabled={matchTimeouts.home >= 2 || !!activeTimeout} class="btn-action">&#9201; Auszeit</button>
+									<button onclick={() => { if (match?.serviceTeam !== 'home') switchService(); }} class="btn-service" class:btn-service-active={match?.serviceTeam === 'home'} disabled={match?.serviceTeam === 'home'}>
+										&#127952; Service
+									</button>
+								</div>
+							</div>
+						{/if}
 					</div>
 					<div class="scoring-team">
 						<div class="scoring-team-header">
 							<span class="scoring-team-icon">&#128101;</span>
 							<span class="font-bold">{match.guestTeamName}</span>
 						</div>
-						<div class="scoring-team-btns">
-							<button onclick={() => addPoint('guest')} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
-							<div class="scoring-secondary">
-								<button onclick={() => callTimeout('guest')} disabled={matchTimeouts.guest >= 2 || !!activeTimeout} class="btn-action">&#9201; Auszeit</button>
-								<button onclick={() => { if (match?.serviceTeam !== 'guest') switchService(); }} class="btn-service" class:btn-service-active={match?.serviceTeam === 'guest'} disabled={match?.serviceTeam === 'guest'}>
-									&#127952; Service
-								</button>
+						{#if match?.status === 'finished'}
+							<div class="finished-banner {guestWon ? 'banner-winner' : 'banner-loser'}">
+								<div class="banner-icon">{guestWon ? '🏆' : ''}</div>
+								<div class="banner-result">{guestWon ? 'Sieger' : 'Verlierer'}</div>
+								<div class="banner-sets">{match.guestSets} {match.guestSets === 1 ? 'Satz' : 'Sätze'}</div>
 							</div>
-						</div>
+						{:else}
+							<div class="scoring-team-btns">
+								<button onclick={() => addPoint('guest')} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
+								<div class="scoring-secondary">
+									<button onclick={() => callTimeout('guest')} disabled={matchTimeouts.guest >= 2 || !!activeTimeout} class="btn-action">&#9201; Auszeit</button>
+									<button onclick={() => { if (match?.serviceTeam !== 'guest') switchService(); }} class="btn-service" class:btn-service-active={match?.serviceTeam === 'guest'} disabled={match?.serviceTeam === 'guest'}>
+										&#127952; Service
+									</button>
+								</div>
+							</div>
+						{/if}
 					</div>
 				</div>
 
@@ -644,6 +676,12 @@
 							{controlTokenCopied ? '&#10003; Kopiert' : '&#128203; Kopieren'}
 						</button>
 					</div>
+					<button onclick={() => showQr = !showQr} class="btn-action" style="margin-top: 8px;">
+						{showQr ? 'QR verbergen' : 'QR-Code'}
+					</button>
+					{#if showQr && qrDataUrl}
+						<img src={qrDataUrl} alt="QR-Code für Freigabe-Link" class="qr-image" />
+					{/if}
 				{:else}
 					<p class="text-sm text-gray-400">Erstelle einen Link, mit dem andere ohne Login dieses Spiel steuern können.</p>
 					<button onclick={generateControlToken} disabled={controlTokenLoading} class="btn-action">
@@ -706,16 +744,7 @@
 		{/if}
 		</div>
 
-		{#if match.status === 'finished'}
-			<div class="match-finished">
-				<p class="text-xl font-bold">Match beendet!</p>
-				<p class="text-gray-300">
-					{match.homeSets > match.guestSets ? match.homeTeamName : match.guestTeamName} gewinnt {match.homeSets}:{match.guestSets}
-				</p>
-			</div>
-		{/if}
-
-		<!-- Advanced Dialog -->
+			<!-- Advanced Dialog -->
 		<dialog bind:this={advancedDialogEl} class="dialog" onclose={() => advancedOpen = false} onclick={(e) => { if (e.target === e.currentTarget) advancedOpen = false; }}>
 			<div class="dialog-header">
 				<h3>Erweitert</h3>
@@ -1373,16 +1402,19 @@
 	.share-link-input { flex: 1; font-size: 13px; font-family: monospace; }
 	.btn-copy { white-space: nowrap; flex-shrink: 0; }
 
-	/* Match finished */
-	.match-finished {
-		max-width: 1100px;
-		margin: 16px auto 0;
-		background: rgba(6, 78, 59, 0.3);
-		border: 1px solid #065f46;
-		border-radius: 12px;
-		padding: 20px;
-		text-align: center;
+	/* Finished banners */
+	.finished-banner {
+		display: flex; flex-direction: column; align-items: center; justify-content: center;
+		gap: 6px; padding: 24px 16px; border-radius: 12px; text-align: center; min-height: 120px;
 	}
+	.banner-winner { background: rgba(22, 163, 74, 0.15); border: 1px solid rgba(22, 163, 74, 0.4); color: #4ade80; }
+	.banner-loser  { background: rgba(75, 85, 99, 0.12); border: 1px solid rgba(75, 85, 99, 0.3); color: var(--color-text-secondary); }
+	.banner-icon   { font-size: 1.5rem; line-height: 1; }
+	.banner-result { font-size: 1.1rem; font-weight: 700; }
+	.banner-sets   { font-size: 0.85rem; opacity: 0.8; }
+
+	/* QR code */
+	.qr-image { display: block; margin: 12px 0; width: 160px; height: 160px; border-radius: 8px; }
 
 	/* Timeline */
 	.timeline-set { margin-bottom: 16px; }

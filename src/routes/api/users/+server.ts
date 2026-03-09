@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { listOrgMembers, listUsersWithRole, createUser, addToOrg, sendSetPasswordEmail, disableUser, getKcOrgId } from '$lib/server/keycloak-admin.js';
+import { listOrgMembersWithStatus, listUsersWithRole, inviteUserByEmail, getKcOrgId } from '$lib/server/keycloak-admin.js';
 import type { RequestHandler } from './$types.js';
 
 export const GET: RequestHandler = async ({ locals }) => {
@@ -9,7 +9,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 	if (!kcOrgId) return json([]);
 
 	const [members, adminUsers] = await Promise.all([
-		listOrgMembers(kcOrgId),
+		listOrgMembersWithStatus(kcOrgId),
 		listUsersWithRole('admin')
 	]);
 
@@ -31,40 +31,20 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const body: { email?: string } = await request.json();
 	if (!body.email?.trim()) return json({ error: 'E-Mail erforderlich' }, { status: 400 });
 
-	const currentMembers = await listOrgMembers(kcOrgId);
-	if (currentMembers.length >= 5) {
-		return json({ error: 'Maximale Nutzerzahl erreicht (5 Nutzer pro Organisation)' }, { status: 400 });
-	}
-
-	let userId: string;
-	try {
-		userId = await createUser(body.email.trim());
-	} catch (err) {
-		const msg = err instanceof Error ? err.message : 'Nutzer konnte nicht erstellt werden';
-		const isConflict = msg.includes('already exists');
-		return json({ error: isConflict ? 'E-Mail bereits registriert' : msg }, { status: isConflict ? 409 : 500 });
+	const allMembers = await listOrgMembersWithStatus(kcOrgId);
+	if (allMembers.length >= 5) {
+		return json({ error: 'Maximale Anzahl Nutzer erreicht' }, { status: 400 });
 	}
 
 	try {
-		await addToOrg(userId, kcOrgId);
+		const userId = await inviteUserByEmail(body.email.trim(), kcOrgId);
+		return json({ id: userId, email: body.email.trim(), emailSent: true }, { status: 201 });
 	} catch (err) {
-		await disableUser(userId).catch(() => {});
 		const msg = err instanceof Error ? err.message : 'Einladung fehlgeschlagen';
-		return json({ error: msg }, { status: 500 });
+		const isAlreadyMember = msg.toLowerCase().includes('conflict') || msg.includes('409');
+		return json(
+			{ error: isAlreadyMember ? 'Nutzer ist bereits Mitglied dieser Organisation' : msg },
+			{ status: isAlreadyMember ? 400 : 500 }
+		);
 	}
-
-	let emailSent = true;
-	try {
-		await sendSetPasswordEmail(userId);
-	} catch (err) {
-		const msg = err instanceof Error ? err.message : '';
-		if (msg.includes('No sender address')) {
-			console.warn(`SMTP not configured — skipping set-password email for ${body.email.trim()}`);
-			emailSent = false;
-		} else {
-			return json({ error: msg || 'E-Mail konnte nicht gesendet werden' }, { status: 500 });
-		}
-	}
-
-	return json({ id: userId, email: body.email.trim(), emailSent }, { status: 201 });
 };

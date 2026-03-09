@@ -29,6 +29,13 @@ export const POST: RequestHandler = async (event) => {
 		}
 	}
 
+	// Clear any existing session before signing in as the new user
+	for (const name of ['authjs.session-token', 'authjs.callback-url', 'authjs.csrf-token']) {
+		event.cookies.delete(name, { path: '/' });
+		event.cookies.delete(`__Secure-${name}`, { path: '/' });
+		event.cookies.delete(`__Host-${name}`, { path: '/' });
+	}
+
 	const result = await serverCredentialsSignIn(event, email, password, '/dashboard');
 	return json(result);
 };
