@@ -1,8 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { serverCredentialsSignIn } from '../../../../auth';
-import { getStripe } from '$lib/server/stripe';
-import { upsertBillingSetting } from '$lib/server/billing';
+import { verifyAndActivateSession } from '$lib/server/billing';
 import { env } from '$env/dynamic/private';
 
 export const POST: RequestHandler = async (event) => {
@@ -16,14 +15,10 @@ export const POST: RequestHandler = async (event) => {
 		return json({ ok: false, redirectUrl: '/signin?registered=1' }, { status: 400 });
 	}
 
-	// Verify Stripe session + activate billing (replaces /api/billing/verify-session)
+	// Verify Stripe session + activate billing (non-fatal — webhook will also set status)
 	if (env.STRIPE_SECRET_KEY) {
 		try {
-			const session = await getStripe().checkout.sessions.retrieve(sessionId);
-			const orgId = session.metadata?.orgId;
-			if (orgId && (session.status === 'complete' || session.payment_status === 'paid')) {
-				await upsertBillingSetting(orgId, 'subscriptionStatus', 'trialing');
-			}
+			await verifyAndActivateSession(sessionId);
 		} catch (e) {
 			console.error('[auto-login] stripe verify failed:', e);
 		}

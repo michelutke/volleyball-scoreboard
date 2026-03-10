@@ -19,6 +19,7 @@ import {
 import { getStripe } from '$lib/server/stripe';
 import { db } from '$lib/server/db';
 import { settings } from '$lib/server/db/schema';
+import { eq } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import { isRateLimited } from '$lib/server/rate-limit';
 
@@ -105,12 +106,13 @@ export const actions: Actions = {
 			return { success: true };
 		} catch (err) {
 			console.error('[signup] provisioning failed, rolling back', err);
-			// LIFO rollback: Stripe → KC org → KC user
+			// LIFO rollback: Stripe → KC org + DB settings → KC user
 			if (stripeCustomerId) {
 				try { await getStripe().customers.del(stripeCustomerId); } catch (e) { console.error('[signup] stripe cleanup failed', e); }
 			}
 			if (kcOrgId) {
 				try { await deleteOrganization(kcOrgId); } catch (e) { console.error('[signup] KC org cleanup failed', e); }
+				try { await db.delete(settings).where(eq(settings.orgId, kcOrgId)); } catch (e) { console.error('[signup] settings cleanup failed', e); }
 			}
 			if (userId) {
 				try { await deleteUser(userId); } catch (e) { console.error('[signup] KC user cleanup failed', e); }

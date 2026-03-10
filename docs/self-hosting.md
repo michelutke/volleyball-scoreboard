@@ -66,11 +66,55 @@ node build
 | `KEYCLOAK_ADMIN_URL` | User mgmt only | KC base URL. Default: `http://localhost:8080` |
 | `KEYCLOAK_ADMIN_CLIENT_ID` | User mgmt only | Service account client ID. Default: `scoring-app` |
 | `KEYCLOAK_ADMIN_CLIENT_SECRET` | User mgmt only | Secret from KC `scoring-app` Credentials tab |
+| `KEYCLOAK_ADMIN_USERNAME` | No | KC master admin username. Default: `admin` — change in production |
+| `KEYCLOAK_ADMIN_PASSWORD` | No | KC master admin password. Default: `admin` — **change in production** |
 | `POSTGRES_USER` | No | Docker postgres user. Default: `scoring` |
 | `POSTGRES_PASSWORD` | No | Docker postgres password. Default: `scoring` |
-| `KC_ADMIN_PASSWORD` | No | Keycloak admin console password. Default: `admin` |
+| `KC_ADMIN_PASSWORD` | No | Keycloak admin console password (Docker only). Default: `admin` |
 
 The `KEYCLOAK_ADMIN_*` variables are only needed for the `/admin/users` user management page. Basic scoring works without them.
+
+`KEYCLOAK_ADMIN_PASSWORD` is also used as a fallback when configuring the Keycloak organization mapper on first boot. If unset, the app tries the default `admin` password and logs a warning — this works in dev but should be set in production.
+
+## Billing (Optional)
+
+Stripe billing is **entirely optional**. If you don't set the Stripe environment variables, the app runs without any paywall or subscription enforcement — all users have full access.
+
+### Running without Stripe (recommended for self-hosters)
+
+Simply leave these variables unset (or remove them from `.env`):
+
+```bash
+# Do NOT set these to disable billing entirely:
+# STRIPE_SECRET_KEY
+# STRIPE_WEBHOOK_SECRET
+# STRIPE_PRICE_ID
+# PUBLIC_STRIPE_PUBLISHABLE_KEY
+```
+
+With billing disabled:
+- No subscription check on any route
+- Signup creates a KC user + org directly, no checkout step
+- `/billing` page shows no subscription info
+- Stripe webhook endpoint still exists but does nothing
+
+### Running with Stripe (SaaS mode)
+
+Set all four Stripe variables:
+
+```bash
+STRIPE_SECRET_KEY=sk_live_...        # Stripe secret key
+STRIPE_WEBHOOK_SECRET=whsec_...      # Stripe webhook signing secret
+STRIPE_PRICE_ID=price_...            # Price ID for the subscription plan
+PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...  # Publishable key for embedded checkout
+```
+
+When all are set:
+- Signup includes a Stripe embedded checkout (trial subscription)
+- Authenticated users without an active/trialing subscription are redirected to `/billing`
+- Stripe webhooks update subscription status automatically
+
+Register the webhook at `https://your-domain.com/api/billing/webhook` in the Stripe dashboard, listening for: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_failed`.
 
 ## Keycloak Realm Setup
 

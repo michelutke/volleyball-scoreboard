@@ -26,16 +26,18 @@ For production, regenerate a strong secret:
 
 ## 3. User Management (Optional)
 
-The `/admin/users` page requires the `scoring-app` service account to have permission to manage users in Keycloak. This is the same client used for OIDC — enable service accounts on it and grant the roles below. The env var `KEYCLOAK_ADMIN_CLIENT_ID` defaults to `scoring-app`.
+The `/admin/users` page lets admins invite scorers by email. It requires the `scoring-app` service account to have permission to manage users in Keycloak. The app works without these — user management is simply disabled if the service account lacks them.
 
 1. KC Admin Console > realm `scoring` > **Clients** > `scoring-app`
 2. **Service account roles** tab > **Assign roles**
 3. Filter: **Filter by clients** > select `realm-management`
-4. Assign: `manage-users`, `view-users`, `manage-realm`
+4. Assign: `manage-users` (create/invite users)
 
 Also create an Organization so users can be grouped:
 1. Go to **Organizations** > **Create organization**
 2. Name: your club name, Domain: your email domain → Save
+
+> **Note:** Do not assign `manage-realm` — it grants full realm control and is not needed. `view-users` is also not required; the app falls back to the master admin token for org ID lookups.
 
 > **Organizations not visible?** Ensure `KC_FEATURES: organization` (singular) is in docker-compose.yml, then restart Keycloak. Also check: realm `scoring` > Realm settings > General tab > Organizations toggle: ON.
 

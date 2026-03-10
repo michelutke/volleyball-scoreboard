@@ -16,13 +16,13 @@ let tokenCache: { token: string; expiresAt: number } | null = null;
 function getBaseUrl(): string {
 	const url = env.KEYCLOAK_ADMIN_URL;
 	if (!url) throw new Error('KEYCLOAK_ADMIN_URL not configured');
-	return `${url}/admin/realms/${env.KEYCLOAK_REALM ?? 'master'}`;
+	return `${url}/admin/realms/${env.KEYCLOAK_REALM ?? 'scoring'}`;
 }
 
 function getTokenUrl(): string {
 	const url = env.KEYCLOAK_ADMIN_URL;
 	if (!url) throw new Error('KEYCLOAK_ADMIN_URL not configured');
-	return `${url}/realms/${env.KEYCLOAK_REALM ?? 'master'}/protocol/openid-connect/token`;
+	return `${url}/realms/${env.KEYCLOAK_REALM ?? 'scoring'}/protocol/openid-connect/token`;
 }
 
 export async function getAdminToken(): Promise<string> {
@@ -273,6 +273,9 @@ export async function bootstrapKcOrgId(): Promise<void> {
 
 async function getMasterAdminToken(): Promise<string | null> {
 	if (!env.KEYCLOAK_ADMIN_URL) return null;
+	if (!env.KEYCLOAK_ADMIN_PASSWORD) {
+		console.warn('[keycloak] KEYCLOAK_ADMIN_PASSWORD not set — falling back to default "admin". Set this in production.');
+	}
 	try {
 		const res = await fetch(`${env.KEYCLOAK_ADMIN_URL}/realms/master/protocol/openid-connect/token`, {
 			method: 'POST',
@@ -280,7 +283,7 @@ async function getMasterAdminToken(): Promise<string | null> {
 			body: new URLSearchParams({
 				grant_type: 'password',
 				client_id: 'admin-cli',
-				username: 'admin',
+				username: env.KEYCLOAK_ADMIN_USERNAME ?? 'admin',
 				password: env.KEYCLOAK_ADMIN_PASSWORD ?? 'admin'
 			})
 		});
