@@ -239,18 +239,5 @@
 			</div>
 		{/if}
 
-		<!-- USP Callouts -->
-		<div class="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-3">
-			{#each tr.usps as usp}
-				<div class="flex items-start gap-3 rounded-xl border p-4"
-					style="border-color: var(--color-border-subtle); background: var(--color-bg-panel-alt);">
-					<span class="text-xl shrink-0">{usp.icon}</span>
-					<div>
-						<p class="text-sm font-semibold" style="color: var(--color-text-primary);">{usp.title}</p>
-						<p class="mt-0.5 text-xs leading-relaxed" style="color: var(--color-text-secondary);">{usp.desc}</p>
-					</div>
-				</div>
-			{/each}
-		</div>
 	</div>
 </section>

@@ -39,6 +39,12 @@
 				{t[lang].nav.pricing}
 			</a>
 			<a
+				href="/about"
+				class="text-sm text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
+			>
+				{t[lang].nav.about}
+			</a>
+			<a
 				href="/signin"
 				class="text-sm text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
 			>
@@ -95,6 +101,13 @@
 					class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
 				>
 					{t[lang].nav.pricing}
+				</a>
+				<a
+					href="/about"
+					onclick={closeMenu}
+					class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+				>
+					{t[lang].nav.about}
 				</a>
 				<hr class="border-[var(--color-border-subtle)]" />
 				<a

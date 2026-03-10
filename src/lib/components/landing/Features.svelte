@@ -27,8 +27,5 @@
 			{/each}
 		</div>
 
-		<p class="mt-8 text-center text-xs italic text-[var(--color-text-tertiary)]">
-			{t[lang].features.svDisclaimer}
-		</p>
 	</div>
 </section>
