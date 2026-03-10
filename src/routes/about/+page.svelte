@@ -18,10 +18,6 @@
 				heading: 'Mission',
 				text: 'Wir glauben, dass lokaler Schweizer Sport die gleiche professionelle Bühne verdient wie die grossen Ligen — und zwar ohne, dass ehrenamtliche Helfer*innen dafür IT-Experten sein müssen. Mit unseren intuitiven Open-Source- und SaaS-Lösungen machen wir hochwertige Scoring Overlays zugänglich und einfach bedienbar.'
 			},
-			origin: {
-				heading: 'Ursprung',
-				text: 'Michel produzierte Livestreams für seinen eigenen Volleyballverein und stellte dabei aus erster Hand fest, dass bestehende Lösungen für den ehrenamtlichen Breitensport oft zu komplex oder zu teuer sind. Da moderne KI-Tools die Umsetzung solcher Produkte zugänglicher gemacht haben, entschied er sich, selbst eine für Schweizer Ligen optimierte Lösung zu entwickeln.'
-			},
 			values: {
 				heading: 'Kernwerte',
 				items: [
@@ -67,10 +63,6 @@
 			mission: {
 				heading: 'Mission',
 				text: 'We believe local Swiss sport deserves the same professional stage as the big leagues — without volunteers needing to be IT experts. With our intuitive open-source and SaaS solutions, we make high-quality scoring overlays accessible and easy to use.'
-			},
-			origin: {
-				heading: 'Origin',
-				text: 'Michel produced livestreams for his own volleyball club and saw firsthand that existing solutions are often too complex or expensive for volunteer sports teams. With modern AI tools making such products more accessible to build, he decided to create a solution optimised for Swiss leagues.'
 			},
 			values: {
 				heading: 'Core Values',
@@ -138,12 +130,6 @@
 		<section>
 			<h2 class="mb-4 text-2xl font-bold text-[var(--color-text-primary)]">{tr.mission.heading}</h2>
 			<p class="text-base leading-relaxed text-[var(--color-text-secondary)]">{tr.mission.text}</p>
-		</section>
-
-		<!-- Origin -->
-		<section>
-			<h2 class="mb-4 text-2xl font-bold text-[var(--color-text-primary)]">{tr.origin.heading}</h2>
-			<p class="text-base leading-relaxed text-[var(--color-text-secondary)]">{tr.origin.text}</p>
 		</section>
 
 		<!-- Core Values -->
