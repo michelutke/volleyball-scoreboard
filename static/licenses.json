@@ -1,0 +1,877 @@
+{
+  "@auth/core@0.41.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/nextauthjs/next-auth",
+    "publisher": "Balázs Orbán",
+    "email": "info@balazsorban.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@auth/core",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@auth/core/LICENSE"
+  },
+  "@auth/sveltekit@1.11.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/nextauthjs/next-auth",
+    "publisher": "Thang Huu Vu",
+    "email": "hi@thvu.dev",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@auth/sveltekit",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@auth/sveltekit/LICENSE"
+  },
+  "@esbuild/darwin-arm64@0.27.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/evanw/esbuild",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@esbuild/darwin-arm64",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@esbuild/darwin-arm64/README.md"
+  },
+  "@jridgewell/gen-mapping@0.3.13": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jridgewell/sourcemaps",
+    "publisher": "Justin Ridgewell",
+    "email": "justin@ridgewell.name",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@jridgewell/gen-mapping",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@jridgewell/gen-mapping/LICENSE"
+  },
+  "@jridgewell/remapping@2.3.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jridgewell/sourcemaps",
+    "publisher": "Justin Ridgewell",
+    "email": "justin@ridgewell.name",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@jridgewell/remapping",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@jridgewell/remapping/LICENSE"
+  },
+  "@jridgewell/resolve-uri@3.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jridgewell/resolve-uri",
+    "publisher": "Justin Ridgewell",
+    "email": "justin@ridgewell.name",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@jridgewell/resolve-uri",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@jridgewell/resolve-uri/LICENSE"
+  },
+  "@jridgewell/sourcemap-codec@1.5.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jridgewell/sourcemaps",
+    "publisher": "Justin Ridgewell",
+    "email": "justin@ridgewell.name",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@jridgewell/sourcemap-codec",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@jridgewell/sourcemap-codec/LICENSE"
+  },
+  "@jridgewell/trace-mapping@0.3.31": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jridgewell/sourcemaps",
+    "publisher": "Justin Ridgewell",
+    "email": "justin@ridgewell.name",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@jridgewell/trace-mapping",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@jridgewell/trace-mapping/LICENSE"
+  },
+  "@panva/hkdf@1.2.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/panva/hkdf",
+    "publisher": "Filip Skokan",
+    "email": "panva.ip@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@panva/hkdf",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@panva/hkdf/LICENSE.md"
+  },
+  "@polka/url@1.0.0-next.29": {
+    "licenses": "MIT",
+    "repository": "https://github.com/lukeed/polka",
+    "publisher": "Luke Edwards",
+    "email": "luke@lukeed.com",
+    "url": "https://lukeed.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@polka/url",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@polka/url/readme.md"
+  },
+  "@rollup/plugin-commonjs@29.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/rollup/plugins",
+    "publisher": "Rich Harris",
+    "email": "richard.a.harris@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@rollup/plugin-commonjs",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@rollup/plugin-commonjs/LICENSE"
+  },
+  "@rollup/plugin-json@6.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/rollup/plugins",
+    "publisher": "rollup",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@rollup/plugin-json",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@rollup/plugin-json/LICENSE"
+  },
+  "@rollup/plugin-node-resolve@16.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/rollup/plugins",
+    "publisher": "Rich Harris",
+    "email": "richard.a.harris@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@rollup/plugin-node-resolve",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@rollup/plugin-node-resolve/LICENSE"
+  },
+  "@rollup/pluginutils@5.3.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/rollup/plugins",
+    "publisher": "Rich Harris",
+    "email": "richard.a.harris@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@rollup/pluginutils",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@rollup/pluginutils/LICENSE"
+  },
+  "@rollup/rollup-darwin-arm64@4.59.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/rollup/rollup",
+    "publisher": "Lukas Taegert-Atkinson",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@rollup/rollup-darwin-arm64",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@rollup/rollup-darwin-arm64/README.md"
+  },
+  "@standard-schema/spec@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/standard-schema/standard-schema",
+    "publisher": "Colin McDonnell",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@standard-schema/spec",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@standard-schema/spec/LICENSE"
+  },
+  "@stripe/stripe-js@8.9.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/stripe/stripe-js",
+    "publisher": "Stripe",
+    "url": "https://www.stripe.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@stripe/stripe-js",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@stripe/stripe-js/LICENSE"
+  },
+  "@sveltejs/acorn-typescript@1.0.9": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sveltejs/acorn-typescript",
+    "publisher": "tyrealhu and the Svelte team",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@sveltejs/acorn-typescript",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@sveltejs/acorn-typescript/LICENSE.md"
+  },
+  "@sveltejs/adapter-node@5.5.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sveltejs/kit",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@sveltejs/adapter-node",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@sveltejs/adapter-node/LICENSE"
+  },
+  "@sveltejs/kit@2.53.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sveltejs/kit",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@sveltejs/kit",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@sveltejs/kit/LICENSE"
+  },
+  "@sveltejs/vite-plugin-svelte-inspector@5.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sveltejs/vite-plugin-svelte",
+    "publisher": "dominikg",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@sveltejs/vite-plugin-svelte-inspector",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@sveltejs/vite-plugin-svelte-inspector/LICENSE"
+  },
+  "@sveltejs/vite-plugin-svelte@6.2.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sveltejs/vite-plugin-svelte",
+    "publisher": "dominikg",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@sveltejs/vite-plugin-svelte",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@sveltejs/vite-plugin-svelte/LICENSE"
+  },
+  "@types/cookie@0.6.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@types/cookie",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@types/cookie/LICENSE"
+  },
+  "@types/estree@1.0.8": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@types/estree",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@types/estree/LICENSE"
+  },
+  "@types/node@25.3.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@types/node",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@types/node/LICENSE"
+  },
+  "@types/resolve@1.20.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@types/resolve",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@types/resolve/LICENSE"
+  },
+  "@types/trusted-types@2.0.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@types/trusted-types",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@types/trusted-types/LICENSE"
+  },
+  "acorn@8.15.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/acornjs/acorn",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/acorn",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/acorn/LICENSE"
+  },
+  "ansi-regex@5.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/ansi-regex",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/ansi-regex",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/ansi-regex/license"
+  },
+  "ansi-styles@4.3.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/ansi-styles",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/ansi-styles",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/ansi-styles/license"
+  },
+  "aria-query@5.3.1": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/A11yance/aria-query",
+    "publisher": "Jesse Beach",
+    "email": "splendidnoise@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/aria-query",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/aria-query/LICENSE"
+  },
+  "axobject-query@4.1.0": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/A11yance/axobject-query",
+    "publisher": "Jesse Beach",
+    "email": "splendidnoise@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/axobject-query",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/axobject-query/LICENSE"
+  },
+  "camelcase@5.3.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/camelcase",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/camelcase",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/camelcase/license"
+  },
+  "cliui@6.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/yargs/cliui",
+    "publisher": "Ben Coe",
+    "email": "ben@npmjs.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/cliui",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/cliui/LICENSE.txt"
+  },
+  "clsx@2.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/lukeed/clsx",
+    "publisher": "Luke Edwards",
+    "email": "luke.edwards05@gmail.com",
+    "url": "https://lukeed.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/clsx",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/clsx/license"
+  },
+  "color-convert@2.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Qix-/color-convert",
+    "publisher": "Heather Arthur",
+    "email": "fayearthur@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/color-convert",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/color-convert/LICENSE"
+  },
+  "color-name@1.1.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/colorjs/color-name",
+    "publisher": "DY",
+    "email": "dfcreative@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/color-name",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/color-name/LICENSE"
+  },
+  "commondir@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/substack/node-commondir",
+    "publisher": "James Halliday",
+    "email": "mail@substack.net",
+    "url": "http://substack.net",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/commondir",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/commondir/LICENSE"
+  },
+  "cookie@0.6.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/cookie",
+    "publisher": "Roman Shtylman",
+    "email": "shtylman@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/cookie",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/cookie/LICENSE"
+  },
+  "decamelize@1.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/decamelize",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/decamelize",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/decamelize/license"
+  },
+  "deepmerge@4.3.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/TehShrike/deepmerge",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/deepmerge",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/deepmerge/license.txt"
+  },
+  "detect-libc@2.1.2": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/lovell/detect-libc",
+    "publisher": "Lovell Fuller",
+    "email": "npm@lovell.info",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/detect-libc",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/detect-libc/LICENSE"
+  },
+  "devalue@5.6.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sveltejs/devalue",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/devalue",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/devalue/LICENSE"
+  },
+  "dijkstrajs@1.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tcort/dijkstrajs",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/dijkstrajs",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/dijkstrajs/LICENSE.md"
+  },
+  "drizzle-orm@0.45.1": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/drizzle-team/drizzle-orm",
+    "publisher": "Drizzle Team",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/drizzle-orm",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/drizzle-orm/README.md"
+  },
+  "emoji-regex@8.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/mathiasbynens/emoji-regex",
+    "publisher": "Mathias Bynens",
+    "url": "https://mathiasbynens.be/",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/emoji-regex",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/emoji-regex/LICENSE-MIT.txt"
+  },
+  "esbuild@0.27.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/evanw/esbuild",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/esbuild",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/esbuild/LICENSE.md"
+  },
+  "esm-env@1.2.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/benmccann/esm-env",
+    "publisher": "Ben McCann",
+    "url": "https://www.benmccann.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/esm-env",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/esm-env/LICENSE"
+  },
+  "esrap@2.2.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sveltejs/esrap",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/esrap",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/esrap/LICENSE"
+  },
+  "estree-walker@2.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Rich-Harris/estree-walker",
+    "publisher": "Rich Harris",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/estree-walker",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/estree-walker/LICENSE"
+  },
+  "fdir@6.5.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/thecodrr/fdir",
+    "publisher": "thecodrr",
+    "email": "thecodrr@protonmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/fdir",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/fdir/LICENSE"
+  },
+  "find-up@4.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/find-up",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/find-up",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/find-up/license"
+  },
+  "fsevents@2.3.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/fsevents/fsevents",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/fsevents",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/fsevents/LICENSE"
+  },
+  "function-bind@1.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Raynos/function-bind",
+    "publisher": "Raynos",
+    "email": "raynos2@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/function-bind",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/function-bind/LICENSE"
+  },
+  "get-caller-file@2.0.5": {
+    "licenses": "ISC",
+    "repository": "https://github.com/stefanpenner/get-caller-file",
+    "publisher": "Stefan Penner",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/get-caller-file",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/get-caller-file/LICENSE.md"
+  },
+  "hasown@2.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/hasOwn",
+    "publisher": "Jordan Harband",
+    "email": "ljharb@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/hasown",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/hasown/LICENSE"
+  },
+  "is-core-module@2.16.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/is-core-module",
+    "publisher": "Jordan Harband",
+    "email": "ljharb@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/is-core-module",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/is-core-module/LICENSE"
+  },
+  "is-fullwidth-code-point@3.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/is-fullwidth-code-point",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/is-fullwidth-code-point",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/is-fullwidth-code-point/license"
+  },
+  "is-module@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/component/is-module",
+    "publisher": "Jonathan Ong",
+    "email": "me@jongleberry.com",
+    "url": "http://jongleberry.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/is-module",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/is-module/README.md"
+  },
+  "is-reference@1.2.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Rich-Harris/is-reference",
+    "publisher": "Rich Harris",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/is-reference",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/is-reference/README.md"
+  },
+  "is-reference@3.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Rich-Harris/is-reference",
+    "publisher": "Rich Harris",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/svelte/node_modules/is-reference",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/svelte/node_modules/is-reference/README.md"
+  },
+  "jiti@2.6.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/unjs/jiti",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/jiti",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/jiti/LICENSE"
+  },
+  "jose@6.1.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/panva/jose",
+    "publisher": "Filip Skokan",
+    "email": "panva.ip@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/jose",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/jose/LICENSE.md"
+  },
+  "kleur@4.1.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/lukeed/kleur",
+    "publisher": "Luke Edwards",
+    "email": "luke.edwards05@gmail.com",
+    "url": "https://lukeed.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/kleur",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/kleur/license"
+  },
+  "lightningcss-darwin-arm64@1.31.1": {
+    "licenses": "MPL-2.0",
+    "repository": "https://github.com/parcel-bundler/lightningcss",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/lightningcss-darwin-arm64",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/lightningcss-darwin-arm64/LICENSE"
+  },
+  "lightningcss@1.31.1": {
+    "licenses": "MPL-2.0",
+    "repository": "https://github.com/parcel-bundler/lightningcss",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/lightningcss",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/lightningcss/LICENSE"
+  },
+  "locate-character@3.0.0": {
+    "licenses": "MIT",
+    "repository": "git+https://gitlab.com/Rich-Harris/locate-character",
+    "publisher": "Rich Harris",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/locate-character",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/locate-character/README.md"
+  },
+  "locate-path@5.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/locate-path",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/locate-path",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/locate-path/license"
+  },
+  "lru-cache@11.2.6": {
+    "licenses": "BlueOak-1.0.0",
+    "repository": "https://github.com/isaacs/node-lru-cache",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/lru-cache",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/lru-cache/LICENSE.md"
+  },
+  "magic-string@0.30.21": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Rich-Harris/magic-string",
+    "publisher": "Rich Harris",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/magic-string",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/magic-string/LICENSE"
+  },
+  "mrmime@2.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/lukeed/mrmime",
+    "publisher": "Luke Edwards",
+    "email": "luke.edwards05@gmail.com",
+    "url": "https://lukeed.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/mrmime",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/mrmime/license"
+  },
+  "nanoid@3.3.11": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ai/nanoid",
+    "publisher": "Andrey Sitnik",
+    "email": "andrey@sitnik.ru",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/nanoid",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/nanoid/LICENSE"
+  },
+  "oauth4webapi@3.8.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/panva/oauth4webapi",
+    "publisher": "Filip Skokan",
+    "email": "panva.ip@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/oauth4webapi",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/oauth4webapi/LICENSE.md"
+  },
+  "obug@2.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sxzz/obug",
+    "publisher": "Kevin Deng",
+    "email": "sxzz@sxzz.moe",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/obug",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/obug/LICENSE"
+  },
+  "p-limit@2.3.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/p-limit",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/p-limit",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/p-limit/license"
+  },
+  "p-locate@4.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/p-locate",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/p-locate",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/p-locate/license"
+  },
+  "p-try@2.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/p-try",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/p-try",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/p-try/license"
+  },
+  "path-exists@4.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/path-exists",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/path-exists",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/path-exists/license"
+  },
+  "path-parse@1.0.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jbgutierrez/path-parse",
+    "publisher": "Javier Blanco",
+    "email": "http://jbgutierrez.info",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/path-parse",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/path-parse/LICENSE"
+  },
+  "picocolors@1.1.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/alexeyraspopov/picocolors",
+    "publisher": "Alexey Raspopov",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/picocolors",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/picocolors/LICENSE"
+  },
+  "picomatch@4.0.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/micromatch/picomatch",
+    "publisher": "Jon Schlinkert",
+    "url": "https://github.com/jonschlinkert",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/picomatch",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/picomatch/LICENSE"
+  },
+  "pngjs@5.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/lukeapage/pngjs",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/pngjs",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/pngjs/LICENSE"
+  },
+  "postcss@8.5.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/postcss/postcss",
+    "publisher": "Andrey Sitnik",
+    "email": "andrey@sitnik.ru",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/postcss",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/postcss/LICENSE"
+  },
+  "postgres@3.4.8": {
+    "licenses": "Unlicense",
+    "repository": "https://github.com/porsager/postgres",
+    "publisher": "Rasmus Porsager",
+    "email": "rasmus@porsager.com",
+    "url": "https://www.porsager.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/postgres",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/postgres/README.md"
+  },
+  "preact-render-to-string@6.5.11": {
+    "licenses": "MIT",
+    "repository": "https://github.com/preactjs/preact-render-to-string",
+    "publisher": "The Preact Authors",
+    "url": "https://github.com/preactjs/preact/contributors",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/preact-render-to-string",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/preact-render-to-string/LICENSE"
+  },
+  "preact@10.24.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/preactjs/preact",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/preact",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/preact/LICENSE"
+  },
+  "qrcode@1.5.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/soldair/node-qrcode",
+    "publisher": "Ryan Day",
+    "email": "soldair@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/qrcode",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/qrcode/license"
+  },
+  "require-directory@2.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/troygoode/node-require-directory",
+    "publisher": "Troy Goode",
+    "email": "troygoode@gmail.com",
+    "url": "http://github.com/troygoode/",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/require-directory",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/require-directory/LICENSE"
+  },
+  "require-main-filename@2.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/yargs/require-main-filename",
+    "publisher": "Ben Coe",
+    "email": "ben@npmjs.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/require-main-filename",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/require-main-filename/LICENSE.txt"
+  },
+  "resolve@1.22.11": {
+    "licenses": "MIT",
+    "repository": "https://github.com/browserify/resolve",
+    "publisher": "James Halliday",
+    "email": "mail@substack.net",
+    "url": "http://substack.net",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/resolve",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/resolve/LICENSE"
+  },
+  "rollup@4.59.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/rollup/rollup",
+    "publisher": "Rich Harris",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/rollup",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/rollup/LICENSE.md"
+  },
+  "scoring@0.0.1": {
+    "licenses": "UNLICENSED",
+    "private": true,
+    "path": "/Users/miggi/miggisrc/scoring",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/LICENSE"
+  },
+  "set-blocking@2.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/yargs/set-blocking",
+    "publisher": "Ben Coe",
+    "email": "ben@npmjs.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/set-blocking",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/set-blocking/LICENSE.txt"
+  },
+  "set-cookie-parser@2.7.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/nfriedly/set-cookie-parser",
+    "publisher": "Nathan Friedly",
+    "url": "http://nfriedly.com/",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/@auth/sveltekit/node_modules/set-cookie-parser",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/@auth/sveltekit/node_modules/set-cookie-parser/LICENSE"
+  },
+  "set-cookie-parser@3.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/nfriedly/set-cookie-parser",
+    "publisher": "Nathan Friedly",
+    "url": "http://nfriedly.com/",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/set-cookie-parser",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/set-cookie-parser/LICENSE"
+  },
+  "sirv@3.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/lukeed/sirv",
+    "publisher": "Luke Edwards",
+    "email": "luke@lukeed.com",
+    "url": "https://lukeed.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/sirv",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/sirv/readme.md"
+  },
+  "source-map-js@1.2.1": {
+    "licenses": "BSD-3-Clause",
+    "repository": "https://github.com/7rulnik/source-map-js",
+    "publisher": "Valentin 7rulnik Semirulnik",
+    "email": "v7rulnik@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/source-map-js",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/source-map-js/LICENSE"
+  },
+  "string-width@4.2.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/string-width",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/string-width",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/string-width/license"
+  },
+  "strip-ansi@6.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/strip-ansi",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/strip-ansi",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/strip-ansi/license"
+  },
+  "stripe@20.4.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/stripe/stripe-node",
+    "publisher": "Stripe",
+    "email": "support@stripe.com",
+    "url": "https://stripe.com/",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/stripe",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/stripe/LICENSE"
+  },
+  "supports-preserve-symlinks-flag@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/inspect-js/node-supports-preserve-symlinks-flag",
+    "publisher": "Jordan Harband",
+    "email": "ljharb@gmail.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/supports-preserve-symlinks-flag",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/supports-preserve-symlinks-flag/LICENSE"
+  },
+  "svelte@5.53.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sveltejs/svelte",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/svelte",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/svelte/LICENSE.md"
+  },
+  "tinyglobby@0.2.15": {
+    "licenses": "MIT",
+    "repository": "https://github.com/SuperchupuDev/tinyglobby",
+    "publisher": "Superchupu",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/tinyglobby",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/tinyglobby/LICENSE"
+  },
+  "totalist@3.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/lukeed/totalist",
+    "publisher": "Luke Edwards",
+    "email": "luke.edwards05@gmail.com",
+    "url": "https://lukeed.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/totalist",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/totalist/license"
+  },
+  "typescript@5.9.3": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/microsoft/TypeScript",
+    "publisher": "Microsoft Corp.",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/typescript",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/typescript/LICENSE.txt"
+  },
+  "undici-types@7.18.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/nodejs/undici",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/undici-types",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/undici-types/LICENSE"
+  },
+  "vite@7.3.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/vitejs/vite",
+    "publisher": "Evan You",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/vite",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/vite/LICENSE.md"
+  },
+  "vitefu@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/svitejs/vitefu",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/vitefu",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/vitefu/LICENSE"
+  },
+  "which-module@2.0.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/nexdrew/which-module",
+    "publisher": "nexdrew",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/which-module",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/which-module/LICENSE"
+  },
+  "wrap-ansi@6.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/chalk/wrap-ansi",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/wrap-ansi",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/wrap-ansi/license"
+  },
+  "y18n@4.0.3": {
+    "licenses": "ISC",
+    "repository": "https://github.com/yargs/y18n",
+    "publisher": "Ben Coe",
+    "email": "ben@npmjs.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/y18n",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/y18n/LICENSE"
+  },
+  "yargs-parser@18.1.3": {
+    "licenses": "ISC",
+    "repository": "https://github.com/yargs/yargs-parser",
+    "publisher": "Ben Coe",
+    "email": "ben@npmjs.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/yargs-parser",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/yargs-parser/LICENSE.txt"
+  },
+  "yargs@15.4.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/yargs/yargs",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/yargs",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/yargs/LICENSE"
+  },
+  "zimmerframe@1.1.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sveltejs/zimmerframe",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/zimmerframe",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/zimmerframe/LICENSE"
+  },
+  "zod@4.3.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/colinhacks/zod",
+    "publisher": "Colin McDonnell",
+    "email": "zod@colinhacks.com",
+    "path": "/Users/miggi/miggisrc/scoring/node_modules/zod",
+    "licenseFile": "/Users/miggi/miggisrc/scoring/node_modules/zod/LICENSE"
+  }
+}

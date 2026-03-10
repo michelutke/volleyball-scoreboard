@@ -5,6 +5,7 @@ export const t = {
 		nav: {
 			features: 'Funktionen',
 			pricing: 'Preise',
+			about: 'Über uns',
 			signin: 'Anmelden',
 			cta: 'Kostenlos testen →'
 		},
@@ -25,24 +26,7 @@ export const t = {
 			set: 'Satz',
 			sets: 'Sätze',
 			matchWon: 'gewinnt das Match!',
-			reset: '↩ Neu starten',
-			usps: [
-				{
-					icon: '🔴',
-					title: 'Match Point & Set Point',
-					desc: 'Bannern erscheinen automatisch — rot bei Matchball, blau bei Satzball.'
-				},
-				{
-					icon: '⏱',
-					title: 'Auszeit-Timer',
-					desc: 'Auszeit klicken → gelbes Banner → verschwindet automatisch nach 30 Sekunden.'
-				},
-				{
-					icon: '📥',
-					title: 'Swiss Volley Import*',
-					desc: 'Teams, Spielplan und Orte werden automatisch aus Swiss Volley importiert.'
-				}
-			]
+			reset: '↩ Neu starten'
 		},
 		features: {
 			title: 'Alles was du brauchst',
@@ -64,11 +48,10 @@ export const t = {
 				},
 				{
 					icon: '🏐',
-					title: 'Swiss Volley Import*',
+					title: 'Swiss Volley Import',
 					desc: 'Spielpläne, Teams und Spielorte mit einem Klick aus der Swiss Volley Datenbank importieren.'
 				}
-			],
-			svDisclaimer: '* Inoffizielle Integration. Scorely steht in keiner Verbindung zu Swiss Volley.'
+			]
 		},
 		howItWorks: {
 			title: 'In 3 Schritten live',
@@ -95,6 +78,7 @@ export const t = {
 		nav: {
 			features: 'Features',
 			pricing: 'Pricing',
+			about: 'About',
 			signin: 'Sign in',
 			cta: 'Try for free →'
 		},
@@ -115,24 +99,7 @@ export const t = {
 			set: 'Set',
 			sets: 'Sets',
 			matchWon: 'wins the match!',
-			reset: '↩ Reset',
-			usps: [
-				{
-					icon: '🔴',
-					title: 'Match Point & Set Point',
-					desc: 'Banners appear automatically — red for match point, blue for set point.'
-				},
-				{
-					icon: '⏱',
-					title: 'Timeout Timer',
-					desc: 'Click timeout → yellow banner → disappears automatically after 30 seconds.'
-				},
-				{
-					icon: '📥',
-					title: 'Swiss Volley Import*',
-					desc: 'Teams, schedule and venues are automatically imported from Swiss Volley.'
-				}
-			]
+			reset: '↩ Reset'
 		},
 		features: {
 			title: 'Everything you need',
@@ -154,11 +121,10 @@ export const t = {
 				},
 				{
 					icon: '🏐',
-					title: 'Swiss Volley Import*',
+					title: 'Swiss Volley Import',
 					desc: 'Import schedules, teams and venues with one click from the Swiss Volley database.'
 				}
-			],
-			svDisclaimer: '* Unofficial integration. Scorely is not affiliated with Swiss Volley.'
+			]
 		},
 		howItWorks: {
 			title: '3 steps to go live',

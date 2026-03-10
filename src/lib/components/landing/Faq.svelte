@@ -13,23 +13,28 @@
 			items: [
 				{
 					q: 'Brauche ich spezielle Hardware?',
-					a: 'Nein. Scorely läuft komplett im Browser. Du brauchst nur einen Computer und eine Internetverbindung.'
+					a: 'Nein. Scorely läuft komplett im Browser. Du brauchst nur einen Computer und eine Internetverbindung.',
+					link: null
 				},
 				{
 					q: 'Wie funktioniert der Swiss Volley Import?',
-					a: 'Scorely nutzt eine inoffizielle Schnittstelle zur Swiss Volley Datenbank. Spielpläne werden automatisch importiert. Scorely steht in keiner Verbindung zu Swiss Volley.'
+					a: 'Scorely nutzt die Swiss Volley Manager API, um Spielpläne, Teams und Spielorte automatisch zu importieren. Scorely wird nicht von Swiss Volley betrieben und steht in keiner offiziellen Verbindung zu Swiss Volley.',
+					link: { text: 'Swiss Volley Manager API', url: 'https://swissvolley.docs.apiary.io/' }
 				},
 				{
 					q: 'Was passiert nach der Testphase?',
-					a: 'Nach 3 Tagen kannst du ein Abo abschliessen oder dein Konto löschen. Keine versteckten Kosten.'
+					a: 'Nach 3 Tagen kannst du ein Abo abschliessen oder dein Konto löschen. Keine versteckten Kosten.',
+					link: null
 				},
 				{
 					q: 'Funktioniert Scorely mit meiner Streaming-Software?',
-					a: 'Ja. Das Overlay funktioniert als Browser Source in OBS, Streamlabs, vMix und anderen Programmen.'
+					a: 'Ja. Das Overlay funktioniert als Browser Source in OBS, Streamlabs, vMix und anderen Programmen.',
+					link: null
 				},
 				{
 					q: 'Wie viele Scorer kann ich einladen?',
-					a: 'Mit dem aktuellen Plan kannst du bis zu 5 Scorer einladen.'
+					a: 'Mit dem aktuellen Plan kannst du bis zu 5 Scorer einladen.',
+					link: null
 				}
 			]
 		},
@@ -38,23 +43,28 @@
 			items: [
 				{
 					q: 'Do I need special hardware?',
-					a: 'No. Scorely runs entirely in the browser. All you need is a computer and an internet connection.'
+					a: 'No. Scorely runs entirely in the browser. All you need is a computer and an internet connection.',
+					link: null
 				},
 				{
 					q: 'How does the Swiss Volley import work?',
-					a: 'Scorely uses an unofficial interface to the Swiss Volley database. Match schedules are imported automatically. Scorely is not affiliated with Swiss Volley.'
+					a: 'Scorely uses the Swiss Volley Manager API to automatically import schedules, teams and venues. Scorely is not operated by Swiss Volley and has no official affiliation with Swiss Volley.',
+					link: { text: 'Swiss Volley Manager API', url: 'https://swissvolley.docs.apiary.io/' }
 				},
 				{
 					q: 'What happens after the trial?',
-					a: 'After 3 days you can start a subscription or delete your account. No hidden costs.'
+					a: 'After 3 days you can start a subscription or delete your account. No hidden costs.',
+					link: null
 				},
 				{
 					q: 'Does Scorely work with my streaming software?',
-					a: 'Yes. The overlay works as a browser source in OBS, Streamlabs, vMix and other programs.'
+					a: 'Yes. The overlay works as a browser source in OBS, Streamlabs, vMix and other programs.',
+					link: null
 				},
 				{
 					q: 'How many scorers can I invite?',
-					a: 'With the current plan you can invite up to 5 scorers.'
+					a: 'With the current plan you can invite up to 5 scorers.',
+					link: null
 				}
 			]
 		}
@@ -93,6 +103,14 @@
 					{#if openIndex === i}
 						<p class="pb-5 text-[var(--color-text-secondary)] leading-relaxed">
 							{item.a}
+							{#if item.link}
+								<a
+									href={item.link.url}
+									target="_blank"
+									rel="noopener noreferrer"
+									class="underline hover:text-[var(--color-accent-mid)]"
+								>{item.link.text}</a>
+							{/if}
 						</p>
 					{/if}
 				</div>
