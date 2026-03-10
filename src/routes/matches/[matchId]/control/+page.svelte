@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
-	import type { MatchState, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
+	import type { MatchState, DesignTemplate, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
 	import QRCode from 'qrcode';
 
 	let { data } = $props();
@@ -25,19 +25,12 @@
 	let editHomeJersey = $state('#000000');
 	let editGuestJersey = $state('#000000');
 	let editShowJerseyColors = $state(false);
-	let editOverlayBg = $state('#1a1a1a');
-	let editOverlayBg2 = $state('#1a1a1a');
-	let editOverlayBgGradient = $state(false);
-	let editOverlayText = $state('#ffffff');
-	let editOverlayRounded = $state(false);
-	let editOverlayDivider = $state('#2a2a2a');
-	let editOverlaySatsBg = $state('#1a1a1a');
-	let editOverlaySetScoreBg = $state('#1a1a1a');
 	let editHomeLogo = $state('');
 	let editGuestLogo = $state('');
-	let editScoreColor = $state('#1a1a1a');
-	let editScoreColor2 = $state('#1a1a1a');
-	let editScoreColorGradient = $state(false);
+
+	// Design template selection
+	let designTemplates = $state<DesignTemplate[]>(data.designTemplates ?? []);
+	let selectedTemplateId = $state<number | null>(null);
 
 	let settingsDirty = $derived(
 		editHomeName !== (match?.homeTeamName ?? '') ||
@@ -45,19 +38,9 @@
 			editHomeJersey !== (match?.homeJerseyColor ?? '#000000') ||
 			editGuestJersey !== (match?.guestJerseyColor ?? '#000000') ||
 			editShowJerseyColors !== (match?.showJerseyColors ?? false) ||
-			editOverlayBg !== (match?.overlayBg ?? '#1a1a1a') ||
-			editOverlayBg2 !== (match?.overlayBg2 ?? '#1a1a1a') ||
-			editOverlayBgGradient !== (match?.overlayBgGradient ?? false) ||
-			editOverlayText !== (match?.overlayText ?? '#ffffff') ||
-			editOverlayRounded !== (match?.overlayRounded ?? false) ||
-			editOverlayDivider !== (match?.overlayDivider ?? '#2a2a2a') ||
-			editOverlaySatsBg !== (match?.overlaySatsBg ?? '#1a1a1a') ||
-			editOverlaySetScoreBg !== (match?.overlaySetScoreBg ?? '#1a1a1a') ||
 			editHomeLogo !== (match?.homeTeamLogo ?? '') ||
 			editGuestLogo !== (match?.guestTeamLogo ?? '') ||
-			editScoreColor !== (match?.scoreColor ?? '#1a1a1a') ||
-			editScoreColor2 !== (match?.scoreColor2 ?? '#1a1a1a') ||
-			editScoreColorGradient !== (match?.scoreColorGradient ?? false)
+			selectedTemplateId !== (match?.designTemplateId ?? null)
 	);
 
 	$effect(() => {
@@ -229,44 +212,27 @@
 		editHomeJersey = match?.homeJerseyColor ?? '#000000';
 		editGuestJersey = match?.guestJerseyColor ?? '#000000';
 		editShowJerseyColors = match?.showJerseyColors ?? false;
-		editOverlayBg = match?.overlayBg ?? '#1a1a1a';
-		editOverlayBg2 = match?.overlayBg2 ?? '#1a1a1a';
-		editOverlayBgGradient = match?.overlayBgGradient ?? false;
-		editOverlayText = match?.overlayText ?? '#ffffff';
-		editOverlayRounded = match?.overlayRounded ?? false;
-		editOverlayDivider = match?.overlayDivider ?? '#2a2a2a';
-		editOverlaySatsBg = match?.overlaySatsBg ?? '#1a1a1a';
-		editOverlaySetScoreBg = match?.overlaySetScoreBg ?? '#1a1a1a';
 		editHomeLogo = match?.homeTeamLogo ?? '';
 		editGuestLogo = match?.guestTeamLogo ?? '';
-		editScoreColor = match?.scoreColor ?? '#1a1a1a';
-		editScoreColor2 = match?.scoreColor2 ?? '#1a1a1a';
-		editScoreColorGradient = match?.scoreColorGradient ?? false;
+		selectedTemplateId = match?.designTemplateId ?? null;
 		settingsOpen = true;
 	}
 
 	async function saveSettings() {
 		if (!match || !settingsDirty) return;
-		await api({
+		const payload: Record<string, unknown> = {
 			homeTeamName: editHomeName,
 			guestTeamName: editGuestName,
 			homeJerseyColor: editHomeJersey,
 			guestJerseyColor: editGuestJersey,
 			showJerseyColors: editShowJerseyColors,
-			overlayBg: editOverlayBg,
-			overlayBg2: editOverlayBg2,
-			overlayBgGradient: editOverlayBgGradient,
-			overlayText: editOverlayText,
-			overlayRounded: editOverlayRounded,
-			overlayDivider: editOverlayDivider,
-			overlaySatsBg: editOverlaySatsBg,
-			overlaySetScoreBg: editOverlaySetScoreBg,
 			homeTeamLogo: editHomeLogo || null,
-			guestTeamLogo: editGuestLogo || null,
-			scoreColor: editScoreColor,
-			scoreColor2: editScoreColor2,
-			scoreColorGradient: editScoreColorGradient
-		});
+			guestTeamLogo: editGuestLogo || null
+		};
+		if (selectedTemplateId !== (match.designTemplateId ?? null)) {
+			payload.designTemplateId = selectedTemplateId;
+		}
+		await api(payload);
 		settingsOpen = false;
 	}
 
@@ -827,84 +793,21 @@
 						<img src="/api/image-proxy?url={encodeURIComponent(editGuestLogo)}" alt="" class="logo-preview" />
 					{/if}
 				</div>
+				{#if designTemplates.length > 0}
 				<div class="dialog-section">
-					<h4 class="dialog-section-title">Overlay-Farben</h4>
-					<div class="dialog-section-row">
-						<span class="text-sm text-gray-400">Hintergrund</span>
-						<label class="toggle-label toggle-label-start">
-							Verlauf
-							<button class="toggle" class:active={editOverlayBgGradient} onclick={() => editOverlayBgGradient = !editOverlayBgGradient} aria-label="Verlauf">
-								<span class="toggle-knob"></span>
-							</button>
-						</label>
-						<label class="toggle-label toggle-label-start">
-							Abgerundet
-							<button class="toggle" class:active={editOverlayRounded} onclick={() => editOverlayRounded = !editOverlayRounded} aria-label="Abgerundet">
-								<span class="toggle-knob"></span>
-							</button>
-						</label>
-					</div>
-					<div class="color-row-compact">
-						<div class="color-field-inline">
-							<input type="color" bind:value={editOverlayBg} class="color-picker" />
-							<span class="color-hex">{editOverlayBg}</span>
-						</div>
-						{#if editOverlayBgGradient}
-							<div class="color-field-inline">
-								<input type="color" bind:value={editOverlayBg2} class="color-picker" />
-								<span class="color-hex">{editOverlayBg2}</span>
-							</div>
-						{/if}
-					</div>
-					<div class="color-row-compact">
-						<div class="color-field-inline">
-							<input type="color" bind:value={editOverlayText} class="color-picker" />
-							<span class="text-sm text-gray-400">Text</span>
-						</div>
-					</div>
-					<div class="color-row-compact">
-						<div class="color-field-inline">
-							<input type="color" bind:value={editOverlayDivider} class="color-picker" />
-							<span class="text-sm text-gray-400">Trennlinie</span>
-							<span class="color-hex">{editOverlayDivider}</span>
-						</div>
-					</div>
-					<div class="color-row-compact">
-						<div class="color-field-inline">
-							<input type="color" bind:value={editOverlaySatsBg} class="color-picker" />
-							<span class="text-sm text-gray-400">Satz</span>
-							<span class="color-hex">{editOverlaySatsBg}</span>
-						</div>
-					</div>
-					<div class="color-row-compact">
-						<div class="color-field-inline">
-							<input type="color" bind:value={editOverlaySetScoreBg} class="color-picker" />
-							<span class="text-sm text-gray-400">Satzresultate</span>
-							<span class="color-hex">{editOverlaySetScoreBg}</span>
-						</div>
-					</div>
-					<div class="dialog-section-row">
-						<span class="text-sm text-gray-400">Punktzahl</span>
-						<label class="toggle-label toggle-label-start">
-							Verlauf
-							<button class="toggle" class:active={editScoreColorGradient} onclick={() => editScoreColorGradient = !editScoreColorGradient} aria-label="Verlauf">
-								<span class="toggle-knob"></span>
-							</button>
-						</label>
-					</div>
-					<div class="color-row-compact">
-						<div class="color-field-inline">
-							<input type="color" bind:value={editScoreColor} class="color-picker" />
-							<span class="color-hex">{editScoreColor}</span>
-						</div>
-						{#if editScoreColorGradient}
-							<div class="color-field-inline">
-								<input type="color" bind:value={editScoreColor2} class="color-picker" />
-								<span class="color-hex">{editScoreColor2}</span>
-							</div>
-						{/if}
-					</div>
+					<h4 class="dialog-section-title">Overlay-Design</h4>
+					<select
+						class="field-input"
+						value={selectedTemplateId ?? ''}
+						onchange={(e) => { const v = (e.target as HTMLSelectElement).value; selectedTemplateId = v ? parseInt(v) : null; }}
+					>
+						<option value="">— Kein Template —</option>
+						{#each designTemplates as template}
+							<option value={template.id}>{template.name}{template.isDefault ? ' (Standard)' : ''}</option>
+						{/each}
+					</select>
 				</div>
+				{/if}
 			</div>
 			<div class="dialog-footer">
 				<button onclick={() => settingsOpen = false} class="btn-action">

@@ -1,6 +1,7 @@
 import { db } from '$lib/server/db/index.js';
 import { matches, teams } from '$lib/server/db/schema.js';
 import { getTeams, getUpcomingGames } from '$lib/server/swiss-volley.js';
+import { getDefaultTemplate, templateToMatchColors } from '$lib/server/design-template.js';
 import { eq, and } from 'drizzle-orm';
 
 /** Sync teams from Swiss Volley API into local DB. */
@@ -44,6 +45,9 @@ export async function syncMatches(
 		(g) => g.teams.home.teamId === numericSvTeamId || g.teams.away.teamId === numericSvTeamId
 	);
 
+	const defaultTemplate = await getDefaultTemplate(orgId);
+	const templateColors = defaultTemplate ? templateToMatchColors(defaultTemplate) : {};
+
 	let synced = 0;
 	for (const game of svGames) {
 		const matchId = String(game.gameId);
@@ -82,7 +86,8 @@ export async function syncMatches(
 				venue,
 				league: game.league.caption,
 				swissVolleyMatchId: matchId,
-				status: 'upcoming'
+				status: 'upcoming',
+				...templateColors
 			});
 		}
 		synced++;

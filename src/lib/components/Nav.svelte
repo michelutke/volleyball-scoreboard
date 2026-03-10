@@ -8,6 +8,7 @@
 	const links: NavLink[] = [
 		{ href: '/teams', label: 'Teams' },
 		{ href: '/admin/users', label: 'Nutzerverwaltung', adminOnly: true },
+		{ href: '/admin/designs', label: 'Designs', adminOnly: true },
 		{ href: '/settings', label: 'Einstellungen' },
 		{ href: '/profile', label: 'Profil' }
 	];

@@ -25,6 +25,7 @@ export function toMatchState(match: MatchRow, score: ScoreRow): MatchState {
 		scoreColor: match.scoreColor,
 		scoreColor2: match.scoreColor2,
 		scoreColorGradient: match.scoreColorGradient,
+		designTemplateId: match.designTemplateId ?? null,
 		homePoints: score.homePoints,
 		guestPoints: score.guestPoints,
 		homeSets: score.homeSets,

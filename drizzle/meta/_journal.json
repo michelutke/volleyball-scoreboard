@@ -36,6 +36,13 @@
       "when": 1771418510297,
       "tag": "0004_fluffy_slapstick",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1741628400000,
+      "tag": "0005_design_templates",
+      "breakpoints": true
     }
   ]
 }
