@@ -37,12 +37,33 @@ export const matches = pgTable('matches', {
 	scoreColor: text('score_color').notNull().default('#1a1a1a'),
 	scoreColor2: text('score_color2').notNull().default('#1a1a1a'),
 	scoreColorGradient: boolean('score_color_gradient').notNull().default(false),
+	designTemplateId: integer('design_template_id').references(() => designTemplates.id, { onDelete: 'set null' }),
 	status: text('status', { enum: ['upcoming', 'live', 'finished'] }).notNull().default('upcoming'),
 	swissVolleyMatchId: text('swiss_volley_match_id'),
 	scheduledAt: timestamp('scheduled_at'),
 	venue: text('venue'),
 	league: text('league'),
 	controlToken: text('control_token'),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+	updatedAt: timestamp('updated_at').notNull().defaultNow()
+});
+
+export const designTemplates = pgTable('design_templates', {
+	id: serial('id').primaryKey(),
+	orgId: text('org_id').notNull().default('default'),
+	name: text('name').notNull(),
+	isDefault: boolean('is_default').notNull().default(false),
+	overlayBg: text('overlay_bg').notNull().default('#1a1a1a'),
+	overlayBg2: text('overlay_bg2').notNull().default('#1a1a1a'),
+	overlayBgGradient: boolean('overlay_bg_gradient').notNull().default(false),
+	overlayText: text('overlay_text').notNull().default('#ffffff'),
+	overlayRounded: boolean('overlay_rounded').notNull().default(false),
+	overlayDivider: text('overlay_divider').notNull().default('#2a2a2a'),
+	overlaySatsBg: text('overlay_sats_bg').notNull().default('#1a1a1a'),
+	overlaySetScoreBg: text('overlay_set_score_bg').notNull().default('#1a1a1a'),
+	scoreColor: text('score_color').notNull().default('#1a1a1a'),
+	scoreColor2: text('score_color2').notNull().default('#1a1a1a'),
+	scoreColorGradient: boolean('score_color_gradient').notNull().default(false),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 	updatedAt: timestamp('updated_at').notNull().defaultNow()
 });

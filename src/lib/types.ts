@@ -1,5 +1,22 @@
 export type Team = 'home' | 'guest';
 
+export interface DesignTemplate {
+	id: number;
+	name: string;
+	isDefault: boolean;
+	overlayBg: string;
+	overlayBg2: string;
+	overlayBgGradient: boolean;
+	overlayText: string;
+	overlayRounded: boolean;
+	overlayDivider: string;
+	overlaySatsBg: string;
+	overlaySetScoreBg: string;
+	scoreColor: string;
+	scoreColor2: string;
+	scoreColorGradient: boolean;
+}
+
 export type MatchStatus = 'upcoming' | 'live' | 'finished';
 
 export interface SetScore {
@@ -35,6 +52,7 @@ export interface MatchState {
 	scoreColor: string;
 	scoreColor2: string;
 	scoreColorGradient: boolean;
+	designTemplateId: number | null;
 	status: MatchStatus;
 }
 

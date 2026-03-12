@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
-import { settings, matches, scores, timeouts } from '$lib/server/db/schema.js';
+import { settings, matches, scores, timeouts, designTemplates } from '$lib/server/db/schema.js';
 import { toMatchState } from '$lib/server/match-state.js';
 import { getUpcomingGames } from '$lib/server/swiss-volley.js';
 import { eq, desc, asc, and } from 'drizzle-orm';
@@ -40,7 +40,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	});
 	if (!score) error(404, 'Score not found');
 
-	const [homeTimeouts, guestTimeouts, permalinkRow, scoreHistory, timeoutHistory] = await Promise.all([
+	const [homeTimeouts, guestTimeouts, permalinkRow, scoreHistory, timeoutHistory, orgDesignTemplates] = await Promise.all([
 		db.query.timeouts.findMany({
 			where: and(eq(timeouts.matchId, matchId), eq(timeouts.team, 'home'), eq(timeouts.set, score.currentSet))
 		}),
@@ -57,6 +57,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		db.query.timeouts.findMany({
 			where: eq(timeouts.matchId, matchId),
 			orderBy: asc(timeouts.createdAt)
+		}),
+		db.query.designTemplates.findMany({
+			where: eq(designTemplates.orgId, orgId),
+			orderBy: designTemplates.createdAt
 		})
 	]);
 
@@ -69,6 +73,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		timeoutHistory,
 		teamId: match.teamId,
 		permalinkOverlayMatchId,
-		controlToken: match.controlToken ?? null
+		controlToken: match.controlToken ?? null,
+		designTemplates: orgDesignTemplates
 	};
 };

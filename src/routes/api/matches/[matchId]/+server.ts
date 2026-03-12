@@ -3,6 +3,7 @@ import { db } from '$lib/server/db/index.js';
 import { matches, scores } from '$lib/server/db/schema.js';
 import { matchSSEEmitter } from '$lib/server/sse.js';
 import { toMatchState } from '$lib/server/match-state.js';
+import { applyTemplateToMatch } from '$lib/server/design-template.js';
 import { addPoint, removePoint, resetMatch, isMatchOver } from '$lib/volleyball.js';
 import { and, eq, desc } from 'drizzle-orm';
 import type { MatchState } from '$lib/types.js';
@@ -116,8 +117,13 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		return json(newState);
 	}
 
-	// Settings update
-	const settingsFields = ['homeTeamName', 'guestTeamName', 'homeJerseyColor', 'guestJerseyColor', 'showJerseyColors', 'showSetScores', 'overlayBg', 'overlayBg2', 'overlayBgGradient', 'overlayText', 'overlayRounded', 'overlayDivider', 'overlaySatsBg', 'overlaySetScoreBg', 'homeTeamLogo', 'guestTeamLogo', 'scoreColor', 'scoreColor2', 'scoreColorGradient'] as const;
+	// Apply design template if selected
+	if (body.designTemplateId !== undefined) {
+		await applyTemplateToMatch(body.designTemplateId, matchId);
+	}
+
+	// Settings update (scorer-editable fields only: team names, jerseys, logos)
+	const settingsFields = ['homeTeamName', 'guestTeamName', 'homeJerseyColor', 'guestJerseyColor', 'showJerseyColors', 'showSetScores', 'homeTeamLogo', 'guestTeamLogo'] as const;
 	const updateData: Record<string, unknown> = { updatedAt: new Date() };
 	for (const field of settingsFields) {
 		if (body[field] !== undefined) updateData[field] = body[field];

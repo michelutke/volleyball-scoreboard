@@ -3,6 +3,7 @@ import { db } from '$lib/server/db/index.js';
 import { matches } from '$lib/server/db/schema.js';
 import { toMatchListItems } from '$lib/server/match-list.js';
 import { autoFinishStale } from '$lib/server/auto-finish.js';
+import { getDefaultTemplate, templateToMatchColors } from '$lib/server/design-template.js';
 import { and, eq, desc } from 'drizzle-orm';
 import type { RequestHandler } from './$types.js';
 
@@ -25,6 +26,10 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 	const teamId = parseInt(params.teamId);
 	const body = await request.json();
 
+	// Apply default template colors if one exists
+	const defaultTemplate = await getDefaultTemplate(orgId);
+	const templateColors = defaultTemplate ? templateToMatchColors(defaultTemplate) : {};
+
 	const [match] = await db
 		.insert(matches)
 		.values({
@@ -35,7 +40,8 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 			scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : null,
 			venue: body.venue ?? null,
 			league: body.league ?? null,
-			status: 'upcoming'
+			status: 'upcoming',
+			...templateColors
 		})
 		.returning();
 

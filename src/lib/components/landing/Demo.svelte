@@ -42,7 +42,8 @@
 		overlaySetScoreBg: '#1e293b',
 		scoreColor: '#0ea5e9',
 		scoreColor2: '#0284c7',
-		scoreColorGradient: true
+		scoreColorGradient: true,
+		designTemplateId: null
 	};
 
 	let match = $state<MatchState>({ ...INITIAL });
