@@ -64,6 +64,9 @@ export const designTemplates = pgTable('design_templates', {
 	scoreColor: text('score_color').notNull().default('#1a1a1a'),
 	scoreColor2: text('score_color2').notNull().default('#1a1a1a'),
 	scoreColorGradient: boolean('score_color_gradient').notNull().default(false),
+	customCode: text('custom_code'),
+	isPublic: boolean('is_public').notNull().default(false),
+	description: text('description'),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 	updatedAt: timestamp('updated_at').notNull().defaultNow()
 });

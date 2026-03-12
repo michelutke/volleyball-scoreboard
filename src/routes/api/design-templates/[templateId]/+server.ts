@@ -24,6 +24,10 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		if (body[field] !== undefined) updateData[field] = body[field];
 	}
 
+	if (body.customCode !== undefined) updateData.customCode = body.customCode || null;
+	if (body.isPublic !== undefined) updateData.isPublic = !!body.isPublic;
+	if (body.description !== undefined) updateData.description = body.description || null;
+
 	// Handle default toggle
 	if (body.isDefault !== undefined) {
 		if (body.isDefault && !existing.isDefault) {

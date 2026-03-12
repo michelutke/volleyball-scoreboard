@@ -15,6 +15,20 @@ export interface DesignTemplate {
 	scoreColor: string;
 	scoreColor2: string;
 	scoreColorGradient: boolean;
+	customCode: string | null;
+	isPublic: boolean;
+	description: string | null;
+}
+
+export interface LibraryOverlay {
+	id: number;
+	name: string;
+	description: string | null;
+	clubName: string;
+	overlayBg: string;
+	overlayBg2: string;
+	overlayBgGradient: boolean;
+	overlayText: string;
 }
 
 export type MatchStatus = 'upcoming' | 'live' | 'finished';

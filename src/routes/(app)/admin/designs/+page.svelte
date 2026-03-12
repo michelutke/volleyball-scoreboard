@@ -20,6 +20,9 @@
 		scoreColor: string;
 		scoreColor2: string;
 		scoreColorGradient: boolean;
+		customCode?: string | null;
+		isPublic?: boolean;
+		description?: string | null;
 	};
 
 	let templates = $state<Template[]>(data.templates ?? []);
@@ -42,6 +45,10 @@
 	let editScoreColor = $state('#1a1a1a');
 	let editScoreColor2 = $state('#1a1a1a');
 	let editScoreColorGradient = $state(false);
+	let editCustomCode = $state<string | null>(null);
+	let editCustomCodeEnabled = $state(false);
+	let editIsPublic = $state(false);
+	let editDescription = $state('');
 
 	const previewMatch: MatchState = $derived({
 		matchId: 0,
@@ -89,6 +96,10 @@
 		editScoreColor = '#1a1a1a';
 		editScoreColor2 = '#1a1a1a';
 		editScoreColorGradient = false;
+		editCustomCode = null;
+		editCustomCodeEnabled = false;
+		editIsPublic = false;
+		editDescription = '';
 	}
 
 	function startCreate() {
@@ -114,6 +125,10 @@
 		editScoreColor = t.scoreColor;
 		editScoreColor2 = t.scoreColor2;
 		editScoreColorGradient = t.scoreColorGradient;
+		editCustomCode = t.customCode ?? null;
+		editCustomCodeEnabled = !!t.customCode;
+		editIsPublic = t.isPublic ?? false;
+		editDescription = t.description ?? '';
 	}
 
 	function cancelEdit() {
@@ -135,9 +150,28 @@
 			overlaySetScoreBg: editOverlaySetScoreBg,
 			scoreColor: editScoreColor,
 			scoreColor2: editScoreColor2,
-			scoreColorGradient: editScoreColorGradient
+			scoreColorGradient: editScoreColorGradient,
+			customCode: editCustomCodeEnabled ? (editCustomCode || null) : null,
+			isPublic: editIsPublic,
+			description: editDescription.trim() || null
 		};
 	}
+
+	const STARTER_CODE = `<!-- CSS-Variablen: --overlay-bg, --overlay-text, --score-color, etc. -->
+<!-- Match-Daten via postMessage (type: 'matchState') -->
+<style>
+  body { margin: 0; background: transparent; }
+  #score { color: var(--score-color, #fff); font-size: 2rem; font-family: sans-serif; }
+</style>
+<div id="score"></div>
+<script>
+  window.addEventListener('message', e => {
+    if (e.data?.type !== 'matchState') return;
+    const d = e.data.data;
+    document.getElementById('score').textContent =
+      d.homeTeam + ' ' + d.homePoints + ' - ' + d.guestPoints + ' ' + d.guestTeam;
+  });
+<\/script>`;
 
 	async function saveTemplate() {
 		if (!editName.trim()) {
@@ -322,7 +356,11 @@
 				</h2>
 
 				<div class="preview-wrap">
-					<ScoreboardDisplay match={previewMatch} homeTimeoutsUsed={1} guestTimeoutsUsed={0} timeoutTeam={null} />
+					{#if editCustomCodeEnabled && editCustomCode}
+						<p class="text-xs text-text-tertiary text-center py-4">Custom Code aktiv — nach dem Speichern testen.</p>
+					{:else}
+						<ScoreboardDisplay match={previewMatch} homeTimeoutsUsed={1} guestTimeoutsUsed={0} timeoutTeam={null} />
+					{/if}
 				</div>
 
 				<label class="block">
@@ -399,6 +437,67 @@
 					{/if}
 				</div>
 
+				<!-- Custom Code -->
+				<div class="space-y-3">
+					<div class="flex items-center justify-between">
+						<h3 class="text-sm font-semibold text-text-tertiary uppercase tracking-wide">Custom Code</h3>
+						<label class="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
+							<input
+								type="checkbox"
+								bind:checked={editCustomCodeEnabled}
+								onchange={() => { if (editCustomCodeEnabled && !editCustomCode) editCustomCode = STARTER_CODE; }}
+								class="accent-accent-mid"
+							/>
+							Aktivieren
+						</label>
+					</div>
+
+					{#if editCustomCodeEnabled}
+						<div class="rounded-lg bg-yellow-900/20 border border-yellow-700/30 px-3 py-2 text-xs text-yellow-300">
+							Nur vertrauenswürdigen Code verwenden. Code wird isoliert ausgeführt (kein Zugriff auf App-Daten oder Cookies).
+						</div>
+						<textarea
+							bind:value={editCustomCode}
+							rows={18}
+							spellcheck={false}
+							class="w-full bg-bg-base border border-border-subtle rounded-lg px-3 py-2 text-xs text-text-primary font-mono resize-y focus:outline-none focus:border-accent"
+							placeholder="<!-- HTML/CSS/JS hier eingeben -->"
+						></textarea>
+						{#if editing}
+							<a
+								href="/api/overlay-sandbox/{editing.id}?preview=1"
+								target="_blank"
+								rel="noopener"
+								class="inline-block text-sm text-accent hover:underline"
+							>
+								In neuem Tab testen →
+							</a>
+						{/if}
+					{/if}
+				</div>
+
+				<!-- Library publishing -->
+				{#if editCustomCodeEnabled && editCustomCode}
+					<div class="space-y-3 border-t border-border-subtle pt-4">
+						<label class="flex items-center gap-2 text-sm text-text-primary cursor-pointer">
+							<input type="checkbox" bind:checked={editIsPublic} class="accent-accent-mid" />
+							In der Community-Bibliothek veröffentlichen
+						</label>
+						{#if editIsPublic}
+							<label class="block">
+								<span class="text-sm text-text-secondary">Kurzbeschreibung (optional)</span>
+								<textarea
+									bind:value={editDescription}
+									maxlength={200}
+									rows={2}
+									class="w-full bg-bg-base border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent mt-1 resize-none"
+									placeholder="z.B. Minimalistisches Design mit großen Zahlen"
+								></textarea>
+							</label>
+						{/if}
+					</div>
+				{/if}
+
 				<div class="flex gap-2 pt-2">
 					<button onclick={cancelEdit} class="flex-1 bg-bg-base border border-border-subtle text-text-secondary rounded-lg py-2 hover:text-text-primary transition-colors">
 						Abbrechen
@@ -440,7 +539,19 @@
 	}
 
 	.preview-wrap {
+		display: block;
 		overflow-x: auto;
-		padding: 12px 0;
+		padding: 16px;
+		background-image:
+			linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
+			linear-gradient(-45deg, #2a2a2a 25%, transparent 25%),
+			linear-gradient(45deg, transparent 75%, #2a2a2a 75%),
+			linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
+		background-size: 16px 16px;
+		background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+		background-color: #1a1a1a;
+		border-radius: 8px;
+		font-size: 16px;
+		line-height: normal;
 	}
 </style>

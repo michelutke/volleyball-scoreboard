@@ -39,6 +39,12 @@
 				{t[lang].nav.pricing}
 			</a>
 			<a
+				href="/library"
+				class="text-sm text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
+			>
+				Bibliothek
+			</a>
+			<a
 				href="/about"
 				class="text-sm text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
 			>
@@ -101,6 +107,13 @@
 					class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
 				>
 					{t[lang].nav.pricing}
+				</a>
+				<a
+					href="/library"
+					onclick={closeMenu}
+					class="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+				>
+					Bibliothek
 				</a>
 				<a
 					href="/about"
