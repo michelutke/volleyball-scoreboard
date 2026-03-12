@@ -31,6 +31,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		if (body[field] !== undefined) values[field] = body[field];
 	}
 
+	if (body.customCode !== undefined) values.customCode = body.customCode || null;
+	if (body.isPublic !== undefined) values.isPublic = !!body.isPublic;
+	if (body.description !== undefined) values.description = body.description || null;
+
 	// If setting as default, unset existing default first
 	if (values.isDefault) {
 		await db
