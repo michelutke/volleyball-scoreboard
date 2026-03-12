@@ -43,6 +43,13 @@
       "when": 1741628400000,
       "tag": "0005_design_templates",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1773321514935,
+      "tag": "0006_custom_overlay",
+      "breakpoints": true
     }
   ]
 }
