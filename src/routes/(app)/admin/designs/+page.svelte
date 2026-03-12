@@ -69,6 +69,8 @@
 		scoreColor: editScoreColor,
 		scoreColor2: editScoreColor2,
 		scoreColorGradient: editScoreColorGradient,
+		homeTeamLogo: null,
+		guestTeamLogo: null,
 		designTemplateId: null,
 		status: 'live'
 	});
@@ -427,6 +429,7 @@
 		cursor: pointer;
 		padding: 0;
 		-webkit-appearance: none;
+		appearance: none;
 	}
 	.color-picker::-webkit-color-swatch-wrapper {
 		padding: 0;
