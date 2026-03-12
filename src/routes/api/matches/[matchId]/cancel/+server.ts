@@ -2,8 +2,8 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import { matches, scores, timeouts } from '$lib/server/db/schema.js';
 import { matchSSEEmitter } from '$lib/server/sse.js';
+import { toResetMatchState } from '$lib/server/match-state.js';
 import { and, eq } from 'drizzle-orm';
-import type { MatchState } from '$lib/types.js';
 import type { RequestHandler } from './$types.js';
 
 export const POST: RequestHandler = async ({ params, locals }) => {
@@ -27,38 +27,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 	await db.delete(scores).where(eq(scores.matchId, matchId));
 	await db.delete(timeouts).where(eq(timeouts.matchId, matchId));
 
-	const state: MatchState = {
-		matchId: updated.id,
-		homeTeamName: updated.homeTeamName,
-		guestTeamName: updated.guestTeamName,
-		homeJerseyColor: updated.homeJerseyColor,
-		guestJerseyColor: updated.guestJerseyColor,
-		showJerseyColors: updated.showJerseyColors,
-		homePoints: 0,
-		guestPoints: 0,
-		homeSets: 0,
-		guestSets: 0,
-		currentSet: 1,
-		setScores: [],
-		serviceTeam: 'home',
-		showSetScores: updated.showSetScores,
-		overlayBg: updated.overlayBg,
-		overlayBg2: updated.overlayBg2,
-		overlayBgGradient: updated.overlayBgGradient,
-		overlayText: updated.overlayText,
-		overlayRounded: updated.overlayRounded,
-		overlayDivider: updated.overlayDivider,
-		overlaySatsBg: updated.overlaySatsBg,
-		overlaySetScoreBg: updated.overlaySetScoreBg,
-		homeTeamLogo: updated.homeTeamLogo ?? null,
-		guestTeamLogo: updated.guestTeamLogo ?? null,
-		scoreColor: updated.scoreColor,
-		scoreColor2: updated.scoreColor2,
-		scoreColorGradient: updated.scoreColorGradient,
-		designTemplateId: updated.designTemplateId ?? null,
-		status: 'upcoming'
-	};
-	matchSSEEmitter.emit(matchId, { type: 'match', data: state });
+	matchSSEEmitter.emit(matchId, { type: 'match', data: toResetMatchState(updated) });
 
 	return json({ success: true });
 };
