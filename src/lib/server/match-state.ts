@@ -4,6 +4,18 @@ import type { matches, scores } from '$lib/server/db/schema.js';
 type MatchRow = typeof matches.$inferSelect;
 type ScoreRow = typeof scores.$inferSelect;
 
+export function toResetMatchState(match: MatchRow): MatchState {
+	return toMatchState(match, {
+		homePoints: 0,
+		guestPoints: 0,
+		homeSets: 0,
+		guestSets: 0,
+		currentSet: 1,
+		setScores: [],
+		serviceTeam: 'home'
+	} as ScoreRow);
+}
+
 export function toMatchState(match: MatchRow, score: ScoreRow): MatchState {
 	return {
 		matchId: match.id,

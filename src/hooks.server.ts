@@ -2,7 +2,6 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { redirect } from '@sveltejs/kit';
 import { handle as authHandle } from './auth';
 import type { HandleServerError } from '@sveltejs/kit';
-import { db } from '$lib/server/db';
 import { env } from '$env/dynamic/private';
 import { bootstrapKcOrgId, ensureOrganizationMapper, ensureDirectAccessGrants, ensureRealmSettings, syncClientRedirectUri } from '$lib/server/keycloak-admin';
 import { getBillingStatus } from '$lib/server/billing';
