@@ -74,10 +74,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		teamId: match.teamId,
 		permalinkOverlayMatchId,
 		controlToken: match.controlToken ?? null,
-		designTemplates: orgDesignTemplates.map((t) => ({
-			id: t.id,
-			name: t.name,
-			isDefault: t.isDefault
-		}))
+		designTemplates: orgDesignTemplates
 	};
 };

@@ -55,6 +55,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 		scoreColor: updated.scoreColor,
 		scoreColor2: updated.scoreColor2,
 		scoreColorGradient: updated.scoreColorGradient,
+		designTemplateId: updated.designTemplateId ?? null,
 		status: 'upcoming'
 	};
 	matchSSEEmitter.emit(matchId, { type: 'match', data: state });

@@ -131,6 +131,7 @@ export function createInitialState(matchId: number): MatchState {
 		scoreColor: '#1a1a1a',
 		scoreColor2: '#1a1a1a',
 		scoreColorGradient: false,
+		designTemplateId: null,
 		status: 'live'
 	};
 }
