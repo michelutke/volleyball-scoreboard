@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types.js';
+	import type { MatchState } from '$lib/types.js';
+	import ScoreboardDisplay from '$lib/components/ScoreboardDisplay.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -40,6 +42,38 @@
 	let editScoreColor = $state('#1a1a1a');
 	let editScoreColor2 = $state('#1a1a1a');
 	let editScoreColorGradient = $state(false);
+
+	const previewMatch: MatchState = $derived({
+		matchId: 0,
+		homeTeamName: 'HEIM',
+		guestTeamName: 'GAST',
+		homeJerseyColor: '#c0392b',
+		guestJerseyColor: '#1e6ab5',
+		showJerseyColors: true,
+		homePoints: 14,
+		guestPoints: 10,
+		homeSets: 1,
+		guestSets: 0,
+		currentSet: 2,
+		setScores: [{ home: 25, guest: 21 }],
+		serviceTeam: 'home',
+		showSetScores: true,
+		overlayBg: editOverlayBg,
+		overlayBg2: editOverlayBg2,
+		overlayBgGradient: editOverlayBgGradient,
+		overlayText: editOverlayText,
+		overlayRounded: editOverlayRounded,
+		overlayDivider: editOverlayDivider,
+		overlaySatsBg: editOverlaySatsBg,
+		overlaySetScoreBg: editOverlaySetScoreBg,
+		scoreColor: editScoreColor,
+		scoreColor2: editScoreColor2,
+		scoreColorGradient: editScoreColorGradient,
+		homeTeamLogo: null,
+		guestTeamLogo: null,
+		designTemplateId: null,
+		status: 'live'
+	});
 
 	function resetForm() {
 		editName = '';
@@ -287,6 +321,10 @@
 					{creating ? 'Neues Template' : 'Template bearbeiten'}
 				</h2>
 
+				<div class="preview-wrap">
+					<ScoreboardDisplay match={previewMatch} homeTimeoutsUsed={1} guestTimeoutsUsed={0} timeoutTeam={null} />
+				</div>
+
 				<label class="block">
 					<span class="text-sm text-text-primary">Name</span>
 					<input type="text" bind:value={editName} placeholder="z.B. Dunkel" class="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent mt-1" />
@@ -389,7 +427,20 @@
 		border-radius: 8px;
 		border: 1px solid var(--color-border-subtle);
 		cursor: pointer;
-		background: transparent;
 		padding: 0;
+		-webkit-appearance: none;
+		appearance: none;
+	}
+	.color-picker::-webkit-color-swatch-wrapper {
+		padding: 0;
+	}
+	.color-picker::-webkit-color-swatch {
+		border: none;
+		border-radius: 6px;
+	}
+
+	.preview-wrap {
+		overflow-x: auto;
+		padding: 12px 0;
 	}
 </style>
