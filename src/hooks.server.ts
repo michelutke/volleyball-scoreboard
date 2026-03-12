@@ -2,15 +2,12 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { redirect } from '@sveltejs/kit';
 import { handle as authHandle } from './auth';
 import type { HandleServerError } from '@sveltejs/kit';
-import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { db } from '$lib/server/db';
 import { env } from '$env/dynamic/private';
 import { bootstrapKcOrgId, ensureOrganizationMapper, ensureDirectAccessGrants, ensureRealmSettings, syncClientRedirectUri } from '$lib/server/keycloak-admin';
 import { getBillingStatus } from '$lib/server/billing';
 
 export async function init() {
-	await migrate(db, { migrationsFolder: 'drizzle' });
-	console.log('[db] migrations applied');
 	await bootstrapKcOrgId();
 	await ensureOrganizationMapper();
 	await ensureDirectAccessGrants();
