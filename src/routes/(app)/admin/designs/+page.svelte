@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types.js';
-	import type { MatchState } from '$lib/types.js';
+	import type { MatchState, LibraryOverlay } from '$lib/types.js';
 	import ScoreboardDisplay from '$lib/components/ScoreboardDisplay.svelte';
 
 	let { data }: { data: PageData } = $props();
@@ -26,6 +26,8 @@
 	};
 
 	let templates = $state<Template[]>(data.templates ?? []);
+	let libraryTemplates = $state<LibraryOverlay[]>(data.library ?? []);
+	let showLibrary = $state(false);
 	let loading = $state(false);
 	let feedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -262,6 +264,26 @@
 			}
 			templates = templates.map((t) => ({ ...t, isDefault: t.id === id }));
 			feedback = { type: 'success', message: 'Standard-Template gesetzt' };
+		} catch {
+			feedback = { type: 'error', message: 'Netzwerkfehler' };
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function installFromLibrary(id: number) {
+		loading = true;
+		feedback = null;
+		try {
+			const res = await fetch(`/api/library/install/${id}`, { method: 'POST' });
+			if (!res.ok) {
+				const err = await res.json().catch(() => ({}));
+				feedback = { type: 'error', message: err.error ?? 'Fehler beim Installieren' };
+				return;
+			}
+			const installed: Template = await res.json();
+			templates = [...templates, installed];
+			feedback = { type: 'success', message: `"${installed.name}" installiert` };
 		} catch {
 			feedback = { type: 'error', message: 'Netzwerkfehler' };
 		} finally {
@@ -542,6 +564,64 @@ body{margin:0;background:transparent;}
 					+ Neues Template erstellen
 				</button>
 			</div>
+
+			{#if libraryTemplates.length > 0}
+				<div class="mt-6">
+					<button
+						onclick={() => showLibrary = !showLibrary}
+						class="w-full flex items-center justify-between bg-bg-panel-alt hover:bg-bg-panel-hover rounded-xl p-4 transition-colors text-left"
+					>
+						<div>
+							<span class="text-text-primary font-medium">Community-Bibliothek</span>
+							<span class="text-text-tertiary text-sm ml-2">({libraryTemplates.length})</span>
+						</div>
+						<span class="text-text-tertiary text-sm">{showLibrary ? '▲' : '▼'}</span>
+					</button>
+
+					{#if showLibrary}
+						<div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+							{#each libraryTemplates as overlay (overlay.id)}
+								<div class="rounded-xl border border-border-subtle bg-bg-panel-alt overflow-hidden flex flex-col">
+									<div
+										class="h-12 w-full flex items-center justify-center"
+										style:background={overlay.overlayBgGradient
+											? `linear-gradient(to right, ${overlay.overlayBg}, ${overlay.overlayBg2})`
+											: overlay.overlayBg}
+									>
+										<span class="text-sm font-bold opacity-60" style:color={overlay.overlayText}>Aa 14 — 10 Aa</span>
+									</div>
+									<div class="p-3 flex flex-col gap-2 flex-1">
+										<div>
+											<p class="font-medium text-text-primary text-sm">{overlay.name}</p>
+											<p class="text-xs text-text-tertiary">von {overlay.clubName}</p>
+										</div>
+										{#if overlay.description}
+											<p class="text-xs text-text-secondary flex-1">{overlay.description}</p>
+										{/if}
+										<div class="flex gap-2 mt-1">
+											<a
+												href="/api/overlay-sandbox/{overlay.id}?preview=1"
+												target="_blank"
+												rel="noopener"
+												class="flex-1 text-center text-xs border border-border-subtle hover:border-border-prominent rounded-lg py-1.5 transition-colors text-text-secondary"
+											>
+												Vorschau
+											</a>
+											<button
+												onclick={() => installFromLibrary(overlay.id)}
+												disabled={loading}
+												class="flex-1 text-xs bg-accent-deepest/30 hover:bg-accent-deepest/50 text-accent rounded-lg py-1.5 transition-colors font-medium disabled:opacity-50"
+											>
+												Installieren
+											</button>
+										</div>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{/if}
+				</div>
+			{/if}
 		{/if}
 	</div>
 </div>

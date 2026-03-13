@@ -4,7 +4,8 @@ import { and, eq, isNotNull } from 'drizzle-orm';
 import type { LibraryOverlay } from '$lib/types.js';
 import type { PageServerLoad } from './$types.js';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	const isLoggedIn = !!locals.orgId;
 	const rows = await db
 		.select({
 			id: designTemplates.id,
@@ -35,5 +36,5 @@ export const load: PageServerLoad = async () => {
 		overlayText: r.overlayText
 	}));
 
-	return { overlays };
+	return { overlays, isLoggedIn };
 };
