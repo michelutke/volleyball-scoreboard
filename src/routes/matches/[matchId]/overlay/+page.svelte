@@ -73,7 +73,7 @@
 			homeSets: m.homeSets,
 			guestSets: m.guestSets,
 			currentSet: m.currentSet,
-			setScores: m.setScores,
+			setScores: m.setScores.map((s) => ({ home: s.home, guest: s.guest })),
 			serviceTeam: m.serviceTeam,
 			status: m.status,
 			homeJerseyColor: m.homeJerseyColor,
