@@ -11,6 +11,10 @@
 	}
 
 	async function install(id: number) {
+		if (!data.isLoggedIn) {
+			window.location.href = `/signin?callbackUrl=${encodeURIComponent('/library')}`;
+			return;
+		}
 		const res = await fetch(`/api/library/install/${id}`, { method: 'POST' });
 		if (res.status === 401) {
 			window.location.href = `/signin?callbackUrl=${encodeURIComponent('/library')}`;
