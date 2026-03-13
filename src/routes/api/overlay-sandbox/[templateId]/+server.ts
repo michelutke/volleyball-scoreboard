@@ -59,7 +59,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		headers: {
 			'Content-Type': 'text/html; charset=utf-8',
 			'Content-Security-Policy':
-				"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' 'unsafe-eval'; img-src data: blob:; connect-src 'none'; font-src data:;",
+				"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com; img-src data: blob: https:; connect-src 'none'; font-src data: https://fonts.gstatic.com;",
 			'X-Frame-Options': 'SAMEORIGIN'
 		}
 	});
