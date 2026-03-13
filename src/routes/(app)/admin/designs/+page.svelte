@@ -274,6 +274,37 @@
 			? `linear-gradient(to right, ${t.overlayBg}, ${t.overlayBg2})`
 			: t.overlayBg;
 	}
+
+	const MOCK_MATCH = {
+		homeTeam: 'VBC Thun', guestTeam: 'Volley Lugano',
+		homePoints: 14, guestPoints: 10,
+		homeSets: 1, guestSets: 0, currentSet: 2,
+		setScores: [{ home: 25, guest: 20 }, { home: 14, guest: 10 }],
+		serviceTeam: 'home', status: 'live',
+		homeJerseyColor: '#c0392b', guestJerseyColor: '#1e6ab5',
+		homeTeamLogo: null, guestTeamLogo: null,
+		timeout: { active: false, team: null },
+		isSetPoint: false, isMatchPoint: false
+	};
+
+	function buildPreviewHtml(code: string): string {
+		return `<!DOCTYPE html><html><head><style>
+:root{--overlay-bg:${editOverlayBg};--overlay-bg2:${editOverlayBg2};--overlay-text:${editOverlayText};--overlay-divider:${editOverlayDivider};--overlay-sats-bg:${editOverlaySatsBg};--overlay-set-score-bg:${editOverlaySetScoreBg};--score-color:${editScoreColor};--score-color2:${editScoreColor2};}
+body{margin:0;background:transparent;}
+</style></head><body>${code}
+<script>setTimeout(()=>window.dispatchEvent(new MessageEvent('message',{data:{type:'matchState',data:${JSON.stringify(MOCK_MATCH)}}})),200);<\/script>
+</body></html>`;
+	}
+
+	let previewSrcdoc = $state('');
+	let _previewDebounce: ReturnType<typeof setTimeout>;
+	$effect(() => {
+		const html = editCustomCodeEnabled && editCustomCode
+			? buildPreviewHtml(editCustomCode)
+			: '';
+		clearTimeout(_previewDebounce);
+		_previewDebounce = setTimeout(() => { previewSrcdoc = html; }, 400);
+	});
 </script>
 
 <div class="min-h-screen bg-bg-base p-4">
@@ -357,7 +388,13 @@
 
 				<div class="preview-wrap">
 					{#if editCustomCodeEnabled && editCustomCode}
-						<p class="text-xs text-text-tertiary text-center py-4">Custom Code aktiv — nach dem Speichern testen.</p>
+						<iframe
+							srcdoc={previewSrcdoc}
+							sandbox="allow-scripts"
+							class="w-full rounded border-none"
+							style="height:360px;background:transparent;"
+							title="Vorschau"
+						></iframe>
 					{:else}
 						<ScoreboardDisplay match={previewMatch} homeTimeoutsUsed={1} guestTimeoutsUsed={0} timeoutTeam={null} />
 					{/if}
@@ -463,16 +500,6 @@
 							class="w-full bg-bg-base border border-border-subtle rounded-lg px-3 py-2 text-xs text-text-primary font-mono resize-y focus:outline-none focus:border-accent"
 							placeholder="<!-- HTML/CSS/JS hier eingeben -->"
 						></textarea>
-						{#if editing}
-							<a
-								href="/api/overlay-sandbox/{editing.id}?preview=1"
-								target="_blank"
-								rel="noopener"
-								class="inline-block text-sm text-accent hover:underline"
-							>
-								In neuem Tab testen →
-							</a>
-						{/if}
 					{/if}
 				</div>
 
