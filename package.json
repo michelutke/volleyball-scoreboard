@@ -23,7 +23,7 @@
 		"drizzle-kit": "^0.31.9",
 		"husky": "^9.1.7",
 		"license-checker": "^25.0.1",
-		"svelte": "^5.53.6",
+		"svelte": "^5.53.12",
 		"svelte-check": "^4.4.4",
 		"tailwindcss": "^4.2.1",
 		"typescript": "^5.9.3",
