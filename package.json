@@ -35,7 +35,7 @@
 		"@stripe/stripe-js": "^8.9.0",
 		"@sveltejs/adapter-node": "^5.5.4",
 		"drizzle-orm": "^0.45.1",
-		"lru-cache": "^11.2.6",
+		"lru-cache": "^11.2.7",
 		"postgres": "^3.4.8",
 		"qrcode": "^1.5.4",
 		"stripe": "^20.4.0",
