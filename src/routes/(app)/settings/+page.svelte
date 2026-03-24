@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { DEFAULT_ACCENT } from '$lib/theme.js';
 	import type { PageData } from './$types.js';
@@ -23,10 +23,7 @@
 		saving = true;
 		error = '';
 		try {
-			const payload: Record<string, string> = { clubName: clubName.trim() };
-			if (isEdit) {
-				payload.accentColor = accentColor;
-			}
+			const payload: Record<string, string> = { clubName: clubName.trim(), accentColor };
 			if (swissVolleyApiKey) {
 				payload.swissVolleyApiKey = swissVolleyApiKey;
 			}
@@ -36,6 +33,7 @@
 				body: JSON.stringify(payload)
 			});
 			if (!res.ok) throw new Error('Speichern fehlgeschlagen');
+			await invalidate('app:settings');
 			await goto(isEdit ? '/' : '/teams');
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Unbekannter Fehler';
