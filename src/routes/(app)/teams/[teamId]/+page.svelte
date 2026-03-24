@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto, invalidateAll } from '$app/navigation';
 	import type { PageData } from './$types.js';
 
 	let { data }: { data: PageData } = $props();
@@ -62,7 +63,7 @@
 		try {
 			const res = await fetch(`/api/matches/${matchId}/activate`, { method: 'POST' });
 			if (res.ok) {
-				window.location.href = `/matches/${matchId}/control`;
+				await goto(`/matches/${matchId}/control`);
 			}
 		} finally {
 			activating = null;
@@ -84,7 +85,7 @@
 					league: league.trim() || null
 				})
 			});
-			if (res.ok) window.location.reload();
+			if (res.ok) await invalidateAll();
 		} finally {
 			creating = false;
 		}
@@ -95,7 +96,7 @@
 		cancelling = matchId;
 		try {
 			const res = await fetch(`/api/matches/${matchId}/cancel`, { method: 'POST' });
-			if (res.ok) window.location.reload();
+			if (res.ok) await invalidateAll();
 		} finally {
 			cancelling = null;
 		}

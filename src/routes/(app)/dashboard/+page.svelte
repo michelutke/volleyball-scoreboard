@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto, invalidateAll } from '$app/navigation';
 	import type { PageData } from './$types.js';
 	import type { MatchListItem } from '$lib/types.js';
 
@@ -46,7 +47,7 @@
 		activating = matchId;
 		try {
 			const res = await fetch(`/api/matches/${matchId}/activate`, { method: 'POST' });
-			if (res.ok) window.location.href = `/matches/${matchId}/control`;
+			if (res.ok) await goto(`/matches/${matchId}/control`);
 		} finally {
 			activating = null;
 		}
@@ -57,7 +58,7 @@
 		cancelling = matchId;
 		try {
 			const res = await fetch(`/api/matches/${matchId}/cancel`, { method: 'POST' });
-			if (res.ok) window.location.reload();
+			if (res.ok) await invalidateAll();
 		} finally {
 			cancelling = null;
 		}

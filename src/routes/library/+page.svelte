@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import type { PageData } from './$types.js';
 	import type { LibraryOverlay } from '$lib/types.js';
 
@@ -12,16 +13,16 @@
 
 	async function install(id: number) {
 		if (!data.isLoggedIn) {
-			window.location.href = `/signin?callbackUrl=${encodeURIComponent('/library')}`;
+			await goto(`/signin?callbackUrl=${encodeURIComponent('/library')}`);
 			return;
 		}
 		const res = await fetch(`/api/library/install/${id}`, { method: 'POST' });
 		if (res.status === 401) {
-			window.location.href = `/signin?callbackUrl=${encodeURIComponent('/library')}`;
+			await goto(`/signin?callbackUrl=${encodeURIComponent('/library')}`);
 			return;
 		}
 		if (res.ok) {
-			window.location.href = '/admin/designs';
+			await goto('/admin/designs');
 		} else {
 			const err = await res.json().catch(() => ({}));
 			alert(err.error ?? 'Fehler beim Installieren');

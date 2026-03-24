@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { PageData } from './$types.js';
 
@@ -54,7 +55,9 @@
 				body: JSON.stringify({ name: newTeamName.trim() })
 			});
 			if (res.ok) {
-				window.location.reload();
+				await invalidateAll();
+				showCreate = false;
+				newTeamName = '';
 			}
 		} finally {
 			creating = false;

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { DEFAULT_ACCENT } from '$lib/theme.js';
 	import type { PageData } from './$types.js';
@@ -35,7 +36,7 @@
 				body: JSON.stringify(payload)
 			});
 			if (!res.ok) throw new Error('Speichern fehlgeschlagen');
-			window.location.href = isEdit ? '/' : '/teams';
+			await goto(isEdit ? '/' : '/teams');
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Unbekannter Fehler';
 			saving = false;
