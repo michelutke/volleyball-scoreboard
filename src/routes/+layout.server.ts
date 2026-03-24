@@ -3,7 +3,8 @@ import { settings } from '$lib/server/db/schema.js';
 import { and, eq } from 'drizzle-orm';
 import type { LayoutServerLoad } from './$types.js';
 
-export const load: LayoutServerLoad = async ({ locals }) => {
+export const load: LayoutServerLoad = async ({ locals, depends }) => {
+	depends('app:settings');
 	const orgId = locals.orgId;
 	if (!orgId) return { accentColor: null, isAdmin: false, session: null };
 
