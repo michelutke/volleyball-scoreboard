@@ -53,7 +53,11 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		? `<script>setTimeout(()=>window.dispatchEvent(new MessageEvent('message',{data:${MOCK_STATE}})),500)</script>`
 		: '';
 
-	const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${cssVars}</style>${previewScript}</head><body>${template.customCode}</body></html>`;
+	const sanitizedCode = template.customCode
+		.replace(/<script[\s>]/gi, '&lt;script ')
+		.replace(/<\/script>/gi, '&lt;/script&gt;');
+
+	const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${cssVars}</style>${previewScript}</head><body>${sanitizedCode}</body></html>`;
 
 	return new Response(html, {
 		headers: {

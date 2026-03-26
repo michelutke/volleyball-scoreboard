@@ -119,7 +119,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 
 	// Apply design template if selected
 	if (body.designTemplateId !== undefined) {
-		await applyTemplateToMatch(body.designTemplateId, matchId);
+		await applyTemplateToMatch(body.designTemplateId, matchId, orgId);
 	}
 
 	// Settings update (scorer-editable fields only: team names, jerseys, logos)

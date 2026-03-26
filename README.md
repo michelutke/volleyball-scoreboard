@@ -33,8 +33,8 @@ Real-time volleyball scoring app with OBS overlay, built for VBC Thun.
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/your-org/scoring.git
-cd scoring
+git clone https://github.com/michelutke/volleyball-scoreboard.git
+cd volleyball-scoreboard
 npm install
 
 # 2. Configure environment

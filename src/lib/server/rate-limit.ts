@@ -1,7 +1,12 @@
+import { LRUCache } from 'lru-cache';
+
 const WINDOW_MS = 60 * 60 * 1000; // 1 hour
 const MAX_ATTEMPTS = 5;
 
-const buckets = new Map<string, { count: number; resetAt: number }>();
+const buckets = new LRUCache<string, { count: number; resetAt: number }>({
+	max: 10_000,
+	ttl: WINDOW_MS
+});
 
 /** Returns true if the key has exceeded the rate limit. */
 export function isRateLimited(key: string): boolean {

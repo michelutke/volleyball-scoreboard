@@ -274,7 +274,8 @@ export async function bootstrapKcOrgId(): Promise<void> {
 async function getMasterAdminToken(): Promise<string | null> {
 	if (!env.KEYCLOAK_ADMIN_URL) return null;
 	if (!env.KEYCLOAK_ADMIN_PASSWORD) {
-		console.warn('[keycloak] KEYCLOAK_ADMIN_PASSWORD not set — falling back to default "admin". Set this in production.');
+		console.warn('[keycloak] KEYCLOAK_ADMIN_PASSWORD not set — skipping master admin auth');
+		return null;
 	}
 	try {
 		const res = await fetch(`${env.KEYCLOAK_ADMIN_URL}/realms/master/protocol/openid-connect/token`, {
@@ -284,7 +285,7 @@ async function getMasterAdminToken(): Promise<string | null> {
 				grant_type: 'password',
 				client_id: 'admin-cli',
 				username: env.KEYCLOAK_ADMIN_USERNAME ?? 'admin',
-				password: env.KEYCLOAK_ADMIN_PASSWORD ?? 'admin'
+				password: env.KEYCLOAK_ADMIN_PASSWORD
 			})
 		});
 		if (!res.ok) return null;
@@ -299,7 +300,7 @@ export async function ensureOrganizationMapper(): Promise<void> {
 	if (!env.KEYCLOAK_ADMIN_URL) return;
 	try {
 		const clientId = env.KEYCLOAK_CLIENT_ID ?? 'scoring-app';
-		const realm = env.KEYCLOAK_REALM ?? 'master';
+		const realm = env.KEYCLOAK_REALM ?? 'scoring';
 		const base = `${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}`;
 
 		// service account may lack manage-clients — try it first, fall back to master admin
@@ -387,7 +388,7 @@ export async function ensureRealmSettings(): Promise<void> {
 			console.warn('[keycloak] ensureRealmSettings: no master admin token');
 			return;
 		}
-		const realm = env.KEYCLOAK_REALM ?? 'master';
+		const realm = env.KEYCLOAK_REALM ?? 'scoring';
 		const res = await fetch(`${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}`, {
 			method: 'PUT',
 			headers: { Authorization: `Bearer ${masterToken}`, 'Content-Type': 'application/json' },
@@ -402,6 +403,10 @@ export async function ensureRealmSettings(): Promise<void> {
 
 export async function ensureDirectAccessGrants(): Promise<void> {
 	if (!env.KEYCLOAK_ADMIN_URL) return;
+	if (!env.KEYCLOAK_ADMIN_PASSWORD) {
+		console.warn('[keycloak] ensureDirectAccessGrants: KEYCLOAK_ADMIN_PASSWORD not set — skipping');
+		return;
+	}
 	try {
 		const masterTokenRes = await fetch(`${env.KEYCLOAK_ADMIN_URL}/realms/master/protocol/openid-connect/token`, {
 			method: 'POST',
@@ -409,8 +414,8 @@ export async function ensureDirectAccessGrants(): Promise<void> {
 			body: new URLSearchParams({
 				grant_type: 'password',
 				client_id: 'admin-cli',
-				username: 'admin',
-				password: env.KEYCLOAK_ADMIN_PASSWORD ?? 'admin'
+				username: env.KEYCLOAK_ADMIN_USERNAME ?? 'admin',
+				password: env.KEYCLOAK_ADMIN_PASSWORD
 			})
 		});
 		if (!masterTokenRes.ok) {
@@ -419,7 +424,7 @@ export async function ensureDirectAccessGrants(): Promise<void> {
 			return;
 		}
 		const { access_token } = await masterTokenRes.json() as { access_token: string };
-		const realm = env.KEYCLOAK_REALM ?? 'master';
+		const realm = env.KEYCLOAK_REALM ?? 'scoring';
 		const base = `${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}`;
 		const headers = { Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json' };
 		const clientId = env.KEYCLOAK_CLIENT_ID ?? 'scoring-app';
@@ -501,7 +506,7 @@ export async function getKcOrgIdForUser(userId: string): Promise<string | undefi
 	console.warn('[keycloak] getKcOrgIdForUser SA failed:', res.status, 'userId:', userId, '— trying master admin');
 	const masterToken = await getMasterAdminToken();
 	if (!masterToken) return undefined;
-	const realm = env.KEYCLOAK_REALM ?? 'master';
+	const realm = env.KEYCLOAK_REALM ?? 'scoring';
 	const fallback = await fetch(`${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}/users/${userId}/organizations`, {
 		headers: { Authorization: `Bearer ${masterToken}` }
 	});
