@@ -28,7 +28,7 @@
 		"tailwindcss": "^4.2.1",
 		"typescript": "^5.9.3",
 		"vite": "^8.0.2",
-		"vitest": "^4.1.0"
+		"vitest": "^4.1.2"
 	},
 	"dependencies": {
 		"@auth/sveltekit": "^1.11.1",
