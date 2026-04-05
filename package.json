@@ -32,7 +32,7 @@
 	},
 	"dependencies": {
 		"@auth/sveltekit": "^1.11.1",
-		"@stripe/stripe-js": "^8.11.0",
+		"@stripe/stripe-js": "^9.0.1",
 		"@sveltejs/adapter-node": "^5.5.4",
 		"drizzle-orm": "^0.45.1",
 		"lru-cache": "^11.2.7",
