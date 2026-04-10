@@ -137,7 +137,7 @@
 <svelte:head>
 	<title>Overlay — Match #{matchId}</title>
 	<style>
-		body {
+		html, body {
 			background: transparent !important;
 			margin: 0;
 			overflow: hidden;
