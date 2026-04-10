@@ -12,8 +12,11 @@ export const GET: RequestHandler = async ({ url }) => {
 	const matchId = url.searchParams.get('id');
 
 	if (matchId) {
+		const id = parseInt(matchId);
+		if (isNaN(id)) return json({ error: 'Invalid match id' }, { status: 400 });
+
 		const match = await db.query.matches.findFirst({
-			where: eq(matches.id, parseInt(matchId))
+			where: eq(matches.id, id)
 		});
 		if (!match) return json({ error: 'Match not found' }, { status: 404 });
 
@@ -174,7 +177,9 @@ export const PUT: RequestHandler = async ({ request }) => {
 export const DELETE: RequestHandler = async ({ url }) => {
 	const matchId = url.searchParams.get('id');
 	if (!matchId) return json({ error: 'Missing id' }, { status: 400 });
+	const id = parseInt(matchId);
+	if (isNaN(id)) return json({ error: 'Invalid match id' }, { status: 400 });
 
-	await db.delete(matches).where(eq(matches.id, parseInt(matchId)));
+	await db.delete(matches).where(eq(matches.id, id));
 	return json({ ok: true });
 };
