@@ -33,12 +33,6 @@
 
 	const palette = $derived(data.accentColor ? generateAccentPalette(data.accentColor, effectiveTheme) : null);
 
-	const accentStyle = $derived(
-		palette
-			? `:root { ${ACCENT_CSS_PROPS.map(([prop, key]) => `${prop}: ${palette[key]}`).join('; ')}; }`
-			: ''
-	);
-
 	$effect(() => {
 		document.documentElement.dataset.theme = effectiveTheme;
 	});
@@ -56,11 +50,5 @@
 		}
 	});
 </script>
-
-<svelte:head>
-	{#if accentStyle}
-		{@html `<style>${accentStyle}</style>`}
-	{/if}
-</svelte:head>
 
 {@render children()}
