@@ -75,7 +75,7 @@
 <svelte:head>
 	<title>Overlay</title>
 	<style>
-		body {
+		html, body {
 			background: transparent !important;
 			margin: 0;
 			overflow: hidden;
