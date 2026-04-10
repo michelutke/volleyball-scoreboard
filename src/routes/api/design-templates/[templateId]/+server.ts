@@ -3,6 +3,7 @@ import { db } from '$lib/server/db/index.js';
 import { designTemplates } from '$lib/server/db/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { templateColorFields, applyTemplateToAllMatches } from '$lib/server/design-template.js';
+import { designTemplateCreateSchema } from '$lib/server/validation.js';
 import type { RequestHandler } from './$types.js';
 
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
@@ -10,7 +11,10 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 	if (!isAdmin) return json({ error: 'Forbidden' }, { status: 403 });
 
 	const templateId = parseInt(params.templateId);
-	const body = await request.json();
+	const raw = await request.json();
+	const parsed = designTemplateCreateSchema.partial().safeParse(raw);
+	if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+	const body = parsed.data;
 
 	const existing = await db.query.designTemplates.findFirst({
 		where: and(eq(designTemplates.orgId, orgId), eq(designTemplates.id, templateId))

@@ -62,7 +62,7 @@ export const actions: Actions = {
 		try {
 			userId = await createUser(email, { firstName, lastName, username });
 			await setUserPassword(userId, password);
-			const randomId = Math.random().toString(36).slice(2, 8).toUpperCase();
+			const randomId = crypto.randomUUID().slice(0, 8).toUpperCase();
 			const orgName = `${username}-${randomId}`;
 			const orgAlias = orgName.toLowerCase();
 			kcOrgId = await createOrganization(orgName);

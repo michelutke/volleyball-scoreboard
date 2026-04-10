@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { listOrgMembersWithStatus, listUsersWithRole, inviteUserByEmail, getKcOrgId } from '$lib/server/keycloak-admin.js';
+import { userInviteSchema } from '$lib/server/validation.js';
 import type { RequestHandler } from './$types.js';
 
 export const GET: RequestHandler = async ({ locals }) => {
@@ -28,8 +29,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const kcOrgId = await getKcOrgId(locals.orgId);
 	if (!kcOrgId) return json({ error: 'Organisation nicht konfiguriert' }, { status: 400 });
 
-	const body: { email?: string } = await request.json();
-	if (!body.email?.trim()) return json({ error: 'E-Mail erforderlich' }, { status: 400 });
+	const raw = await request.json();
+	const parsed = userInviteSchema.safeParse(raw);
+	if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+	const body = parsed.data;
 
 	const allMembers = await listOrgMembersWithStatus(kcOrgId);
 	if (allMembers.length >= 5) {
@@ -37,13 +40,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	try {
-		const userId = await inviteUserByEmail(body.email.trim(), kcOrgId);
-		return json({ id: userId, email: body.email.trim(), emailSent: true }, { status: 201 });
+		const userId = await inviteUserByEmail(body.email, kcOrgId);
+		return json({ id: userId, email: body.email, emailSent: true }, { status: 201 });
 	} catch (err) {
-		const msg = err instanceof Error ? err.message : 'Einladung fehlgeschlagen';
+		const msg = err instanceof Error ? err.message : '';
 		const isAlreadyMember = msg.toLowerCase().includes('conflict') || msg.includes('409');
+		if (!isAlreadyMember) console.error('[users] invite failed:', err);
 		return json(
-			{ error: isAlreadyMember ? 'Nutzer ist bereits Mitglied dieser Organisation' : msg },
+			{ error: isAlreadyMember ? 'Nutzer ist bereits Mitglied dieser Organisation' : 'Einladung fehlgeschlagen' },
 			{ status: isAlreadyMember ? 400 : 500 }
 		);
 	}

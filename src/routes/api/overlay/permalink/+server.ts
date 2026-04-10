@@ -15,6 +15,8 @@ export const GET: RequestHandler = async ({ locals }) => {
 	}
 
 	const matchId = parseInt(row.value);
+	if (isNaN(matchId)) return json({ matchId: null, homeTeamName: null, guestTeamName: null });
+
 	const match = await db.query.matches.findFirst({
 		where: and(eq(matches.id, matchId), eq(matches.orgId, orgId))
 	});
@@ -50,6 +52,8 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
 	}
 
 	const matchId = parseInt(value);
+	if (isNaN(matchId)) return json({ matchId: null, homeTeamName: null, guestTeamName: null });
+
 	const match = await db.query.matches.findFirst({
 		where: and(eq(matches.id, matchId), eq(matches.orgId, orgId))
 	});

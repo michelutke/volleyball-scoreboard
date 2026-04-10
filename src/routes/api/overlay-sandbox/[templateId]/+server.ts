@@ -26,7 +26,7 @@ const MOCK_STATE = JSON.stringify({
 	}
 });
 
-export const GET: RequestHandler = async ({ params, url }) => {
+export const GET: RequestHandler = async ({ params, url, locals }) => {
 	const templateId = parseInt(params.templateId);
 	if (isNaN(templateId)) return new Response('Not found', { status: 404 });
 
@@ -34,6 +34,11 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		where: eq(designTemplates.id, templateId)
 	});
 	if (!template?.customCode) return new Response('Not found', { status: 404 });
+
+	// Only allow access to public templates or templates owned by the authenticated user's org
+	if (!template.isPublic && template.orgId !== locals.orgId) {
+		return new Response('Not found', { status: 404 });
+	}
 
 	const isPreview = url.searchParams.has('preview');
 

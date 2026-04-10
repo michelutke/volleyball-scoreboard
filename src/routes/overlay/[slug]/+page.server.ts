@@ -20,6 +20,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	if (!permalinkRow?.value) return { match: null, matchId: null, timeouts: { home: 0, guest: 0 } };
 
 	const matchId = parseInt(permalinkRow.value);
+	if (isNaN(matchId)) return { match: null, matchId: null, timeouts: { home: 0, guest: 0 } };
 
 	const match = await db.query.matches.findFirst({
 		where: eq(matches.id, matchId)

@@ -4,13 +4,17 @@ import { matches, scores } from '$lib/server/db/schema.js';
 import { matchSSEEmitter } from '$lib/server/sse.js';
 import { toMatchState } from '$lib/server/match-state.js';
 import { addPoint, removePoint, resetMatch, isMatchOver } from '$lib/volleyball.js';
+import { controlActionSchema } from '$lib/server/validation.js';
 import { eq, desc } from 'drizzle-orm';
 import type { MatchState } from '$lib/types.js';
 import type { RequestHandler } from './$types.js';
 
 export const PUT: RequestHandler = async ({ params, request }) => {
 	const { controlToken } = params;
-	const body = await request.json();
+	const raw = await request.json();
+	const parsed = controlActionSchema.safeParse(raw);
+	if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+	const body = parsed.data;
 
 	const match = await db.query.matches.findFirst({
 		where: eq(matches.controlToken, controlToken)
@@ -30,10 +34,10 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 	let newState: MatchState;
 	switch (body.action) {
 		case 'addPoint':
-			newState = addPoint(state, body.team);
+			newState = addPoint(state, body.team!);
 			break;
 		case 'removePoint':
-			newState = removePoint(state, body.team);
+			newState = removePoint(state, body.team!);
 			break;
 		case 'reset':
 			newState = resetMatch(state);

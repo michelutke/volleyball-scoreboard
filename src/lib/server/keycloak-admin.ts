@@ -271,11 +271,17 @@ export async function bootstrapKcOrgId(): Promise<void> {
 	}
 }
 
+let masterTokenCache: { token: string; expiresAt: number } | null = null;
+let masterTokenFailed = false;
+
 async function getMasterAdminToken(): Promise<string | null> {
 	if (!env.KEYCLOAK_ADMIN_URL) return null;
 	if (!env.KEYCLOAK_ADMIN_PASSWORD) {
-		console.warn('[keycloak] KEYCLOAK_ADMIN_PASSWORD not set — falling back to default "admin". Set this in production.');
+		console.warn('[keycloak] KEYCLOAK_ADMIN_PASSWORD not set — skipping master admin auth');
+		return null;
 	}
+	if (masterTokenFailed) return null;
+	if (masterTokenCache && Date.now() < masterTokenCache.expiresAt) return masterTokenCache.token;
 	try {
 		const res = await fetch(`${env.KEYCLOAK_ADMIN_URL}/realms/master/protocol/openid-connect/token`, {
 			method: 'POST',
@@ -284,13 +290,19 @@ async function getMasterAdminToken(): Promise<string | null> {
 				grant_type: 'password',
 				client_id: 'admin-cli',
 				username: env.KEYCLOAK_ADMIN_USERNAME ?? 'admin',
-				password: env.KEYCLOAK_ADMIN_PASSWORD ?? 'admin'
+				password: env.KEYCLOAK_ADMIN_PASSWORD
 			})
 		});
-		if (!res.ok) return null;
-		const data: { access_token: string } = await res.json();
+		if (!res.ok) {
+			console.warn('[keycloak] master admin auth failed:', res.status, '— will not retry this startup');
+			masterTokenFailed = true;
+			return null;
+		}
+		const data: { access_token: string; expires_in: number } = await res.json();
+		masterTokenCache = { token: data.access_token, expiresAt: Date.now() + (data.expires_in - 60) * 1000 };
 		return data.access_token;
 	} catch {
+		masterTokenFailed = true;
 		return null;
 	}
 }
@@ -403,25 +415,11 @@ export async function ensureRealmSettings(): Promise<void> {
 export async function ensureDirectAccessGrants(): Promise<void> {
 	if (!env.KEYCLOAK_ADMIN_URL) return;
 	try {
-		const masterTokenRes = await fetch(`${env.KEYCLOAK_ADMIN_URL}/realms/master/protocol/openid-connect/token`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-			body: new URLSearchParams({
-				grant_type: 'password',
-				client_id: 'admin-cli',
-				username: 'admin',
-				password: env.KEYCLOAK_ADMIN_PASSWORD ?? 'admin'
-			})
-		});
-		if (!masterTokenRes.ok) {
-			const body = await masterTokenRes.text();
-			console.warn('[keycloak] ensureDirectAccessGrants: master token failed:', masterTokenRes.status, body);
-			return;
-		}
-		const { access_token } = await masterTokenRes.json() as { access_token: string };
-		const realm = env.KEYCLOAK_REALM ?? 'master';
+		const masterToken = await getMasterAdminToken();
+		if (!masterToken) return;
+		const realm = env.KEYCLOAK_REALM ?? 'scoring';
 		const base = `${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}`;
-		const headers = { Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json' };
+		const headers = { Authorization: `Bearer ${masterToken}`, 'Content-Type': 'application/json' };
 		const clientId = env.KEYCLOAK_CLIENT_ID ?? 'scoring-app';
 		const searchRes = await fetch(`${base}/clients?clientId=${encodeURIComponent(clientId)}`, { headers });
 		if (!searchRes.ok) return;

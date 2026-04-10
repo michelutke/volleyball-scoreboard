@@ -16,11 +16,25 @@ export const GET: RequestHandler = async ({ locals }) => {
 	return json(result);
 };
 
+const ALLOWED_SETTING_KEYS = new Set([
+	'clubName',
+	'overlaySlug',
+	'permalinkOverlayMatchId',
+	'swissVolleyApiKey',
+	'accentColor'
+]);
+
 export const PUT: RequestHandler = async ({ request, locals }) => {
 	const { orgId, isAdmin } = locals;
 	if (!isAdmin) return json({ error: 'Forbidden' }, { status: 403 });
 
 	const body: Record<string, unknown> = await request.json();
+
+	for (const key of Object.keys(body)) {
+		if (!ALLOWED_SETTING_KEYS.has(key)) {
+			return json({ error: `Setting key '${key}' is not allowed` }, { status: 400 });
+		}
+	}
 
 	for (const [key, value] of Object.entries(body)) {
 		const rawValue = typeof value === 'string' ? value : JSON.stringify(value);

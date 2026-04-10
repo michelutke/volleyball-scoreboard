@@ -5,6 +5,7 @@ import { matchSSEEmitter } from '$lib/server/sse.js';
 import { toMatchState } from '$lib/server/match-state.js';
 import { applyTemplateToMatch } from '$lib/server/design-template.js';
 import { addPoint, removePoint, resetMatch, isMatchOver } from '$lib/volleyball.js';
+import { matchIdActionSchema, matchIdSettingsSchema } from '$lib/server/validation.js';
 import { and, eq, desc } from 'drizzle-orm';
 import type { MatchState } from '$lib/types.js';
 import type { RequestHandler } from './$types.js';
@@ -30,9 +31,13 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
 	const { orgId } = locals;
 	const matchId = parseInt(params.matchId);
-	const body = await request.json();
+	const raw = await request.json();
 
-	if (body.action) {
+	if (raw.action) {
+		const parsed = matchIdActionSchema.safeParse(raw);
+		if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+		const body = parsed.data;
+
 		const currentScore = await db.query.scores.findFirst({
 			where: eq(scores.matchId, matchId),
 			orderBy: desc(scores.createdAt)
@@ -49,10 +54,10 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		let newState: MatchState;
 		switch (body.action) {
 			case 'addPoint':
-				newState = addPoint(state, body.team);
+				newState = addPoint(state, body.team!);
 				break;
 			case 'removePoint':
-				newState = removePoint(state, body.team);
+				newState = removePoint(state, body.team!);
 				break;
 			case 'reset':
 				newState = resetMatch(state);
@@ -117,8 +122,13 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		return json(newState);
 	}
 
+	// Settings update
+	const settingsParsed = matchIdSettingsSchema.safeParse(raw);
+	if (!settingsParsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+	const body = settingsParsed.data;
+
 	// Apply design template if selected
-	if (body.designTemplateId !== undefined) {
+	if (body.designTemplateId != null) {
 		await applyTemplateToMatch(body.designTemplateId, matchId);
 	}
 
