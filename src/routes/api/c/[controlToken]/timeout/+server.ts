@@ -2,12 +2,16 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import { matches, timeouts, scores } from '$lib/server/db/schema.js';
 import { matchSSEEmitter } from '$lib/server/sse.js';
+import { controlTimeoutSchema } from '$lib/server/validation.js';
 import { eq, and, desc } from 'drizzle-orm';
 import type { RequestHandler } from './$types.js';
 
 export const POST: RequestHandler = async ({ params, request }) => {
 	const { controlToken } = params;
-	const { team } = await request.json();
+	const raw = await request.json();
+	const parsed = controlTimeoutSchema.safeParse(raw);
+	if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+	const { team } = parsed.data;
 
 	const match = await db.query.matches.findFirst({
 		where: eq(matches.controlToken, controlToken)
@@ -48,7 +52,10 @@ export const POST: RequestHandler = async ({ params, request }) => {
 
 export const DELETE: RequestHandler = async ({ params, request }) => {
 	const { controlToken } = params;
-	const { team } = await request.json();
+	const raw = await request.json();
+	const parsed = controlTimeoutSchema.safeParse(raw);
+	if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+	const { team } = parsed.data;
 
 	const match = await db.query.matches.findFirst({
 		where: eq(matches.controlToken, controlToken)

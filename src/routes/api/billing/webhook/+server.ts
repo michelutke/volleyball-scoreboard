@@ -5,6 +5,9 @@ import { getOrgByStripeCustomer, upsertBillingSetting } from '$lib/server/billin
 import { env } from '$env/dynamic/private';
 import type Stripe from 'stripe';
 
+const processedEvents = new Set<string>();
+const MAX_PROCESSED = 10000;
+
 export const POST: RequestHandler = async ({ request }) => {
 	if (!env.STRIPE_WEBHOOK_SECRET) throw error(503, 'Webhook not configured');
 
@@ -18,6 +21,15 @@ export const POST: RequestHandler = async ({ request }) => {
 	} catch {
 		throw error(400, 'Invalid signature');
 	}
+
+	if (processedEvents.has(event.id)) {
+		return json({ received: true });
+	}
+	if (processedEvents.size >= MAX_PROCESSED) {
+		const first = processedEvents.values().next().value;
+		if (first) processedEvents.delete(first);
+	}
+	processedEvents.add(event.id);
 
 	const resolveCustomerId = (customer: string | Stripe.Customer | Stripe.DeletedCustomer | null): string | null =>
 		typeof customer === 'string' ? customer : (customer?.id ?? null);

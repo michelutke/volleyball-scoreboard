@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { removeFromOrg, deleteUser, listOrgMembers, assignAdminRole, revokeAdminRole, getKcOrgId } from '$lib/server/keycloak-admin.js';
+import { userPatchSchema } from '$lib/server/validation.js';
 import type { RequestHandler } from './$types.js';
 
 export const DELETE: RequestHandler = async ({ params, locals }) => {
@@ -21,8 +22,8 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 		await removeFromOrg(params.id, kcOrgId);
 		await deleteUser(params.id);
 	} catch (err) {
-		const msg = err instanceof Error ? err.message : 'Entfernen fehlgeschlagen';
-		return json({ error: msg }, { status: 500 });
+		console.error('[users] delete failed:', err);
+		return json({ error: 'Entfernen fehlgeschlagen' }, { status: 500 });
 	}
 
 	return json({ ok: true });
@@ -41,8 +42,10 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 		return json({ error: 'Eigene Rolle kann nicht geändert werden' }, { status: 400 });
 	}
 
-	const body: { isAdmin?: boolean } = await request.json();
-	if (typeof body.isAdmin !== 'boolean') return json({ error: 'isAdmin required' }, { status: 400 });
+	const raw = await request.json();
+	const parsed = userPatchSchema.safeParse(raw);
+	if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+	const body = parsed.data;
 
 	try {
 		if (body.isAdmin) {
@@ -51,8 +54,8 @@ export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 			await revokeAdminRole(params.id);
 		}
 	} catch (err) {
-		const msg = err instanceof Error ? err.message : 'Rollenänderung fehlgeschlagen';
-		return json({ error: msg }, { status: 500 });
+		console.error('[users] role change failed:', err);
+		return json({ error: 'Rollenänderung fehlgeschlagen' }, { status: 500 });
 	}
 
 	return json({ ok: true });

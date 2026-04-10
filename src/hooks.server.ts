@@ -5,6 +5,7 @@ import type { HandleServerError } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { bootstrapKcOrgId, ensureOrganizationMapper, ensureDirectAccessGrants, ensureRealmSettings, syncClientRedirectUri } from '$lib/server/keycloak-admin';
 import { getBillingStatus } from '$lib/server/billing';
+import { isRateLimited } from '$lib/server/rate-limit.js';
 
 export async function init() {
 	await bootstrapKcOrgId();
@@ -66,10 +67,25 @@ export const handle = sequence(authHandle, async ({ event, resolve }) => {
 		}
 	}
 
+	if (path.startsWith('/api/') && !isPublic) {
+		if (isRateLimited(`api:${event.getClientAddress()}`, { maxAttempts: 100, windowMs: 60 * 1000 })) {
+			return new Response(JSON.stringify({ error: 'Too many requests' }), {
+				status: 429,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+	}
+
 	const response = await resolve(event);
 
 	for (const [header, value] of Object.entries(securityHeaders)) {
 		response.headers.set(header, value);
+	}
+
+	response.headers.delete('X-Powered-By');
+	if (!isPublic) {
+		response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+		response.headers.set('Pragma', 'no-cache');
 	}
 
 	// CSP is set by SvelteKit via svelte.config.js (with nonces) — only override per-route

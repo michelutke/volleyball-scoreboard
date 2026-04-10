@@ -4,11 +4,13 @@ import { matches, scores } from '$lib/server/db/schema.js';
 import { emitAll } from '$lib/server/sse.js';
 import { toMatchState } from '$lib/server/match-state.js';
 import { addPoint, removePoint, resetMatch, isMatchOver } from '$lib/volleyball.js';
-import { eq, desc } from 'drizzle-orm';
+import { matchCreateSchema, matchActionSchema, matchSettingsSchema } from '$lib/server/validation.js';
+import { and, eq, desc } from 'drizzle-orm';
 import type { MatchState } from '$lib/types.js';
 import type { RequestHandler } from './$types.js';
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, locals }) => {
+	const { orgId } = locals;
 	const matchId = url.searchParams.get('id');
 
 	if (matchId) {
@@ -16,7 +18,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		if (isNaN(id)) return json({ error: 'Invalid match id' }, { status: 400 });
 
 		const match = await db.query.matches.findFirst({
-			where: eq(matches.id, id)
+			where: and(eq(matches.orgId, orgId), eq(matches.id, id))
 		});
 		if (!match) return json({ error: 'Match not found' }, { status: 404 });
 
@@ -30,17 +32,23 @@ export const GET: RequestHandler = async ({ url }) => {
 	}
 
 	const allMatches = await db.query.matches.findMany({
+		where: eq(matches.orgId, orgId),
 		orderBy: desc(matches.createdAt)
 	});
 	return json(allMatches);
 };
 
-export const POST: RequestHandler = async ({ request }) => {
-	const body = await request.json();
+export const POST: RequestHandler = async ({ request, locals }) => {
+	const { orgId } = locals;
+	const raw = await request.json();
+	const parsed = matchCreateSchema.safeParse(raw);
+	if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+	const body = parsed.data;
 
 	const [match] = await db
 		.insert(matches)
 		.values({
+			orgId,
 			homeTeamName: body.homeTeamName ?? 'Heim',
 			guestTeamName: body.guestTeamName ?? 'Gast',
 			homeJerseyColor: body.homeJerseyColor ?? '#1e40af',
@@ -61,11 +69,16 @@ export const POST: RequestHandler = async ({ request }) => {
 	return json(state, { status: 201 });
 };
 
-export const PUT: RequestHandler = async ({ request }) => {
-	const body = await request.json();
-	const matchId = body.matchId as number;
+export const PUT: RequestHandler = async ({ request, locals }) => {
+	const { orgId } = locals;
+	const raw = await request.json();
 
-	if (body.action) {
+	if (raw.action) {
+		const parsed = matchActionSchema.safeParse(raw);
+		if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+		const body = parsed.data;
+		const matchId = body.matchId;
+
 		// Score actions
 		const currentScore = await db.query.scores.findFirst({
 			where: eq(scores.matchId, matchId),
@@ -74,7 +87,7 @@ export const PUT: RequestHandler = async ({ request }) => {
 		if (!currentScore) return json({ error: 'Score not found' }, { status: 404 });
 
 		const match = await db.query.matches.findFirst({
-			where: eq(matches.id, matchId)
+			where: and(eq(matches.orgId, orgId), eq(matches.id, matchId))
 		});
 		if (!match) return json({ error: 'Match not found' }, { status: 404 });
 
@@ -83,10 +96,10 @@ export const PUT: RequestHandler = async ({ request }) => {
 		let newState: MatchState;
 		switch (body.action) {
 			case 'addPoint':
-				newState = addPoint(state, body.team);
+				newState = addPoint(state, body.team!);
 				break;
 			case 'removePoint':
-				newState = removePoint(state, body.team);
+				newState = removePoint(state, body.team!);
 				break;
 			case 'reset':
 				newState = resetMatch(state);
@@ -153,15 +166,20 @@ export const PUT: RequestHandler = async ({ request }) => {
 	}
 
 	// Update match settings (team names, colors)
+	const settingsParsed = matchSettingsSchema.safeParse(raw);
+	if (!settingsParsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+	const body = settingsParsed.data;
+	const matchId = body.matchId;
+
 	const settingsFields = ['homeTeamName', 'guestTeamName', 'homeJerseyColor', 'guestJerseyColor', 'showJerseyColors', 'showSetScores'] as const;
 	const updateData: Record<string, unknown> = { updatedAt: new Date() };
 	for (const field of settingsFields) {
 		if (body[field] !== undefined) updateData[field] = body[field];
 	}
 
-	await db.update(matches).set(updateData).where(eq(matches.id, matchId));
+	await db.update(matches).set(updateData).where(and(eq(matches.orgId, orgId), eq(matches.id, matchId)));
 
-	const match = await db.query.matches.findFirst({ where: eq(matches.id, matchId) });
+	const match = await db.query.matches.findFirst({ where: and(eq(matches.orgId, orgId), eq(matches.id, matchId)) });
 	const score = await db.query.scores.findFirst({
 		where: eq(scores.matchId, matchId),
 		orderBy: desc(scores.createdAt)
@@ -174,12 +192,13 @@ export const PUT: RequestHandler = async ({ request }) => {
 	return json(state);
 };
 
-export const DELETE: RequestHandler = async ({ url }) => {
+export const DELETE: RequestHandler = async ({ url, locals }) => {
+	const { orgId } = locals;
 	const matchId = url.searchParams.get('id');
 	if (!matchId) return json({ error: 'Missing id' }, { status: 400 });
 	const id = parseInt(matchId);
 	if (isNaN(id)) return json({ error: 'Invalid match id' }, { status: 400 });
 
-	await db.delete(matches).where(eq(matches.id, id));
+	await db.delete(matches).where(and(eq(matches.orgId, orgId), eq(matches.id, id)));
 	return json({ ok: true });
 };
