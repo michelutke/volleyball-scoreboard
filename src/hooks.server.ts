@@ -98,5 +98,14 @@ export const handle = sequence(authHandle, async ({ event, resolve }) => {
 		response.headers.delete('content-security-policy');
 	}
 
+	// Allow form-action to KC issuer (signout redirects to KC logout)
+	if (env.KEYCLOAK_ISSUER) {
+		const csp = response.headers.get('content-security-policy');
+		if (csp) {
+			const kcOrigin = new URL(env.KEYCLOAK_ISSUER).origin;
+			response.headers.set('content-security-policy', csp.replace("form-action 'self'", `form-action 'self' ${kcOrigin}`));
+		}
+	}
+
 	return response;
 });
