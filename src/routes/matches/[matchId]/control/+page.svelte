@@ -5,6 +5,8 @@
 	import type { MatchState, DesignTemplate, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
 	import QRCode from 'qrcode';
 	import MatchLayoutOverride from '$lib/components/MatchLayoutOverride.svelte';
+	import Trophy from 'lucide-svelte/icons/trophy';
+	import Timer from 'lucide-svelte/icons/timer';
 
 	let { data } = $props();
 
@@ -519,7 +521,7 @@
 						</div>
 						{#if match?.status === 'finished'}
 							<div class="finished-banner {homeWon ? 'banner-winner' : 'banner-loser'}">
-								<div class="banner-icon">{homeWon ? '🏆' : ''}</div>
+								<div class="banner-icon">{#if homeWon}<Trophy size="28" strokeWidth="1.5" />{/if}</div>
 								<div class="banner-result">{homeWon ? 'Sieger' : 'Verlierer'}</div>
 								<div class="banner-sets">{match.homeSets} {match.homeSets === 1 ? 'Satz' : 'Sätze'}</div>
 							</div>
@@ -527,7 +529,7 @@
 							<div class="scoring-team-btns">
 								<button onclick={() => addPoint('home')} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
 								<div class="scoring-secondary">
-									<button onclick={() => callTimeout('home')} disabled={matchTimeouts.home >= 2 || !!activeTimeout} class="btn-action">&#9201; Auszeit</button>
+									<button onclick={() => callTimeout('home')} disabled={matchTimeouts.home >= 2 || !!activeTimeout} class="btn-action"><Timer size="14" strokeWidth="2" /> Auszeit</button>
 									<button onclick={() => { if (match?.serviceTeam !== 'home') switchService(); }} class="btn-service" class:btn-service-active={match?.serviceTeam === 'home'} disabled={match?.serviceTeam === 'home'}>
 										&#127952; Service
 									</button>
@@ -542,7 +544,7 @@
 						</div>
 						{#if match?.status === 'finished'}
 							<div class="finished-banner {guestWon ? 'banner-winner' : 'banner-loser'}">
-								<div class="banner-icon">{guestWon ? '🏆' : ''}</div>
+								<div class="banner-icon">{#if guestWon}<Trophy size="28" strokeWidth="1.5" />{/if}</div>
 								<div class="banner-result">{guestWon ? 'Sieger' : 'Verlierer'}</div>
 								<div class="banner-sets">{match.guestSets} {match.guestSets === 1 ? 'Satz' : 'Sätze'}</div>
 							</div>
@@ -550,7 +552,7 @@
 							<div class="scoring-team-btns">
 								<button onclick={() => addPoint('guest')} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
 								<div class="scoring-secondary">
-									<button onclick={() => callTimeout('guest')} disabled={matchTimeouts.guest >= 2 || !!activeTimeout} class="btn-action">&#9201; Auszeit</button>
+									<button onclick={() => callTimeout('guest')} disabled={matchTimeouts.guest >= 2 || !!activeTimeout} class="btn-action"><Timer size="14" strokeWidth="2" /> Auszeit</button>
 									<button onclick={() => { if (match?.serviceTeam !== 'guest') switchService(); }} class="btn-service" class:btn-service-active={match?.serviceTeam === 'guest'} disabled={match?.serviceTeam === 'guest'}>
 										&#127952; Service
 									</button>

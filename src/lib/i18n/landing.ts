@@ -26,28 +26,28 @@ export const t = {
 			set: 'Satz',
 			sets: 'Sätze',
 			matchWon: 'gewinnt das Match!',
-			reset: '↩ Neu starten'
+			reset: 'Neu starten'
 		},
 		features: {
 			title: 'Alles was du brauchst',
 			items: [
 				{
-					icon: '📡',
+					icon: 'radio',
 					title: 'OBS Browser Source',
 					desc: 'Transparentes Overlay, direkt als Browser Source in OBS Studio, Streamlabs oder vMix. Keine Installation.'
 				},
 				{
-					icon: '🔴',
+					icon: 'bell-ring',
 					title: 'Automatische Banner',
 					desc: 'Set Point (blau), Match Point (rot) und Auszeit (gelb) erscheinen und verschwinden automatisch.'
 				},
 				{
-					icon: '⏱',
+					icon: 'timer',
 					title: 'Auszeit-Management',
 					desc: '2 Auszeiten pro Team, pro Satz. Timer läuft 30 Sekunden — Banner verschwindet automatisch.'
 				},
 				{
-					icon: '🏐',
+					icon: 'database',
 					title: 'Swiss Volley Import',
 					desc: 'Spielpläne, Teams und Spielorte mit einem Klick aus der Swiss Volley Datenbank importieren.'
 				}
@@ -99,28 +99,28 @@ export const t = {
 			set: 'Set',
 			sets: 'Sets',
 			matchWon: 'wins the match!',
-			reset: '↩ Reset'
+			reset: 'Reset'
 		},
 		features: {
 			title: 'Everything you need',
 			items: [
 				{
-					icon: '📡',
+					icon: 'radio',
 					title: 'OBS Browser Source',
 					desc: 'Transparent overlay, directly as browser source in OBS Studio, Streamlabs or vMix. No installation.'
 				},
 				{
-					icon: '🔴',
+					icon: 'bell-ring',
 					title: 'Automatic Banners',
 					desc: 'Set point (blue), match point (red) and timeout (yellow) appear and disappear automatically.'
 				},
 				{
-					icon: '⏱',
+					icon: 'timer',
 					title: 'Timeout Management',
 					desc: '2 timeouts per team per set. 30-second timer runs — banner disappears automatically.'
 				},
 				{
-					icon: '🏐',
+					icon: 'database',
 					title: 'Swiss Volley Import',
 					desc: 'Import schedules, teams and venues with one click from the Swiss Volley database.'
 				}

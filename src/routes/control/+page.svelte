@@ -583,10 +583,10 @@
 <style>
 	.control {
 		min-height: 100vh;
-		background: var(--color-bg-base);
-		color: var(--color-text-primary);
+		background: var(--k-surface);
+		color: var(--k-text);
 		padding: 20px;
-		font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+		font-family: var(--font-sans);
 	}
 
 	.start-screen {

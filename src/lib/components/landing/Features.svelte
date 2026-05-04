@@ -2,12 +2,27 @@
 	import { t } from '$lib/i18n/landing.js';
 	import type { Lang } from '$lib/i18n/landing.js';
 	import { reveal } from '$lib/motion.js';
+	import Radio from 'lucide-svelte/icons/radio';
+	import BellRing from 'lucide-svelte/icons/bell-ring';
+	import Timer from 'lucide-svelte/icons/timer';
+	import Database from 'lucide-svelte/icons/database';
 
 	interface Props {
 		lang: Lang;
 	}
 
 	let { lang }: Props = $props();
+
+	const ICONS = {
+		radio: Radio,
+		'bell-ring': BellRing,
+		timer: Timer,
+		database: Database
+	} as const;
+
+	function pickIcon(key: string) {
+		return ICONS[key as keyof typeof ICONS] ?? Radio;
+	}
 </script>
 
 <section id="features" class="features">
@@ -21,9 +36,12 @@
 
 		<div class="grid">
 			{#each t[lang].features.items as item, i}
+				{@const Icon = pickIcon(item.icon)}
 				<article class="card" data-idx={i} use:reveal={{ y: 36, x: i % 2 ? 24 : -24, delay: i * 0.05 }}>
 					<span class="label k-mono">0{i + 1}</span>
-					<div class="icon" aria-hidden="true">{item.icon}</div>
+					<div class="icon" aria-hidden="true">
+						<Icon size="32" strokeWidth="1.5" />
+					</div>
 					<h3 class="card-title">{item.title}</h3>
 					<p class="card-desc">{item.desc}</p>
 					<span class="bar" aria-hidden="true"></span>
@@ -113,9 +131,8 @@
 	}
 
 	.icon {
-		font-size: 36px;
-		line-height: 1;
-		opacity: 0.85;
+		color: var(--pulse);
+		display: inline-flex;
 	}
 
 	.card-title {
@@ -163,8 +180,9 @@
 			grid-row: 1 / span 2;
 			min-height: auto;
 		}
-		.card[data-idx='0'] .icon {
-			font-size: 56px;
+		.card[data-idx='0'] .icon :global(svg) {
+			width: 44px;
+			height: 44px;
 		}
 		.card[data-idx='0'] .card-title {
 			font-size: 28px;

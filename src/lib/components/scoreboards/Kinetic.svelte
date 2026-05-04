@@ -34,10 +34,6 @@
 	const homeServing = $derived(match.serviceTeam === 'home');
 	const guestServing = $derived(match.serviceTeam === 'guest');
 
-	const setScoresExpanded = $derived(
-		match.showSetScores || match.status === 'finished' || !!timeoutTeam
-	);
-
 	function pad(n: number): string {
 		return n.toString().padStart(2, '0');
 	}
@@ -47,11 +43,23 @@
 	const text = $derived(themeMode === 'light' ? '#0a0a0a' : '#f5f3ee');
 	const textDim = $derived(themeMode === 'light' ? '#6b6b6b' : '#8a8a8a');
 	const line = $derived(themeMode === 'light' ? '#c8c5bd' : '#2a2a2a');
+
+	type BannerInfo = { kind: 'timeout' | 'match' | 'set' | null; team: 'home' | 'guest' | null; label: string };
+	const banner: BannerInfo = $derived.by(() => {
+		if (timeoutTeam) return { kind: 'timeout', team: timeoutTeam, label: 'TIME OUT' };
+		if (homeMatchPoint) return { kind: 'match', team: 'home', label: 'MATCH POINT' };
+		if (guestMatchPoint) return { kind: 'match', team: 'guest', label: 'MATCH POINT' };
+		if (homeSetPoint) return { kind: 'set', team: 'home', label: 'SET POINT' };
+		if (guestSetPoint) return { kind: 'set', team: 'guest', label: 'SET POINT' };
+		return { kind: null, team: null, label: '' };
+	});
 </script>
 
 <div
 	class="kinetic"
 	class:has-logos={showLogos}
+	class:has-banner={banner.kind !== null}
+	data-show-sets={match.showSetScores || match.status === 'finished' || !!timeoutTeam || match.setScores.length > 0}
 	style:--k-surface-board={surface}
 	style:--k-surface-board-alt={surfaceAlt}
 	style:--k-text-board={text}
@@ -62,139 +70,138 @@
 	style:--home-jersey={match.homeJerseyColor}
 	style:--guest-jersey={match.guestJerseyColor}
 >
-	<!-- HOME ROW -->
-	<div class="row home" class:serving={homeServing}>
-		{#if showLogos && (match.homeTeamLogo || match.guestTeamLogo)}
-			<div class="logo">
-				{#if match.homeTeamLogo}
-					<img src="/api/image-proxy?url={encodeURIComponent(match.homeTeamLogo)}" alt="" />
-				{:else}
-					<div class="jersey" style:background={match.homeJerseyColor}></div>
+	<div class="rows">
+		<!-- HOME ROW -->
+		<div class="row home" class:serving={homeServing}>
+			{#if showLogos}
+				<div class="logo">
+					{#if match.homeTeamLogo}
+						<img src="/api/image-proxy?url={encodeURIComponent(match.homeTeamLogo)}" alt="" />
+					{:else}
+						<div class="jersey" style:background={match.homeJerseyColor}></div>
+					{/if}
+				</div>
+			{/if}
+
+			<div class="name-cell">
+				<span class="name">{match.homeTeamName.toUpperCase()}</span>
+				{#if homeServing}
+					<span class="service" aria-hidden="true">●</span>
 				{/if}
 			</div>
-		{/if}
 
-		<div class="name-cell">
-			<span class="rank k-mono">H</span>
-			<span class="name">{match.homeTeamName}</span>
-			{#if homeServing}
-				<span class="service" aria-hidden="true">●</span>
+			<div class="sets-cell">
+				<span class="sets-num">{match.homeSets}</span>
+			</div>
+
+			<div class="set-scores">
+				{#each match.setScores as s}
+					<span class="set-score" class:won={s.home > s.guest}>{s.home}</span>
+				{/each}
+			</div>
+
+			<div class="points-cell" class:point-home={homeServing}>
+				{#key match.homePoints}
+					<span class="points">{pad(match.homePoints)}</span>
+				{/key}
+			</div>
+
+			<div class="timeouts">
+				<span class="t-dot" class:used={homeTimeoutsUsed >= 1}></span>
+				<span class="t-dot" class:used={homeTimeoutsUsed >= 2}></span>
+			</div>
+		</div>
+
+		<!-- GUEST ROW -->
+		<div class="row guest" class:serving={guestServing}>
+			{#if showLogos}
+				<div class="logo">
+					{#if match.guestTeamLogo}
+						<img src="/api/image-proxy?url={encodeURIComponent(match.guestTeamLogo)}" alt="" />
+					{:else}
+						<div class="jersey" style:background={match.guestJerseyColor}></div>
+					{/if}
+				</div>
 			{/if}
-		</div>
 
-		<div class="sets-cell">
-			<span class="sets-num">{pad(match.homeSets)}</span>
-		</div>
-
-		<div class="set-scores" class:expanded={setScoresExpanded}>
-			{#each match.setScores as s}
-				<span class="set-score" class:won={s.home > s.guest}>{s.home}</span>
-			{/each}
-		</div>
-
-		<div class="points-cell" class:point-home={homeServing}>
-			{#key match.homePoints}
-				<span class="points k-mono k-tabular">{pad(match.homePoints)}</span>
-			{/key}
-		</div>
-
-		<div class="timeouts">
-			<span class="t-dot" class:used={homeTimeoutsUsed >= 1}></span>
-			<span class="t-dot" class:used={homeTimeoutsUsed >= 2}></span>
-		</div>
-
-		{#if timeoutTeam === 'home'}
-			<div class="banner timeout">TIME OUT</div>
-		{:else if homeMatchPoint}
-			<div class="banner match">MATCH POINT</div>
-		{:else if homeSetPoint}
-			<div class="banner set">SET POINT</div>
-		{/if}
-	</div>
-
-	<!-- GUEST ROW -->
-	<div class="row guest" class:serving={guestServing}>
-		{#if showLogos && (match.homeTeamLogo || match.guestTeamLogo)}
-			<div class="logo">
-				{#if match.guestTeamLogo}
-					<img src="/api/image-proxy?url={encodeURIComponent(match.guestTeamLogo)}" alt="" />
-				{:else}
-					<div class="jersey" style:background={match.guestJerseyColor}></div>
+			<div class="name-cell">
+				<span class="name">{match.guestTeamName.toUpperCase()}</span>
+				{#if guestServing}
+					<span class="service" aria-hidden="true">●</span>
 				{/if}
 			</div>
-		{/if}
 
-		<div class="name-cell">
-			<span class="rank k-mono">G</span>
-			<span class="name">{match.guestTeamName}</span>
-			{#if guestServing}
-				<span class="service" aria-hidden="true">●</span>
-			{/if}
+			<div class="sets-cell">
+				<span class="sets-num">{match.guestSets}</span>
+			</div>
+
+			<div class="set-scores">
+				{#each match.setScores as s}
+					<span class="set-score" class:won={s.guest > s.home}>{s.guest}</span>
+				{/each}
+			</div>
+
+			<div class="points-cell" class:point-guest={guestServing}>
+				{#key match.guestPoints}
+					<span class="points">{pad(match.guestPoints)}</span>
+				{/key}
+			</div>
+
+			<div class="timeouts">
+				<span class="t-dot" class:used={guestTimeoutsUsed >= 1}></span>
+				<span class="t-dot" class:used={guestTimeoutsUsed >= 2}></span>
+			</div>
 		</div>
-
-		<div class="sets-cell">
-			<span class="sets-num">{pad(match.guestSets)}</span>
-		</div>
-
-		<div class="set-scores" class:expanded={setScoresExpanded}>
-			{#each match.setScores as s}
-				<span class="set-score" class:won={s.guest > s.home}>{s.guest}</span>
-			{/each}
-		</div>
-
-		<div class="points-cell" class:point-guest={guestServing}>
-			{#key match.guestPoints}
-				<span class="points k-mono k-tabular">{pad(match.guestPoints)}</span>
-			{/key}
-		</div>
-
-		<div class="timeouts">
-			<span class="t-dot" class:used={guestTimeoutsUsed >= 1}></span>
-			<span class="t-dot" class:used={guestTimeoutsUsed >= 2}></span>
-		</div>
-
-		{#if timeoutTeam === 'guest'}
-			<div class="banner timeout">TIME OUT</div>
-		{:else if guestMatchPoint}
-			<div class="banner match">MATCH POINT</div>
-		{:else if guestSetPoint}
-			<div class="banner set">SET POINT</div>
-		{/if}
 	</div>
 
-	<!-- CENTER RULE -->
-	<div class="rule" aria-hidden="true">
-		<span class="rule-pulse"></span>
-	</div>
+	{#if banner.kind}
+		<div
+			class="banner"
+			class:kind-set={banner.kind === 'set'}
+			class:kind-match={banner.kind === 'match'}
+			class:kind-timeout={banner.kind === 'timeout'}
+		>
+			<span class="banner-rule" aria-hidden="true"></span>
+			<span class="banner-label">{banner.label}</span>
+			<span class="banner-team">
+				{banner.team === 'home' ? match.homeTeamName.toUpperCase() : banner.team === 'guest' ? match.guestTeamName.toUpperCase() : ''}
+			</span>
+		</div>
+	{/if}
 </div>
 
 <style>
 	.kinetic {
-		display: grid;
-		grid-template-rows: 1fr 1fr;
+		display: inline-flex;
+		flex-direction: column;
 		font-family: var(--font-sans);
 		background: var(--k-surface-board);
 		color: var(--k-text-board);
-		position: relative;
-		overflow: hidden;
-		isolation: isolate;
+		border: 1px solid var(--k-line-board);
+	}
+
+	.rows {
+		display: grid;
+		grid-template-rows: 64px 64px;
 	}
 
 	.row {
 		display: grid;
+		grid-template-columns: minmax(220px, 1fr) 56px auto 88px 32px;
 		align-items: stretch;
-		grid-template-columns: minmax(280px, 1fr) 64px auto 96px 36px;
-		min-height: 72px;
-		position: relative;
 		background: var(--k-surface-board);
 		transition: background 0.3s ease;
 	}
 	.kinetic.has-logos .row {
-		grid-template-columns: 72px minmax(240px, 1fr) 64px auto 96px 36px;
+		grid-template-columns: 64px minmax(180px, 1fr) 56px auto 88px 32px;
+	}
+
+	.row.home {
+		border-bottom: 1px solid var(--k-line-board);
 	}
 
 	.row.serving {
-		background: color-mix(in srgb, var(--k-warm) 5%, var(--k-surface-board));
+		background: color-mix(in srgb, var(--k-warm) 6%, var(--k-surface-board));
 	}
 
 	.logo {
@@ -203,6 +210,7 @@
 		justify-content: center;
 		padding: 8px;
 		border-right: 1px solid var(--k-line-board);
+		background: var(--k-surface-board-alt);
 	}
 	.logo img {
 		width: 100%;
@@ -210,42 +218,37 @@
 		object-fit: contain;
 	}
 	.jersey {
-		width: 36px;
-		height: 36px;
+		width: 32px;
+		height: 32px;
 	}
 
 	.name-cell {
 		display: flex;
 		align-items: center;
-		gap: 14px;
-		padding: 0 20px;
+		gap: 12px;
+		padding: 0 18px;
 		border-right: 1px solid var(--k-line-board);
 		min-width: 0;
-	}
-
-	.rank {
-		font-size: 11px;
-		letter-spacing: 0.16em;
-		color: var(--k-text-dim-board);
-		flex-shrink: 0;
+		overflow: hidden;
 	}
 
 	.name {
 		font-family: var(--font-display);
 		font-weight: 700;
 		font-variation-settings: 'wght' 700, 'opsz' 28;
-		font-size: 22px;
-		letter-spacing: -0.02em;
+		font-size: 18px;
+		letter-spacing: -0.01em;
 		color: var(--k-text-board);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		flex: 1;
+		min-width: 0;
 	}
 
 	.service {
 		color: var(--k-warm);
-		font-size: 14px;
+		font-size: 12px;
 		flex-shrink: 0;
 		animation: service-pulse 1.6s ease infinite;
 	}
@@ -271,7 +274,7 @@
 	}
 
 	.sets-num {
-		font-size: 28px;
+		font-size: 24px;
 		font-weight: 600;
 		color: var(--k-text-board);
 		letter-spacing: -0.04em;
@@ -280,27 +283,23 @@
 	.set-scores {
 		display: flex;
 		align-items: stretch;
-		max-width: 0;
 		overflow: hidden;
-		opacity: 0;
-		transition:
-			max-width 0.5s var(--ease-mass, cubic-bezier(0.6, 0.05, 0.1, 1)),
-			opacity 0.4s ease;
+	}
+	.kinetic[data-show-sets='true'] .set-scores {
 		border-right: 1px solid var(--k-line-board);
 	}
-	.set-scores.expanded {
-		max-width: 400px;
-		opacity: 1;
+	.kinetic[data-show-sets='false'] .set-scores {
+		display: none;
 	}
 
 	.set-score {
-		min-width: 48px;
+		min-width: 40px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		font-family: var(--font-mono);
 		font-feature-settings: 'tnum';
-		font-size: 18px;
+		font-size: 16px;
 		font-weight: 500;
 		color: var(--k-text-dim-board);
 		border-right: 1px solid var(--k-line-board);
@@ -351,9 +350,10 @@
 	}
 
 	.points {
-		font-size: 44px;
+		font-family: var(--font-mono);
+		font-feature-settings: 'tnum';
+		font-size: 36px;
 		font-weight: 700;
-		font-variation-settings: 'wght' 700;
 		color: var(--k-text-board);
 		letter-spacing: -0.05em;
 		line-height: 1;
@@ -381,8 +381,8 @@
 	}
 
 	.t-dot {
-		width: 10px;
-		height: 10px;
+		width: 8px;
+		height: 8px;
 		border: 1px solid var(--k-text-dim-board);
 		border-radius: 50%;
 		transition: background 0.3s var(--ease-snap, cubic-bezier(0.2, 0.9, 0.1, 1));
@@ -397,75 +397,70 @@
 	}
 
 	.banner {
-		position: absolute;
-		right: 0;
-		top: 0;
-		bottom: 0;
 		display: flex;
 		align-items: center;
-		padding: 0 24px;
+		gap: 14px;
+		padding: 10px 16px;
 		font-family: var(--font-mono);
-		font-size: 14px;
-		font-weight: 600;
+		font-size: 12px;
 		letter-spacing: 0.18em;
-		color: var(--paper, #f5f3ee);
+		font-weight: 600;
+		border-top: 1px solid var(--k-line-board);
 		animation: banner-slide 0.45s var(--ease-mass, cubic-bezier(0.6, 0.05, 0.1, 1));
-		z-index: 2;
 	}
-	.banner.set {
+
+	.banner-rule {
+		display: block;
+		width: 24px;
+		height: 2px;
+	}
+
+	.banner-team {
+		font-family: var(--font-display);
+		font-size: 13px;
+		letter-spacing: 0.06em;
+		color: var(--k-text-dim-board);
+		margin-left: auto;
+	}
+
+	.banner.kind-set {
+		background: color-mix(in srgb, var(--k-cool) 12%, var(--k-surface-board));
+		color: var(--k-cool);
+	}
+	.banner.kind-set .banner-rule {
 		background: var(--k-cool);
 	}
-	.banner.match {
+
+	.banner.kind-match {
+		background: color-mix(in srgb, var(--k-warm) 14%, var(--k-surface-board));
+		color: var(--k-warm);
+	}
+	.banner.kind-match .banner-rule {
 		background: var(--k-warm);
 	}
-	.banner.timeout {
+
+	.banner.kind-timeout {
+		background: color-mix(in srgb, #eab308 18%, var(--k-surface-board));
+		color: #eab308;
+	}
+	.banner.kind-timeout .banner-rule {
 		background: #eab308;
-		color: #0a0a0a;
 	}
 
 	@keyframes banner-slide {
 		from {
-			transform: translateX(20px);
+			transform: translateY(-8px);
 			opacity: 0;
 		}
 		to {
-			transform: translateX(0);
+			transform: translateY(0);
 			opacity: 1;
-		}
-	}
-
-	.rule {
-		position: absolute;
-		left: 0;
-		right: 0;
-		top: 50%;
-		height: 1px;
-		background: var(--k-line-board);
-		pointer-events: none;
-		z-index: 1;
-	}
-	.rule-pulse {
-		position: absolute;
-		left: 0;
-		top: 0;
-		height: 100%;
-		width: 80px;
-		background: linear-gradient(to right, transparent, var(--k-warm), transparent);
-		animation: rule-pulse 4s linear infinite;
-	}
-	@keyframes rule-pulse {
-		from {
-			transform: translateX(0);
-		}
-		to {
-			transform: translateX(100vw);
 		}
 	}
 
 	:global([data-motion='static']) .service,
 	:global([data-motion='static']) .points-cell::after,
-	:global([data-motion='static']) .rule-pulse,
-	:global([data-motion='damped']) .rule-pulse {
+	:global([data-motion='damped']) .points-cell::after {
 		animation: none;
 	}
 	:global([data-motion='static']) .points {

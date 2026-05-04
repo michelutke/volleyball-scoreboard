@@ -3,6 +3,8 @@
 	import { page } from '$app/state';
 	import type { PageData } from './$types.js';
 	import { KSection, KButton, KEmpty, KInput, KField } from '$lib/components/k';
+	import Star from 'lucide-svelte/icons/star';
+	import Pin from 'lucide-svelte/icons/pin';
 
 	let { data }: { data: PageData } = $props();
 
@@ -131,8 +133,9 @@
 							class:on={isFav(team.id)}
 							onclick={() => toggleFav(team.id)}
 							title={isFav(team.id) ? 'Aus Favoriten entfernen' : 'Zu Favoriten'}
+							aria-label="Favorit"
 						>
-							{isFav(team.id) ? '★' : '☆'}
+							<Star size="18" strokeWidth="1.5" fill={isFav(team.id) ? 'currentColor' : 'none'} />
 						</button>
 						{#if page.data.isAdmin}
 							<button
@@ -140,8 +143,9 @@
 								class:on={isPinned(team.id)}
 								onclick={() => togglePin(team.id)}
 								title={isPinned(team.id) ? 'Pinning entfernen' : 'Für alle pinnen'}
+								aria-label="Pin"
 							>
-								⊙
+								<Pin size="18" strokeWidth="1.5" fill={isPinned(team.id) ? 'currentColor' : 'none'} />
 							</button>
 						{/if}
 					</li>
@@ -278,7 +282,9 @@
 	.row-act {
 		background: transparent;
 		border: none;
-		font-size: 18px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		color: var(--k-text-dim);
 		padding: 0 14px;
 		cursor: pointer;

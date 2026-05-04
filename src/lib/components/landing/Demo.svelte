@@ -5,6 +5,8 @@
 	import type { Lang } from '$lib/i18n/landing.js';
 	import { t } from '$lib/i18n/landing.js';
 	import { reveal } from '$lib/motion.js';
+	import RotateCcw from 'lucide-svelte/icons/rotate-ccw';
+	import Trophy from 'lucide-svelte/icons/trophy';
 
 	interface Props {
 		lang: Lang;
@@ -133,7 +135,7 @@
 		{#if matchWon}
 			<div class="winner" use:reveal={{ y: 16 }}>
 				<p class="winner-title">
-					<span class="winner-mark k-mono">●</span>
+					<Trophy size="22" strokeWidth="1.5" class="winner-mark" />
 					{match.homeSets > match.guestSets ? 'VBC Thun' : 'VBC Scorely'} — {tr.matchWon}
 				</p>
 				<p class="winner-score k-mono k-tabular">{match.homeSets} : {match.guestSets}</p>
@@ -195,7 +197,10 @@
 			</div>
 
 			<div class="reset-row">
-				<button class="reset-link k-mono" onclick={doReset}>↩ {tr.reset}</button>
+				<button class="reset-link k-mono" onclick={doReset}>
+				<RotateCcw size="13" strokeWidth="1.5" />
+				{tr.reset}
+			</button>
 			</div>
 		{/if}
 	</div>
@@ -421,6 +426,9 @@
 		cursor: pointer;
 		padding: 8px;
 		transition: color var(--dur-fast) var(--ease-snap);
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
 	}
 	.reset-link:hover {
 		color: var(--k-text);
@@ -444,8 +452,8 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 10px;
+		color: var(--pulse);
 	}
-	.winner-mark { color: var(--pulse); }
 	.winner-score {
 		font-size: 36px;
 		font-weight: 600;

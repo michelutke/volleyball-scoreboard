@@ -33,9 +33,11 @@
 
 <LandingNav {lang} onLangToggle={() => { lang = lang === 'de' ? 'en' : 'de'; }} basePath="/" />
 
+<div class="page-k">
 <main class="mx-auto max-w-3xl px-4 py-24 md:px-8">
-	<h1 class="mb-2 text-3xl font-bold text-[var(--color-text-primary)]">Impressum</h1>
-	<p class="mb-10 text-sm text-[var(--color-text-tertiary)]">Stand: März 2026</p>
+	<p class="kicker k-mono">— Impressum / Imprint</p>
+	<h1 class="page-title k-display">Impressum</h1>
+	<p class="mb-10 text-sm" style="color: var(--k-text-dim);">Stand: März 2026</p>
 
 	<div class="space-y-10 text-[var(--color-text-secondary)] leading-relaxed">
 
@@ -148,5 +150,30 @@
 
 	</div>
 </main>
+</div>
 
 <LandingFooter {lang} />
+
+<style>
+	.page-k {
+		background: var(--k-surface);
+		color: var(--k-text);
+		min-height: 100vh;
+	}
+	.kicker {
+		font-size: 11px;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
+		margin: 0 0 12px;
+	}
+	.page-title {
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-display);
+		font-size: clamp(40px, 7vw, 72px);
+		line-height: 0.95;
+		letter-spacing: -0.03em;
+		margin: 0 0 8px;
+		color: var(--k-text);
+	}
+</style>

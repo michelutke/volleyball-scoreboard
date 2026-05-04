@@ -52,7 +52,7 @@
 		inset: 0;
 		background: radial-gradient(
 			ellipse 60% 80% at 90% 50%,
-			color-mix(in srgb, var(--cool) 14%, transparent) 0%,
+			color-mix(in srgb, var(--pulse) 14%, transparent) 0%,
 			transparent 60%
 		);
 		pointer-events: none;
@@ -76,7 +76,7 @@
 		font-size: 11px;
 		letter-spacing: 0.18em;
 		text-transform: uppercase;
-		color: var(--cool-soft);
+		color: var(--pulse);
 		margin: 0;
 	}
 
@@ -118,7 +118,7 @@
 		font-size: clamp(56px, 10vw, 140px);
 		font-weight: 600;
 		line-height: 0.9;
-		color: var(--cool);
+		color: var(--pulse);
 		letter-spacing: -0.04em;
 	}
 
@@ -126,7 +126,7 @@
 		display: block;
 		width: 64px;
 		height: 2px;
-		background: var(--cool);
+		background: var(--pulse);
 	}
 
 	.copy {

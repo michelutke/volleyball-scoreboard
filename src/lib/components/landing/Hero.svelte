@@ -4,6 +4,7 @@
 	import { magnetic } from '$lib/motion.js';
 	import { animate, type DOMKeyframesDefinition, type AnimationOptions } from 'motion';
 	import { onMount } from 'svelte';
+	import ArrowRight from 'lucide-svelte/icons/arrow-right';
 
 	interface Props {
 		lang: Lang;
@@ -75,14 +76,12 @@
 		<div class="ctas">
 			<a href="/signup" class="cta-primary" use:magnetic={{ strength: 0.2, radius: 80 }}>
 				<span>{t[lang].hero.ctaPrimary}</span>
-				<span class="arrow" aria-hidden="true">→</span>
+				<span class="arrow" aria-hidden="true"><ArrowRight size="18" strokeWidth="2.5" /></span>
 			</a>
 			<a href="#demo" onclick={scrollToDemo} class="cta-secondary">
 				<span>{t[lang].hero.ctaSecondary}</span>
 			</a>
 		</div>
-
-		<p class="proof k-mono">{t[lang].hero.socialProof}</p>
 	</div>
 
 	<div class="ticker" aria-hidden="true">
@@ -276,19 +275,11 @@
 		background: color-mix(in srgb, var(--k-text) 4%, transparent);
 	}
 
-	.proof {
-		font-size: 11px;
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
-		color: var(--k-text-dim);
-		margin: 0;
-	}
-
 	.ticker {
 		position: absolute;
 		left: 0;
 		right: 0;
-		bottom: 80px;
+		bottom: 64px;
 		overflow: hidden;
 		mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
 		-webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
