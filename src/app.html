@@ -3,18 +3,23 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet" />
 		<script>
-			(function() {
-				var t = localStorage.getItem('theme');
-				if (t === 'light' || t === 'dark') {
-					document.documentElement.dataset.theme = t;
-				} else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-					document.documentElement.dataset.theme = 'light';
+			(function () {
+				function readCookie(name) {
+					var m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+					return m ? decodeURIComponent(m[1]) : null;
+				}
+				var t = readCookie('scoring-theme') || localStorage.getItem('theme');
+				var resolved;
+				if (t === 'light' || t === 'dark') resolved = t;
+				else resolved = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+				document.documentElement.dataset.theme = resolved;
+
+				var m = readCookie('scoring-motion');
+				if (m === 'full' || m === 'damped' || m === 'static') {
+					document.documentElement.dataset.motion = m;
 				} else {
-					document.documentElement.dataset.theme = 'dark';
+					document.documentElement.removeAttribute('data-motion');
 				}
 			})();
 		</script>
