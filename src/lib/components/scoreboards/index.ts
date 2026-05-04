@@ -34,7 +34,7 @@ export const SCOREBOARD_LAYOUTS: ScoreboardLayout[] = [
 	{
 		id: 'classic',
 		name: 'Classic',
-		description: 'Traditional broadcast scoreboard — bold, high-contrast, jersey colors.',
+		description: 'Traditional broadcast scoreboard · bold, high-contrast, jersey colors.',
 		component: Classic as unknown as Component<ScoreboardProps>,
 		supportsThemes: ['dark'],
 		customizableOptions: []
@@ -42,7 +42,7 @@ export const SCOREBOARD_LAYOUTS: ScoreboardLayout[] = [
 	{
 		id: 'kinetic',
 		name: 'Kinetic',
-		description: 'Editorial broadcast — mono numerals, animated digit roll, opposing accents.',
+		description: 'Editorial broadcast · mono numerals, animated digit roll, opposing accents.',
 		component: Kinetic as unknown as Component<ScoreboardProps>,
 		supportsThemes: ['light', 'dark'],
 		customizableOptions: [

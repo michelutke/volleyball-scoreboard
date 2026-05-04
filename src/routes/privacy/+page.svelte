@@ -33,7 +33,7 @@
 			<h3 class="mb-2 font-semibold text-[var(--color-text-primary)]">Registrierung & Konto</h3>
 			<ul class="mb-4 list-disc pl-5 space-y-1">
 				<li>E-Mail-Adresse, Vor- und Nachname</li>
-				<li>Passwort (gespeichert als gehashter Wert durch Keycloak — Scorely hat keinen Zugriff auf das Klartextpasswort)</li>
+				<li>Passwort (gespeichert als gehashter Wert durch Keycloak · Scorely hat keinen Zugriff auf das Klartextpasswort)</li>
 				<li>Organisationszugehörigkeit und Rolle (z. B. Admin oder Scorer)</li>
 			</ul>
 
@@ -81,16 +81,16 @@
 			<p class="mb-3">Scorely nutzt folgende externe Dienste:</p>
 			<ul class="list-disc pl-5 space-y-2">
 				<li>
-					<strong class="text-[var(--color-text-primary)]">Keycloak</strong> — Identitäts- und Zugangsverwaltung.
+					<strong class="text-[var(--color-text-primary)]">Keycloak</strong> · Identitäts- und Zugangsverwaltung.
 					Benutzerdaten (E-Mail, Name, Passwort) werden in Keycloak gespeichert und verwaltet.
 				</li>
 				<li>
-					<strong class="text-[var(--color-text-primary)]">Stripe</strong> — Zahlungsabwicklung.
+					<strong class="text-[var(--color-text-primary)]">Stripe</strong> · Zahlungsabwicklung.
 					Zahlungsdaten werden ausschliesslich von Stripe verarbeitet. Scorely speichert nur die
 					Stripe-Kunden-ID und den Abonnementstatus.
 				</li>
 				<li>
-					<strong class="text-[var(--color-text-primary)]">Swiss Volley Manager API</strong> — Optionaler Import
+					<strong class="text-[var(--color-text-primary)]">Swiss Volley Manager API</strong> · Optionaler Import
 					von Spielplänen und Teamdaten. Nutzung nur mit expliziter Eingabe eines API-Schlüssels durch den Nutzer.
 					Scorely wird nicht von Swiss Volley betrieben.
 				</li>

@@ -45,7 +45,7 @@
 	);
 
 	function formatDate(iso: string | null): string {
-		if (!iso) return '–';
+		if (!iso) return '...';
 		const d = new Date(iso);
 		return d.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 	}

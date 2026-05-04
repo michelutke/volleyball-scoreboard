@@ -13,7 +13,7 @@
 
 	const translations = {
 		de: {
-			overline: '— Preise',
+			overline: 'Preise',
 			title: 'Alles was dein Verein braucht.',
 			saas: {
 				name: 'Scorely SaaS',
@@ -46,7 +46,7 @@
 			}
 		},
 		en: {
-			overline: '— Pricing',
+			overline: 'Pricing',
 			title: 'Everything your club needs.',
 			saas: {
 				name: 'Scorely SaaS',
@@ -301,7 +301,7 @@
 		color: var(--k-text-mute);
 	}
 	.tick {
-		color: var(--cool);
+		color: var(--pulse);
 		font-family: var(--font-mono);
 		font-weight: 600;
 		font-size: 14px;
@@ -326,11 +326,11 @@
 	}
 
 	.cta-primary {
-		background: var(--cool);
+		background: var(--pulse);
 		color: var(--paper);
 	}
 	.cta-primary:hover {
-		background: var(--cool-deep);
+		background: var(--pulse-deep);
 	}
 
 	.cta-secondary {

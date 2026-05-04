@@ -389,7 +389,7 @@
 
 				{#if activeTimeout}
 					<div class="timeout-banner">
-						Auszeit {activeTimeout.teamName} — {activeTimeout.secondsLeft}s
+						Auszeit {activeTimeout.teamName} · {activeTimeout.secondsLeft}s
 						<button onclick={cancelTimeout} class="btn-timeout-cancel">&#10005; Abbrechen</button>
 					</div>
 				{/if}

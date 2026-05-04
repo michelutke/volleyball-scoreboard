@@ -24,7 +24,7 @@
 	const favEntries = $derived(entries.filter((e) => !e.isPinned));
 
 	function formatDate(iso: string | null): string {
-		if (!iso) return '–';
+		if (!iso) return '...';
 		const d = new Date(iso);
 		return d.toLocaleDateString('de-CH', {
 			weekday: 'short',
@@ -129,7 +129,7 @@
 </script>
 
 <div class="page">
-	<KSection kicker="— Übersicht / Overview" title="Dashboard" subtitle="Kommende Spiele deiner Favoriten">
+	<KSection kicker="Übersicht / Overview" title="Dashboard" subtitle="Kommende Spiele deiner Favoriten">
 		{#if !loaded}
 			<p class="muted k-mono">Laden...</p>
 		{:else if entries.length === 0}
@@ -215,14 +215,14 @@
 
 			{#if pinnedEntries.length > 0}
 				<div class="group">
-					<h2 class="group-label k-mono">— Vom Admin angepinnt</h2>
+					<h2 class="group-label k-mono">Vom Admin angepinnt</h2>
 					{@render teamSection(pinnedEntries)}
 				</div>
 			{/if}
 
 			{#if favEntries.length > 0}
 				<div class="group">
-					<h2 class="group-label k-mono">— Deine Favoriten</h2>
+					<h2 class="group-label k-mono">Deine Favoriten</h2>
 					{@render teamSection(favEntries)}
 				</div>
 			{/if}

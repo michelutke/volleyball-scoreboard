@@ -5,8 +5,12 @@
 	import { loadStripe } from '@stripe/stripe-js';
 	import { env } from '$env/dynamic/public';
 	import type { ActionData } from './$types';
+	import LandingNav from '$lib/components/landing/LandingNav.svelte';
+	import { KButton, KInput, KField } from '$lib/components/k';
 
 	let { form }: { form: ActionData } = $props();
+
+	let lang = $state<'de' | 'en'>('de');
 	let loading = $state(false);
 	let email = $state('');
 	let password = $state('');
@@ -58,25 +62,29 @@
 	});
 </script>
 
-<div class="min-h-screen bg-bg-base flex items-center justify-center p-4">
-	<div class="w-full {step === 'checkout' ? 'max-w-2xl' : 'max-w-md'}">
+<LandingNav {lang} onLangToggle={() => (lang = lang === 'de' ? 'en' : 'de')} basePath="/" />
+
+<div class="page">
+	<div class="wrap" class:wide={step === 'checkout'}>
 		{#if step === 'checkout'}
-			<div class="mb-6 text-center">
-				<h1 class="text-2xl font-bold text-text-primary">Zahlungsdetails eingeben</h1>
-				<p class="text-text-secondary mt-1 text-sm">3 Tage kostenlos — danach CHF/Monat</p>
-			</div>
-			<div class="bg-bg-panel-alt rounded-xl p-4">
+			<header class="head">
+				<p class="kicker k-mono">Schritt 02 · Zahlung</p>
+				<h1 class="title k-display">Zahlungsdetails</h1>
+				<p class="sub">3 Tage kostenlos. Erst danach wird abgebucht. Jederzeit kündbar.</p>
+			</header>
+			<div class="panel checkout">
 				{#if checkoutError}
-					<div class="bg-red-900/30 text-red-300 rounded-lg px-4 py-2 text-sm">{checkoutError}</div>
+					<div class="banner-error">{checkoutError}</div>
 				{:else}
 					<div id="stripe-checkout"></div>
 				{/if}
 			</div>
 		{:else}
-			<div class="mb-8 text-center">
-				<h1 class="text-3xl font-bold text-text-primary">Konto erstellen</h1>
-				<p class="text-text-secondary mt-2">3 Tage kostenlos testen</p>
-			</div>
+			<header class="head">
+				<p class="kicker k-mono">Schritt 01 · Konto</p>
+				<h1 class="title k-display">Konto erstellen.</h1>
+				<p class="sub">3 Tage kostenlos testen. Keine Kreditkarte für den Start nötig.</p>
+			</header>
 
 			<form
 				method="POST"
@@ -98,103 +106,163 @@
 						loading = false;
 					};
 				}}
-				class="bg-bg-panel-alt rounded-xl p-6 space-y-4"
+				class="panel"
 			>
 				{#if form?.error}
-					<div class="bg-red-900/30 text-red-300 rounded-lg px-4 py-2 text-sm">{form.error}</div>
+					<div class="banner-error">{form.error}</div>
 				{/if}
 
-				<div>
-					<label class="block text-xs text-text-tertiary mb-1" for="firstName">Vorname</label>
-					<input
-						id="firstName"
-						name="firstName"
-						type="text"
-						required
-						autocomplete="given-name"
-						class="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent"
-					/>
+				<div class="row two">
+					<KField label="Vorname" for="firstName" required>
+						<KInput id="firstName" name="firstName" type="text" required autocomplete="given-name" />
+					</KField>
+					<KField label="Nachname" for="lastName" required>
+						<KInput id="lastName" name="lastName" type="text" required autocomplete="family-name" />
+					</KField>
 				</div>
 
-				<div>
-					<label class="block text-xs text-text-tertiary mb-1" for="lastName">Nachname</label>
-					<input
-						id="lastName"
-						name="lastName"
-						type="text"
-						required
-						autocomplete="family-name"
-						class="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent"
-					/>
-				</div>
+				<KField label="Benutzername" for="username" required hint="3 bis 30 Zeichen, nur Buchstaben, Zahlen, ., _, -">
+					<KInput id="username" name="username" type="text" required autocomplete="username" />
+				</KField>
 
-				<div>
-					<label class="block text-xs text-text-tertiary mb-1" for="username">Benutzername</label>
-					<input
-						id="username"
-						name="username"
-						type="text"
-						required
-						autocomplete="username"
-						class="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent"
-					/>
-				</div>
+				<KField label="E-Mail" for="email" required>
+					<KInput id="email" name="email" type="email" required autocomplete="email" bind:value={email} />
+				</KField>
 
-				<div>
-					<label class="block text-xs text-text-tertiary mb-1" for="email">E-Mail</label>
-					<input
-						id="email"
-						name="email"
-						type="email"
-						required
-						autocomplete="email"
-						bind:value={email}
-						class="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent"
-					/>
-				</div>
-
-				<div>
-					<label class="block text-xs text-text-tertiary mb-1" for="password">Passwort</label>
-					<input
+				<KField label="Passwort" for="password" required hint="Mindestens 8 Zeichen">
+					<KInput
 						id="password"
 						name="password"
 						type="password"
 						required
-						minlength="8"
+						minlength={8}
 						autocomplete="new-password"
 						bind:value={password}
-						class="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent"
 					/>
-				</div>
+				</KField>
 
-				<div>
-					<label class="block text-xs text-text-tertiary mb-1" for="confirmPassword">Passwort bestätigen</label>
-					<input
+				<KField
+					label="Passwort bestätigen"
+					for="confirmPassword"
+					required
+					error={passwordMismatch ? 'Passwörter stimmen nicht überein' : undefined}
+				>
+					<KInput
 						id="confirmPassword"
 						name="confirmPassword"
 						type="password"
 						required
 						autocomplete="new-password"
 						bind:value={confirmPassword}
-						class="w-full bg-bg-base border border-border-subtle rounded-lg px-4 py-2 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent {passwordMismatch ? 'border-red-500' : ''}"
 					/>
-					{#if passwordMismatch}
-						<p class="text-red-400 text-xs mt-1">Passwörter stimmen nicht überein</p>
-					{/if}
-				</div>
+				</KField>
 
-				<button
-					type="submit"
-					disabled={loading || passwordMismatch}
-					class="w-full bg-accent-mid hover:bg-accent-dark disabled:opacity-50 text-white font-semibold rounded-lg px-4 py-3 transition-colors"
-				>
+				<KButton variant="primary" size="lg" full disabled={loading || passwordMismatch}>
 					{loading ? '...' : 'Kostenlos starten'}
-				</button>
+				</KButton>
 			</form>
 
-			<p class="text-center text-text-tertiary text-sm mt-4">
-				Bereits registriert? <a href="/signin" class="text-accent hover:underline">Anmelden</a>
+			<p class="below k-mono">
+				Bereits registriert? <a href="/signin" class="link">Anmelden</a>
 			</p>
 		{/if}
 	</div>
 </div>
+
+<style>
+	.page {
+		min-height: 100vh;
+		background: var(--k-surface);
+		color: var(--k-text);
+		padding: 120px var(--grid-margin) 60px;
+		display: flex;
+		justify-content: center;
+	}
+
+	.wrap {
+		width: 100%;
+		max-width: 480px;
+		display: flex;
+		flex-direction: column;
+		gap: 32px;
+	}
+	.wrap.wide {
+		max-width: 720px;
+	}
+
+	.head {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.kicker {
+		font-size: 11px;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--pulse);
+		margin: 0;
+	}
+
+	.title {
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-display);
+		font-size: clamp(36px, 5vw, 56px);
+		line-height: 0.95;
+		letter-spacing: -0.025em;
+		margin: 0;
+	}
+
+	.sub {
+		font-size: 15px;
+		color: var(--k-text-mute);
+		margin: 0;
+	}
+
+	.panel {
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+		padding: 32px;
+		background: var(--k-surface-alt);
+		border: 1px solid var(--k-line);
+	}
+
+	.checkout {
+		padding: 24px;
+	}
+
+	.row.two {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 16px;
+	}
+	@media (max-width: 480px) {
+		.row.two {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	.banner-error {
+		font-size: 13px;
+		padding: 12px 14px;
+		background: color-mix(in srgb, var(--color-error) 10%, transparent);
+		border: 1px solid var(--color-error);
+		color: var(--color-error-light);
+	}
+
+	.below {
+		font-size: 12px;
+		letter-spacing: 0.06em;
+		color: var(--k-text-dim);
+		text-align: center;
+		margin: 0;
+	}
+	.link {
+		color: var(--pulse);
+		text-decoration: none;
+	}
+	.link:hover {
+		text-decoration: underline;
+	}
+</style>

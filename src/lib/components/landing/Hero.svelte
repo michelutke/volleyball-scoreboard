@@ -88,17 +88,17 @@
 		<div class="ticker-track">
 			{#each Array(2) as _, dup}
 				<div class="ticker-row">
-					<span class="tick"><b>VBC THUN</b> 25 <em>—</em> 22 <b>SPIEZ</b></span>
+					<span class="tick"><b>VBC THUN</b> 25 <em>:</em> 22 <b>SPIEZ</b></span>
 					<span class="sep">/</span>
-					<span class="tick"><b>NUC</b> 18 <em>—</em> 25 <b>VOLERO</b></span>
+					<span class="tick"><b>NUC</b> 18 <em>:</em> 25 <b>VOLERO</b></span>
 					<span class="sep">/</span>
-					<span class="tick"><b>LUC</b> 25 <em>—</em> 19 <b>BERN</b></span>
+					<span class="tick"><b>LUC</b> 25 <em>:</em> 19 <b>BERN</b></span>
 					<span class="sep">/</span>
 					<span class="tick"><b>SET POINT</b></span>
 					<span class="sep">/</span>
-					<span class="tick"><b>FRANCHES</b> 23 <em>—</em> 25 <b>AESCH</b></span>
+					<span class="tick"><b>FRANCHES</b> 23 <em>:</em> 25 <b>AESCH</b></span>
 					<span class="sep">/</span>
-					<span class="tick"><b>KÖNIZ</b> 25 <em>—</em> 21 <b>SAFNERN</b></span>
+					<span class="tick"><b>KÖNIZ</b> 25 <em>:</em> 21 <b>SAFNERN</b></span>
 					<span class="sep">/</span>
 				</div>
 			{/each}

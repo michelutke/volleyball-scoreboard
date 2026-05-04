@@ -39,7 +39,7 @@
 <footer class="footer">
 	<div class="inner">
 		<div class="closer" use:reveal={{ y: 32 }}>
-			<p class="kicker k-mono">— Bereit zu scoren / Ready to score</p>
+			<p class="kicker k-mono">Bereit zu scoren · Ready to score</p>
 			<h2 class="big-mark k-display">{tr.tagline}</h2>
 			<p class="subline">{tr.subline}</p>
 			<a href="/signup" class="cta" use:magnetic={{ strength: 0.18, radius: 70 }}>

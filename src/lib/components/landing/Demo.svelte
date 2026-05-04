@@ -106,7 +106,7 @@
 <section id="demo" class="demo">
 	<div class="inner">
 		<header class="head">
-			<p class="overline k-mono">— Demo / Try it</p>
+			<p class="overline k-mono">Demo · Try it</p>
 			<h2 class="title k-display" use:reveal={{ y: 32 }}>{tr.title}</h2>
 			<p class="subtitle">{tr.subtitle}</p>
 		</header>
@@ -136,7 +136,7 @@
 			<div class="winner" use:reveal={{ y: 16 }}>
 				<p class="winner-title">
 					<Trophy size="22" strokeWidth="1.5" class="winner-mark" />
-					{match.homeSets > match.guestSets ? 'VBC Thun' : 'VBC Scorely'} — {tr.matchWon}
+					{match.homeSets > match.guestSets ? 'VBC Thun' : 'VBC Scorely'} {tr.matchWon}
 				</p>
 				<p class="winner-score k-mono k-tabular">{match.homeSets} : {match.guestSets}</p>
 				<button class="reset-btn" onclick={doReset}>{tr.reset}</button>

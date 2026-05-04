@@ -14,7 +14,7 @@
 	<div class="bg-tint" aria-hidden="true"></div>
 	<div class="inner">
 		<header class="head">
-			<p class="overline k-mono">— Ablauf / Workflow</p>
+			<p class="overline k-mono">Ablauf · Workflow</p>
 			<h2 class="title k-display" use:reveal={{ y: 32 }}>
 				{t[lang].howItWorks.title}
 			</h2>

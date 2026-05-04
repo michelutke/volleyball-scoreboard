@@ -135,7 +135,7 @@
 </script>
 
 <svelte:head>
-	<title>Overlay — Match #{matchId}</title>
+	<title>Overlay · Match #{matchId}</title>
 	<style>
 		html, body {
 			background: transparent !important;

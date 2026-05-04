@@ -49,7 +49,7 @@
 
 <div class="page">
 	<KSection
-		kicker={isEdit ? '— Konfiguration / Settings' : '— Erste Schritte / Setup'}
+		kicker={isEdit ? 'Konfiguration / Settings' : 'Erste Schritte / Setup'}
 		title={isEdit ? 'Einstellungen' : 'Einrichten'}
 		subtitle={isEdit ? undefined : 'Willkommen! Konfiguriere deinen Verein, um loszulegen.'}
 	>
@@ -65,7 +65,7 @@
 			}}
 		>
 			<div class="panel">
-				<h2 class="panel-label k-mono">— Vereinsname</h2>
+				<h2 class="panel-label k-mono">Vereinsname</h2>
 				<KField label="Vereinsname" for="clubName" required>
 					<KInput id="clubName" type="text" bind:value={clubName} placeholder="z.B. VBC Thun" />
 				</KField>
@@ -73,7 +73,7 @@
 
 			{#if data.isAdmin}
 				<div class="panel">
-					<h2 class="panel-label k-mono">— Swiss Volley</h2>
+					<h2 class="panel-label k-mono">Swiss Volley</h2>
 					<div class="hint-row">
 						<button
 							type="button"
@@ -82,7 +82,7 @@
 							aria-label="Anleitung anzeigen"
 						>ℹ</button>
 						<span class="hint">
-							{data.swissVolleyApiKeySet ? 'API-Key ist konfiguriert' : 'Optional — Mannschaften automatisch aus Swiss Volley importieren'}
+							{data.swissVolleyApiKeySet ? 'API-Key ist konfiguriert' : 'Optional · Mannschaften automatisch aus Swiss Volley importieren'}
 						</span>
 					</div>
 					{#if showApiKeyInfo}
@@ -104,7 +104,7 @@
 
 			{#if isEdit && data.overlaySlug}
 				<div class="panel">
-					<h2 class="panel-label k-mono">— Overlay Permalink</h2>
+					<h2 class="panel-label k-mono">Overlay Permalink</h2>
 					<div class="overlay-row">
 						<KInput
 							id="overlayUrl"
@@ -119,7 +119,7 @@
 
 			{#if isEdit}
 				<div class="panel">
-					<h2 class="panel-label k-mono">— Akzentfarbe</h2>
+					<h2 class="panel-label k-mono">Akzentfarbe</h2>
 					<div class="color-row">
 						<input id="accentColor" type="color" bind:value={accentColor} class="color-swatch" />
 						<span class="color-hex k-mono">{accentColor}</span>

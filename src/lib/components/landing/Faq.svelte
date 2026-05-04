@@ -10,7 +10,7 @@
 
 	const translations = {
 		de: {
-			overline: '— Häufige Fragen',
+			overline: 'Häufige Fragen',
 			title: 'FAQ.',
 			items: [
 				{
@@ -41,7 +41,7 @@
 			]
 		},
 		en: {
-			overline: '— FAQ',
+			overline: 'FAQ',
 			title: 'Questions.',
 			items: [
 				{

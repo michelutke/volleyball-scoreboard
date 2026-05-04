@@ -142,7 +142,7 @@
 </script>
 
 <svelte:head>
-	<title>Bibliothek — Scorely</title>
+	<title>Bibliothek · Scorely</title>
 </svelte:head>
 
 <LandingNav {lang} onLangToggle={() => (lang = lang === 'de' ? 'en' : 'de')} basePath="/" />
@@ -150,7 +150,7 @@
 <div class="page">
 	<header class="hero">
 		<div class="hero-inner">
-			<p class="overline k-mono">— Bibliothek / Library</p>
+			<p class="overline k-mono">Bibliothek · Library</p>
 			<h1 class="title k-display" use:reveal={{ y: 32 }}>Scoreboards & Overlays.</h1>
 			<p class="subtitle">
 				Wähle einen Scoreboard-Stil oder installiere ein Community-Overlay. Anpassbar pro Verein und pro Match.
@@ -160,7 +160,7 @@
 
 	<section class="layouts">
 		<div class="section-head">
-			<p class="kicker k-mono">— 01 / Scoreboard Layouts</p>
+			<p class="kicker k-mono">01 · Scoreboard Layouts</p>
 			<h2 class="sec-title">Stil wählen</h2>
 		</div>
 
@@ -204,7 +204,7 @@
 
 					{#if layout.customizableOptions.length > 0 && isSelected}
 						<div class="custom-panel">
-							<p class="custom-label k-mono">— Anpassen</p>
+							<p class="custom-label k-mono">Anpassen</p>
 							{#each layout.customizableOptions as opt}
 								<div class="opt-row">
 									<label class="opt-label k-mono" for="opt-{layout.id}-{opt.key}">{opt.label}</label>
@@ -245,20 +245,20 @@
 
 		{#if data.isLoggedIn}
 			<p class="layout-hint k-mono">
-				— Auswahl gespeichert als Org-Default. Pro Match überschreibbar im Match-Control-Panel.
+				Auswahl gespeichert als Org-Default. Pro Match überschreibbar im Match-Control-Panel.
 			</p>
 		{:else}
 			<p class="layout-hint k-mono">
-				— <a href="/signin?callbackUrl=%2Flibrary">Anmelden</a>, um Scoreboards als Org-Default zu speichern.
+				<a href="/signin?callbackUrl=%2Flibrary">Anmelden</a>, um Scoreboards als Org-Default zu speichern.
 			</p>
 		{/if}
 	</section>
 
 	<section class="overlays">
 		<div class="section-head">
-			<p class="kicker k-mono">— 02 / Community Overlays</p>
+			<p class="kicker k-mono">02 · Community Overlays</p>
 			<h2 class="sec-title">Custom-Overlays</h2>
-			<p class="sec-sub">Community-erstellte Designs — installieren und anpassen.</p>
+			<p class="sec-sub">Community-erstellte Designs zum Installieren und Anpassen.</p>
 		</div>
 
 		{#if data.overlays.length === 0}
@@ -272,11 +272,11 @@
 				{#each data.overlays as overlay, i (overlay.id)}
 					<article class="overlay-card" use:reveal={{ y: 24, delay: i * 0.05 }}>
 						<div class="overlay-preview" style:background={bgStyle(overlay)}>
-							<span class="overlay-sample" style:color={overlay.overlayText}>Aa 14 — 10 Aa</span>
+							<span class="overlay-sample" style:color={overlay.overlayText}>Aa 14 : 10 Aa</span>
 						</div>
 						<div class="overlay-body">
 							<p class="overlay-name">{overlay.name}</p>
-							<p class="overlay-by k-mono">— {overlay.clubName}</p>
+							<p class="overlay-by k-mono">von {overlay.clubName}</p>
 							{#if overlay.description}
 								<p class="overlay-desc">{overlay.description}</p>
 							{/if}

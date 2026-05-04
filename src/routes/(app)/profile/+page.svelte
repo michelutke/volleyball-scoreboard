@@ -32,7 +32,7 @@
 
 <div class="min-h-screen p-4" style="background: var(--k-surface); color: var(--k-text);">
 <div class="max-w-2xl mx-auto pt-12">
-	<p class="kicker k-mono">— Profil / Profile</p>
+	<p class="kicker k-mono">Profil / Profile</p>
 	<h1 class="profile-title k-display">Profil</h1>
 
 	<div class="bg-bg-panel-alt rounded-xl p-6 space-y-4 mb-4">

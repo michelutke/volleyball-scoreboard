@@ -230,14 +230,14 @@
 </script>
 
 <svelte:head>
-	<title>Scoring — Geteilter Zugriff</title>
+	<title>Scoring · Geteilter Zugriff</title>
 </svelte:head>
 
 <div class="control">
 	<!-- Nav bar -->
 	<div class="nav-bar">
 		<div class="share-banner">
-			&#128279; Geteilter Zugriff — Nur für dieses Spiel
+			&#128279; Geteilter Zugriff · Nur für dieses Spiel
 		</div>
 	</div>
 
@@ -354,7 +354,7 @@
 
 				{#if activeTimeout}
 					<div class="timeout-banner">
-						Auszeit {activeTimeout.teamName} — {activeTimeout.secondsLeft}s
+						Auszeit {activeTimeout.teamName} · {activeTimeout.secondsLeft}s
 						<button onclick={cancelTimeout} class="btn-timeout-cancel">&#10005; Abbrechen</button>
 					</div>
 				{/if}

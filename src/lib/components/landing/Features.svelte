@@ -28,7 +28,7 @@
 <section id="features" class="features">
 	<div class="inner">
 		<header class="head">
-			<p class="overline k-mono">— Funktionen / Features</p>
+			<p class="overline k-mono">Funktionen · Features</p>
 			<h2 class="title k-display" use:reveal={{ y: 32 }}>
 				{t[lang].features.title}
 			</h2>
@@ -167,25 +167,6 @@
 	@media (min-width: 640px) {
 		.grid {
 			grid-template-columns: 1fr 1fr;
-		}
-	}
-
-	@media (min-width: 1024px) {
-		.grid {
-			grid-template-columns: 1.4fr 1fr 1fr;
-			grid-template-rows: 1fr 1fr;
-		}
-		.card[data-idx='0'] {
-			grid-column: 1;
-			grid-row: 1 / span 2;
-			min-height: auto;
-		}
-		.card[data-idx='0'] .icon :global(svg) {
-			width: 44px;
-			height: 44px;
-		}
-		.card[data-idx='0'] .card-title {
-			font-size: 28px;
 		}
 	}
 </style>

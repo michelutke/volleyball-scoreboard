@@ -3,11 +3,8 @@
 	import LandingFooter from '$lib/components/landing/LandingFooter.svelte';
 	import type { Lang } from '$lib/i18n/landing.js';
 	import { reveal } from '$lib/motion.js';
-	import Zap from 'lucide-svelte/icons/zap';
-	import Users from 'lucide-svelte/icons/users';
-	import Globe from 'lucide-svelte/icons/globe';
-	import Sparkles from 'lucide-svelte/icons/sparkles';
-	import Target from 'lucide-svelte/icons/target';
+	import { onMount } from 'svelte';
+	import { animate, scroll, type DOMKeyframesDefinition } from 'motion';
 	import Github from 'lucide-svelte/icons/git-fork';
 	import ArrowRight from 'lucide-svelte/icons/arrow-right';
 
@@ -15,11 +12,21 @@
 
 	const GITHUB_URL = 'https://github.com/michelutke/volleyball-scoreboard';
 
-	const ICONS = [Zap, Users, Globe, Sparkles, Target] as const;
+	// Unsplash stock — sport / streaming / collaboration / code, darkened via CSS
+	const IMAGES = {
+		vision:
+			'https://images.unsplash.com/photo-1592656094267-7d29c1c2c1eb?auto=format&fit=crop&w=2000&q=70',
+		mission:
+			'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=2000&q=70',
+		values:
+			'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=2000&q=70',
+		oss:
+			'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=2000&q=70'
+	};
 
 	const content = {
 		de: {
-			overline: '— Über uns / About',
+			overline: 'Über uns · About',
 			title: 'Sport in motion.',
 			vision: {
 				heading: 'Vision',
@@ -27,14 +34,15 @@
 			},
 			mission: {
 				heading: 'Mission',
-				text: 'Lokaler Schweizer Sport verdient die gleiche professionelle Bühne wie die grossen Ligen — ohne dass ehrenamtliche Helfer*innen IT-Experten sein müssen. Mit Open-Source und SaaS machen wir hochwertige Scoring-Overlays zugänglich und einfach bedienbar.'
+				text: 'Lokaler Schweizer Sport verdient die gleiche professionelle Bühne wie die grossen Ligen. Ehrenamtliche Helfer*innen sollen dafür keine IT-Experten sein müssen. Mit Open-Source und SaaS machen wir hochwertige Scoring-Overlays zugänglich und einfach bedienbar.'
 			},
 			values: {
 				heading: 'Kernwerte',
+				lead: 'Was uns leitet, wenn wir entwickeln, gestalten und entscheiden.',
 				items: [
 					{
 						title: 'Radikale Einfachheit',
-						desc: 'Ehrenamtliche arbeiten unter Stress. Plug & Play, intuitiv — kein IT-Background nötig.'
+						desc: 'Ehrenamtliche arbeiten unter Stress. Plug & Play und intuitiv. Kein IT-Background nötig.'
 					},
 					{
 						title: 'Volles Community-Commitment',
@@ -46,7 +54,7 @@
 					},
 					{
 						title: 'Visual Excellence',
-						desc: 'Kleines Budget ≠ kleine Qualität. Moderner Broadcast-Look in jeder Turnhalle.'
+						desc: 'Kleines Budget bedeutet keine kleine Qualität. Moderner Broadcast-Look in jeder Turnhalle.'
 					},
 					{
 						title: 'Meisterschaft durch Fokus',
@@ -61,7 +69,7 @@
 			}
 		},
 		en: {
-			overline: '— About',
+			overline: 'About',
 			title: 'Sport in motion.',
 			vision: {
 				heading: 'Vision',
@@ -69,14 +77,15 @@
 			},
 			mission: {
 				heading: 'Mission',
-				text: 'Local Swiss sport deserves the same professional stage as the big leagues — without volunteers needing to be IT experts. With open source and SaaS, we make high-quality scoring overlays accessible and easy to use.'
+				text: 'Local Swiss sport deserves the same professional stage as the big leagues. Volunteers should not need to be IT experts to deliver it. With open source and SaaS, we make high-quality scoring overlays accessible and easy to use.'
 			},
 			values: {
 				heading: 'Core Values',
+				lead: 'What guides us when we build, design and decide.',
 				items: [
 					{
 						title: 'Radical Simplicity',
-						desc: 'Volunteers work under stress. Plug & play, intuitive — no IT background needed.'
+						desc: 'Volunteers work under stress. Plug & play and intuitive. No IT background required.'
 					},
 					{
 						title: 'Full Community Commitment',
@@ -84,11 +93,11 @@
 					},
 					{
 						title: 'Swiss Leagues First',
-						desc: "We know local sport and use the official APIs for Swiss leagues."
+						desc: 'We know local sport and use the official APIs for Swiss leagues.'
 					},
 					{
 						title: 'Visual Excellence',
-						desc: "A small budget doesn't mean small quality. Modern broadcast look in every sports hall."
+						desc: 'A small budget does not mean small quality. Modern broadcast look in every sports hall.'
 					},
 					{
 						title: 'Mastery through Focus',
@@ -105,6 +114,32 @@
 	} as const;
 
 	const tr = $derived(content[lang]);
+
+	let parallaxRoots = $state<HTMLElement[]>([]);
+
+	onMount(() => {
+		const motionScale = parseFloat(
+			getComputedStyle(document.documentElement).getPropertyValue('--motion-scale')
+		);
+		if (!Number.isFinite(motionScale) || motionScale === 0) return;
+
+		const cleanups: Array<() => void> = [];
+		for (const root of parallaxRoots) {
+			if (!root) continue;
+			const img = root.querySelector<HTMLElement>('.bg-img');
+			if (!img) continue;
+			const stop = scroll(
+				animate(
+					img,
+					{ transform: ['translateY(-8%)', 'translateY(8%)'] } as DOMKeyframesDefinition,
+					{ duration: 1, ease: 'linear' }
+				),
+				{ target: root, offset: ['start end', 'end start'] }
+			);
+			cleanups.push(() => stop?.());
+		}
+		return () => cleanups.forEach((c) => c());
+	});
 </script>
 
 <LandingNav {lang} onLangToggle={() => (lang = lang === 'de' ? 'en' : 'de')} basePath="/" />
@@ -117,44 +152,58 @@
 		</div>
 	</header>
 
-	<section class="block">
+	<section class="block" bind:this={parallaxRoots[0]}>
+		<div class="bg" aria-hidden="true">
+			<img src={IMAGES.vision} alt="" class="bg-img" loading="lazy" />
+		</div>
 		<div class="block-inner">
-			<p class="kicker k-mono">— 01 / Vision</p>
+			<p class="kicker k-mono">01 · Vision</p>
 			<h2 class="block-title k-display">{tr.vision.heading}</h2>
 			<p class="block-text">{tr.vision.text}</p>
 		</div>
 	</section>
 
-	<section class="block alt">
+	<section class="block" bind:this={parallaxRoots[1]}>
+		<div class="bg" aria-hidden="true">
+			<img src={IMAGES.mission} alt="" class="bg-img" loading="lazy" />
+		</div>
 		<div class="block-inner">
-			<p class="kicker k-mono">— 02 / Mission</p>
+			<p class="kicker k-mono">02 · Mission</p>
 			<h2 class="block-title k-display">{tr.mission.heading}</h2>
 			<p class="block-text">{tr.mission.text}</p>
 		</div>
 	</section>
 
-	<section class="values">
-		<div class="values-inner">
-			<p class="kicker k-mono">— 03 / Werte</p>
+	<section class="block tall" bind:this={parallaxRoots[2]}>
+		<div class="bg" aria-hidden="true">
+			<img src={IMAGES.values} alt="" class="bg-img" loading="lazy" />
+		</div>
+		<div class="block-inner">
+			<p class="kicker k-mono">03 · Werte</p>
 			<h2 class="block-title k-display">{tr.values.heading}</h2>
-			<div class="value-grid">
+			<p class="block-text">{tr.values.lead}</p>
+
+			<ol class="value-list">
 				{#each tr.values.items as value, i}
-					{@const Icon = ICONS[i] ?? Zap}
-					<article class="value-card" use:reveal={{ y: 28, delay: i * 0.05 }}>
-						<span class="value-num k-mono">0{i + 1}</span>
-						<Icon size="28" strokeWidth="1.5" class="value-icon" />
-						<h3 class="value-title">{value.title}</h3>
-						<p class="value-desc">{value.desc}</p>
-						<span class="value-bar" aria-hidden="true"></span>
-					</article>
+					<li class="value-row" use:reveal={{ y: 24, delay: i * 0.06 }}>
+						<span class="row-num k-mono">{String(i + 1).padStart(2, '0')}</span>
+						<div class="row-body">
+							<h3 class="row-title">{value.title}</h3>
+							<p class="row-desc">{value.desc}</p>
+						</div>
+						<span class="row-bar" aria-hidden="true"></span>
+					</li>
 				{/each}
-			</div>
+			</ol>
 		</div>
 	</section>
 
-	<section class="block alt closer">
+	<section class="block closer" bind:this={parallaxRoots[3]}>
+		<div class="bg" aria-hidden="true">
+			<img src={IMAGES.oss} alt="" class="bg-img" loading="lazy" />
+		</div>
 		<div class="block-inner">
-			<p class="kicker k-mono">— 04 / Open Source</p>
+			<p class="kicker k-mono">04 · Open Source</p>
 			<h2 class="block-title k-display">{tr.oss.heading}</h2>
 			<p class="block-text">{tr.oss.text}</p>
 			<a class="cta" href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
@@ -204,107 +253,135 @@
 	}
 
 	.block {
-		padding: 96px var(--grid-margin);
-		background: var(--k-surface);
+		position: relative;
+		padding: 120px var(--grid-margin);
+		isolation: isolate;
+		overflow: hidden;
 		border-bottom: 1px solid var(--k-line);
+		color: var(--paper);
 	}
-	.block.alt {
-		background: var(--k-surface-alt);
+	.block.tall {
+		padding: 140px var(--grid-margin);
 	}
+
+	.bg {
+		position: absolute;
+		inset: -10% 0;
+		z-index: -2;
+		overflow: hidden;
+	}
+	.bg-img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		filter: brightness(0.32) saturate(1.05) contrast(1.05);
+		will-change: transform;
+	}
+	.bg::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+				to bottom,
+				color-mix(in srgb, var(--ink) 55%, transparent) 0%,
+				color-mix(in srgb, var(--ink) 30%, transparent) 50%,
+				color-mix(in srgb, var(--ink) 70%, transparent) 100%
+			),
+			color-mix(in srgb, var(--ink) 25%, transparent);
+		pointer-events: none;
+	}
+
 	.block-inner {
 		max-width: 800px;
 		margin: 0 auto;
 		display: flex;
 		flex-direction: column;
 		gap: 16px;
+		position: relative;
 	}
 	.block-title {
 		font-size: clamp(32px, 5vw, 56px);
 		line-height: 1;
 		letter-spacing: -0.025em;
 		margin: 0;
+		color: var(--paper);
 	}
 	.block-text {
 		font-size: 17px;
 		line-height: 1.6;
-		color: var(--k-text-mute);
+		color: color-mix(in srgb, var(--paper) 80%, transparent);
 		margin: 0;
 		max-width: 60ch;
 	}
 
-	.values {
-		padding: 96px var(--grid-margin);
-	}
-	.values-inner {
-		max-width: var(--container-max);
-		margin: 0 auto;
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-	}
-
-	.value-grid {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: 1px;
-		background: var(--k-line);
-		border: 1px solid var(--k-line);
-		margin-top: 32px;
-	}
-
-	.value-card {
-		position: relative;
-		padding: 36px 28px;
-		background: var(--k-surface);
-		display: flex;
-		flex-direction: column;
-		gap: 12px;
-		min-height: 240px;
-		overflow: hidden;
-		transition: background var(--dur-mid) var(--ease-snap);
-	}
-	.value-card:hover {
-		background: color-mix(in srgb, var(--k-text) 3%, var(--k-surface));
-	}
-	.value-card:hover .value-bar {
-		transform: scaleY(1);
-	}
-
-	.value-num {
-		font-size: 11px;
-		letter-spacing: 0.12em;
-		color: var(--k-text-dim);
-	}
-
-	:global(.value-icon) {
+	.kicker {
 		color: var(--pulse);
 	}
 
-	.value-title {
+	.value-list {
+		list-style: none;
+		padding: 0;
+		margin: 32px 0 0;
+		display: flex;
+		flex-direction: column;
+		border-top: 1px solid color-mix(in srgb, var(--paper) 16%, transparent);
+	}
+
+	.value-row {
+		position: relative;
+		display: grid;
+		grid-template-columns: 56px 1fr;
+		gap: 24px;
+		padding: 28px 0;
+		border-bottom: 1px solid color-mix(in srgb, var(--paper) 16%, transparent);
+		transition: background var(--dur-fast) var(--ease-snap);
+	}
+	.value-row:hover {
+		background: color-mix(in srgb, var(--paper) 4%, transparent);
+	}
+	.value-row:hover .row-bar {
+		transform: scaleX(1);
+	}
+
+	.row-num {
+		font-size: 12px;
+		letter-spacing: 0.12em;
+		color: var(--pulse);
+		padding-top: 4px;
+	}
+
+	.row-body {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	.row-title {
 		font-family: var(--font-display);
 		font-weight: var(--type-wght-bold);
-		font-size: 18px;
+		font-size: 22px;
 		margin: 0;
-		color: var(--k-text);
+		color: var(--paper);
 		letter-spacing: -0.01em;
 	}
 
-	.value-desc {
-		font-size: 14px;
-		line-height: 1.55;
-		color: var(--k-text-mute);
+	.row-desc {
+		font-size: 15px;
+		line-height: 1.6;
+		color: color-mix(in srgb, var(--paper) 75%, transparent);
 		margin: 0;
+		max-width: 64ch;
 	}
 
-	.value-bar {
+	.row-bar {
 		position: absolute;
 		left: 0;
-		top: 0;
 		bottom: 0;
-		width: 3px;
+		height: 1px;
+		width: 100%;
 		background: var(--pulse);
-		transform: scaleY(0);
-		transform-origin: top;
+		transform: scaleX(0);
+		transform-origin: left;
 		transition: transform var(--dur-mid) var(--ease-mass);
 	}
 
@@ -331,14 +408,7 @@
 		background: var(--pulse-deep);
 	}
 
-	@media (min-width: 640px) {
-		.value-grid {
-			grid-template-columns: 1fr 1fr;
-		}
-	}
-	@media (min-width: 1024px) {
-		.value-grid {
-			grid-template-columns: 1fr 1fr 1fr;
-		}
+	:global([data-motion='static']) .bg-img {
+		transform: none !important;
 	}
 </style>

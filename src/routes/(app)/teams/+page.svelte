@@ -70,7 +70,7 @@
 
 <div class="page">
 	<KSection
-		kicker="— Verein / Club"
+		kicker="Verein / Club"
 		title={data.clubName ?? 'Teams'}
 		subtitle="Teams verwalten, Favoriten setzen, anpinnen für die ganze Org."
 	>
@@ -154,7 +154,7 @@
 		{/if}
 
 		<div class="footnote">
-			<a href="/control" class="legacy-link k-mono">— Legacy Control Panel →</a>
+			<a href="/control" class="legacy-link k-mono">Legacy Control Panel →</a>
 		</div>
 	</KSection>
 </div>

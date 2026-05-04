@@ -35,7 +35,7 @@
 
 <div class="page-k">
 <main class="mx-auto max-w-3xl px-4 py-24 md:px-8">
-	<p class="kicker k-mono">— Impressum / Imprint</p>
+	<p class="kicker k-mono">Impressum / Imprint</p>
 	<h1 class="page-title k-display">Impressum</h1>
 	<p class="mb-10 text-sm" style="color: var(--k-text-dim);">Stand: März 2026</p>
 

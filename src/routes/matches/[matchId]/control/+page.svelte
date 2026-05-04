@@ -409,7 +409,7 @@
 </script>
 
 <svelte:head>
-	<title>Scoring Control — Match #{matchId}</title>
+	<title>Scoring Control · Match #{matchId}</title>
 </svelte:head>
 
 <div class="control">
@@ -564,7 +564,7 @@
 
 				{#if activeTimeout}
 					<div class="timeout-banner">
-						Auszeit {activeTimeout.teamName} — {activeTimeout.secondsLeft}s
+						Auszeit {activeTimeout.teamName} · {activeTimeout.secondsLeft}s
 						<button onclick={cancelTimeout} class="btn-timeout-cancel">&#10005; Abbrechen</button>
 					</div>
 				{/if}
@@ -805,7 +805,7 @@
 						value={selectedTemplateId ?? ''}
 						onchange={(e) => { const v = (e.target as HTMLSelectElement).value; selectedTemplateId = v ? parseInt(v) : null; }}
 					>
-						<option value="">— Kein Template —</option>
+						<option value="">Kein Template</option>
 						{#each designTemplates as template}
 							<option value={template.id}>{template.name}{template.isDefault ? ' (Standard)' : ''}</option>
 						{/each}

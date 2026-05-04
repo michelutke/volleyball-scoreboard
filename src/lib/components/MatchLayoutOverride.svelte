@@ -72,7 +72,7 @@
 
 <div class="layout-override">
 	<header class="head">
-		<p class="kicker k-mono">— Scoreboard Layout</p>
+		<p class="kicker k-mono">Scoreboard Layout</p>
 		<h3 class="title k-display">Layout für dieses Match</h3>
 		<p class="hint k-mono">
 			{#if selected === null && orgDefault}
@@ -108,7 +108,7 @@
 
 	{#if selected && activeLayout.customizableOptions.length > 0}
 		<div class="opts">
-			<p class="opts-label k-mono">— Anpassen ({activeLayout.name})</p>
+			<p class="opts-label k-mono">Anpassen ({activeLayout.name})</p>
 			{#each activeLayout.customizableOptions as opt}
 				<div class="opt-row">
 					<label class="opt-label k-mono" for="lov-{opt.key}">{opt.label}</label>

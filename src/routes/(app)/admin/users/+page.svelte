@@ -127,7 +127,7 @@
 
 <div class="page">
 	<KSection
-		kicker="— Admin / Users"
+		kicker="Admin / Users"
 		title="Nutzerverwaltung"
 		subtitle="Scorer einladen und verwalten."
 	>
@@ -208,7 +208,7 @@
 			</ul>
 
 			{#if pendingInvites.length > 0}
-				<h2 class="group-label k-mono">— Ausstehende Einladungen ({pendingInvites.length})</h2>
+				<h2 class="group-label k-mono">Ausstehende Einladungen ({pendingInvites.length})</h2>
 				<ul class="user-list">
 					{#each pendingInvites as invite (invite.id)}
 						<li class="user-row">
@@ -242,7 +242,7 @@
 		{/if}
 
 		{#if atLimit}
-			<p class="limit-hint k-mono">— Maximale Anzahl Nutzer erreicht (5 / 5)</p>
+			<p class="limit-hint k-mono">Maximale Anzahl Nutzer erreicht (5 / 5)</p>
 		{/if}
 	</KSection>
 </div>

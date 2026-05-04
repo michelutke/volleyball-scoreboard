@@ -11,17 +11,17 @@ export const t = {
 		},
 		hero: {
 			headline: 'Volleyball-Scoring.\nLive. Professionell.',
-			sub: 'Dein Verein verdient mehr als Papier und Bleistift. Scorely bringt Echtzeit-Scoring direkt in deinen Stream — kein Setup, keine Hardware, keine Fehler.',
-			ctaPrimary: 'Kostenlos testen – 3 Tage gratis',
+			sub: 'Dein Verein verdient mehr als Papier und Bleistift. Scorely bringt Echtzeit-Scoring direkt in deinen Stream · kein Setup, keine Hardware, keine Fehler.',
+			ctaPrimary: '3 Tage kostenlos testen',
 			ctaSecondary: 'Demo ausprobieren ↓',
 			socialProof: 'Von VBC Thun eingesetzt · 50+ Matches live übertragen'
 		},
 		demo: {
 			title: 'Probier Scorely aus',
 			subtitle:
-				'Klick auf + um zu scoren. Sieh wie das OBS-Overlay in Echtzeit reagiert — mit Match Point, Auszeiten und Satzresultaten.',
+				'Klick auf + um zu scoren. Sieh wie das OBS-Overlay in Echtzeit reagiert · mit Match Point, Auszeiten und Satzresultaten.',
 			svBadge: 'Importiert von Swiss Volley · NLA · Spiez Arena · 1. März 2026',
-			obsLabel: 'OBS Studio — Browser Source',
+			obsLabel: 'OBS Studio · Browser Source',
 			timeout: 'Auszeit',
 			set: 'Satz',
 			sets: 'Sätze',
@@ -44,7 +44,7 @@ export const t = {
 				{
 					icon: 'timer',
 					title: 'Auszeit-Management',
-					desc: '2 Auszeiten pro Team, pro Satz. Timer läuft 30 Sekunden — Banner verschwindet automatisch.'
+					desc: '2 Auszeiten pro Team, pro Satz. Timer läuft 30 Sekunden · Banner verschwindet automatisch.'
 				},
 				{
 					icon: 'database',
@@ -59,7 +59,7 @@ export const t = {
 				{
 					num: '1',
 					title: 'Konto erstellen',
-					desc: 'Verein anlegen, 3 Tage gratis testen — keine Kreditkarte erforderlich.'
+					desc: 'Verein anlegen, 3 Tage gratis testen · keine Kreditkarte erforderlich.'
 				},
 				{
 					num: '2',
@@ -69,7 +69,7 @@ export const t = {
 				{
 					num: '3',
 					title: 'Live gehen',
-					desc: 'OBS Browser Source hinzufügen — Overlay läuft sofort.'
+					desc: 'OBS Browser Source hinzufügen · Overlay läuft sofort.'
 				}
 			]
 		}
@@ -84,7 +84,7 @@ export const t = {
 		},
 		hero: {
 			headline: 'Volleyball Scoring.\nLive. Professional.',
-			sub: 'Your club deserves better than pen and paper. Scorely brings real-time scoring straight into your stream — no setup, no hardware, no mistakes.',
+			sub: 'Your club deserves better than pen and paper. Scorely brings real-time scoring straight into your stream · no setup, no hardware, no mistakes.',
 			ctaPrimary: 'Try free for 3 days',
 			ctaSecondary: 'Try the demo ↓',
 			socialProof: 'Used by VBC Thun · 50+ matches live streamed'
@@ -92,9 +92,9 @@ export const t = {
 		demo: {
 			title: 'Try Scorely now',
 			subtitle:
-				'Click + to score a point. See how the OBS overlay reacts in real time — with match point, timeouts and set scores.',
+				'Click + to score a point. See how the OBS overlay reacts in real time · with match point, timeouts and set scores.',
 			svBadge: 'Imported from Swiss Volley · NLA · Spiez Arena · 1 March 2026',
-			obsLabel: 'OBS Studio — Browser Source',
+			obsLabel: 'OBS Studio · Browser Source',
 			timeout: 'Timeout',
 			set: 'Set',
 			sets: 'Sets',
@@ -117,7 +117,7 @@ export const t = {
 				{
 					icon: 'timer',
 					title: 'Timeout Management',
-					desc: '2 timeouts per team per set. 30-second timer runs — banner disappears automatically.'
+					desc: '2 timeouts per team per set. 30-second timer runs · banner disappears automatically.'
 				},
 				{
 					icon: 'database',
@@ -132,7 +132,7 @@ export const t = {
 				{
 					num: '1',
 					title: 'Create account',
-					desc: 'Set up your club, try free for 3 days — no credit card required.'
+					desc: 'Set up your club, try free for 3 days · no credit card required.'
 				},
 				{
 					num: '2',
@@ -142,7 +142,7 @@ export const t = {
 				{
 					num: '3',
 					title: 'Go live',
-					desc: 'Add OBS browser source — overlay works instantly.'
+					desc: 'Add OBS browser source · overlay works instantly.'
 				}
 			]
 		}
