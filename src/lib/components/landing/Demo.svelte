@@ -4,6 +4,7 @@
 	import ScoreboardDisplay from '$lib/components/ScoreboardDisplay.svelte';
 	import type { Lang } from '$lib/i18n/landing.js';
 	import { t } from '$lib/i18n/landing.js';
+	import { reveal } from '$lib/motion.js';
 
 	interface Props {
 		lang: Lang;
@@ -100,145 +101,375 @@
 	const matchWon = $derived(match.status === 'finished');
 </script>
 
-<section id="demo" class="px-4 py-20 md:px-8" style="background: var(--color-bg-elevated);">
-	<div class="mx-auto max-w-5xl">
-		<!-- Header -->
-		<div class="mb-10 text-center">
-			<h2
-				class="mb-3 text-3xl font-bold"
-				style="color: var(--color-text-primary); font-family: 'Montserrat', sans-serif;"
-			>
-				{tr.title}
-			</h2>
-			<p class="text-base" style="color: var(--color-text-secondary);">{tr.subtitle}</p>
-		</div>
+<section id="demo" class="demo">
+	<div class="inner">
+		<header class="head">
+			<p class="overline k-mono">— Demo / Try it</p>
+			<h2 class="title k-display" use:reveal={{ y: 32 }}>{tr.title}</h2>
+			<p class="subtitle">{tr.subtitle}</p>
+		</header>
 
-		<!-- OBS Preview Frame -->
-		<div class="mb-8 overflow-hidden rounded-2xl border" style="border-color: var(--color-border-subtle); background: #050d1a;">
-			<div class="flex items-center gap-2 border-b px-4 py-2 text-xs"
-				style="border-color: var(--color-border-subtle); color: var(--color-text-tertiary);">
-				<span class="h-3 w-3 rounded-full bg-red-500/60"></span>
-				<span class="h-3 w-3 rounded-full bg-yellow-500/60"></span>
-				<span class="h-3 w-3 rounded-full bg-green-500/60"></span>
-				<span class="ml-2">{tr.obsLabel}</span>
+		<div class="board-frame" use:reveal={{ y: 28, delay: 0.1 }}>
+			<div class="board-bar">
+				<span class="dot dot-r"></span>
+				<span class="dot dot-y"></span>
+				<span class="dot dot-g"></span>
+				<span class="bar-label k-mono">{tr.obsLabel}</span>
+				<span class="bar-id k-mono">KINETIC // LIVE</span>
 			</div>
-			<div class="flex items-center justify-center overflow-x-auto p-8 py-12">
-				<div class="shrink-0">
+			<div class="board-stage">
+				<div class="board-shrink">
 					<ScoreboardDisplay
 						{match}
 						homeTimeoutsUsed={homeTimeouts}
 						guestTimeoutsUsed={guestTimeouts}
 						{timeoutTeam}
+						layoutId="kinetic"
 					/>
 				</div>
 			</div>
 		</div>
 
-		<!-- Control Panel -->
 		{#if matchWon}
-			<div class="mb-6 rounded-xl border px-6 py-5 text-center"
-				style="border-color: var(--color-accent-border); background: var(--color-bg-panel-alt);">
-				<p class="text-xl font-bold" style="color: var(--color-text-primary);">
-					🏆 {match.homeSets > match.guestSets ? 'VBC Thun' : 'VBC Scorely'} — {tr.matchWon}
+			<div class="winner" use:reveal={{ y: 16 }}>
+				<p class="winner-title">
+					<span class="winner-mark k-mono">●</span>
+					{match.homeSets > match.guestSets ? 'VBC Thun' : 'VBC Scorely'} — {tr.matchWon}
 				</p>
-				<p class="mt-1 text-sm" style="color: var(--color-text-secondary);">
-					{match.homeSets}:{match.guestSets}
-				</p>
-				<button
-					onclick={doReset}
-					class="mt-4 rounded-lg px-5 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
-					style="background: var(--color-accent-mid); color: white;"
-				>
-					{tr.reset}
-				</button>
+				<p class="winner-score k-mono k-tabular">{match.homeSets} : {match.guestSets}</p>
+				<button class="reset-btn" onclick={doReset}>{tr.reset}</button>
 			</div>
 		{:else}
-			<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-				<!-- Home Team Control -->
-				<div class="rounded-xl border p-5"
-					style="border-color: var(--color-border-subtle); background: var(--color-bg-panel-alt);">
-					<div class="mb-4 flex items-center gap-3">
-						<div class="h-5 w-5 rounded-full shadow-sm" style="background: {match.homeJerseyColor};"></div>
-						<span class="font-semibold" style="color: var(--color-text-primary);">VBC Thun</span>
-						<span class="ml-auto text-xs px-2 py-0.5 rounded"
-							style="background: var(--color-bg-elevated); color: var(--color-text-secondary);">
-							{tr.set} {match.currentSet}
-						</span>
-					</div>
-					<div class="mb-4 flex items-center justify-between gap-3">
+			<div class="controls">
+				<div class="ctrl ctrl-home">
+					<header class="ctrl-head">
+						<span class="ctrl-jersey" style:background={match.homeJerseyColor}></span>
+						<span class="ctrl-name">VBC Thun</span>
+						<span class="ctrl-meta k-mono">{tr.set} {match.currentSet}</span>
+					</header>
+					<div class="ctrl-score-row">
 						<button
+							class="op op-minus"
 							onclick={() => doRemovePoint('home')}
 							disabled={match.homePoints === 0}
-							class="h-12 w-12 rounded-lg text-2xl font-bold transition-all hover:opacity-80 disabled:opacity-30"
-							style="background: var(--color-bg-elevated); color: var(--color-text-primary);"
+							aria-label="−"
 						>−</button>
-						<span class="text-5xl font-extrabold tabular-nums" style="color: var(--color-text-primary);"
-							>{match.homePoints}</span
-						>
-						<button
-							onclick={() => doAddPoint('home')}
-							class="h-12 w-12 rounded-lg text-2xl font-bold transition-all hover:opacity-90"
-							style="background: var(--color-accent-mid); color: white;"
-						>+</button>
+						<span class="ctrl-score k-mono k-tabular">{match.homePoints}</span>
+						<button class="op op-plus" onclick={() => doAddPoint('home')} aria-label="+">+</button>
 					</div>
 					<button
+						class="ctrl-timeout"
+						class:on={timeoutTeam === 'home'}
 						onclick={() => doTimeout('home')}
 						disabled={homeTimeouts >= 2}
-						class="w-full rounded-lg py-2 text-sm font-medium transition-all hover:opacity-80 disabled:opacity-30"
-						style="background: {timeoutTeam === 'home' ? 'rgba(234,179,8,0.2)' : 'var(--color-bg-elevated)'}; color: var(--color-text-secondary); border: 1px solid var(--color-border-subtle);"
 					>
-						⏱ {tr.timeout} ({homeTimeouts}/2)
+						{tr.timeout} <span class="k-mono">{homeTimeouts}/2</span>
 					</button>
 				</div>
 
-				<!-- Guest Team Control -->
-				<div class="rounded-xl border p-5"
-					style="border-color: var(--color-border-subtle); background: var(--color-bg-panel-alt);">
-					<div class="mb-4 flex items-center gap-3">
-						<div class="h-5 w-5 rounded-full shadow-sm" style="background: {match.guestJerseyColor};"></div>
-						<span class="font-semibold" style="color: var(--color-text-primary);">VBC Scorely</span>
-						<span class="ml-auto text-xs px-2 py-0.5 rounded"
-							style="background: var(--color-bg-elevated); color: var(--color-text-secondary);">
-							{tr.sets}: {match.homeSets}:{match.guestSets}
-						</span>
-					</div>
-					<div class="mb-4 flex items-center justify-between gap-3">
+				<div class="ctrl ctrl-guest">
+					<header class="ctrl-head">
+						<span class="ctrl-jersey" style:background={match.guestJerseyColor}></span>
+						<span class="ctrl-name">VBC Scorely</span>
+						<span class="ctrl-meta k-mono">{tr.sets}: {match.homeSets}:{match.guestSets}</span>
+					</header>
+					<div class="ctrl-score-row">
 						<button
+							class="op op-minus"
 							onclick={() => doRemovePoint('guest')}
 							disabled={match.guestPoints === 0}
-							class="h-12 w-12 rounded-lg text-2xl font-bold transition-all hover:opacity-80 disabled:opacity-30"
-							style="background: var(--color-bg-elevated); color: var(--color-text-primary);"
+							aria-label="−"
 						>−</button>
-						<span class="text-5xl font-extrabold tabular-nums" style="color: var(--color-text-primary);"
-							>{match.guestPoints}</span
-						>
-						<button
-							onclick={() => doAddPoint('guest')}
-							class="h-12 w-12 rounded-lg text-2xl font-bold transition-all hover:opacity-90"
-							style="background: var(--color-accent-mid); color: white;"
-						>+</button>
+						<span class="ctrl-score k-mono k-tabular">{match.guestPoints}</span>
+						<button class="op op-plus" onclick={() => doAddPoint('guest')} aria-label="+">+</button>
 					</div>
 					<button
+						class="ctrl-timeout"
+						class:on={timeoutTeam === 'guest'}
 						onclick={() => doTimeout('guest')}
 						disabled={guestTimeouts >= 2}
-						class="w-full rounded-lg py-2 text-sm font-medium transition-all hover:opacity-80 disabled:opacity-30"
-						style="background: {timeoutTeam === 'guest' ? 'rgba(234,179,8,0.2)' : 'var(--color-bg-elevated)'}; color: var(--color-text-secondary); border: 1px solid var(--color-border-subtle);"
 					>
-						⏱ {tr.timeout} ({guestTimeouts}/2)
+						{tr.timeout} <span class="k-mono">{guestTimeouts}/2</span>
 					</button>
 				</div>
 			</div>
 
-			<div class="mt-4 text-center">
-				<button
-					onclick={doReset}
-					class="text-sm transition-colors hover:opacity-80"
-					style="color: var(--color-text-tertiary);"
-				>
-					{tr.reset}
-				</button>
+			<div class="reset-row">
+				<button class="reset-link k-mono" onclick={doReset}>↩ {tr.reset}</button>
 			</div>
 		{/if}
-
 	</div>
 </section>
+
+<style>
+	.demo {
+		background: var(--k-surface-alt);
+		color: var(--k-text);
+		padding: 120px var(--grid-margin);
+		border-top: 1px solid var(--k-line);
+		border-bottom: 1px solid var(--k-line);
+	}
+
+	.inner {
+		max-width: var(--container-max);
+		margin: 0 auto;
+	}
+
+	.head {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		margin-bottom: 48px;
+		max-width: 800px;
+	}
+
+	.overline {
+		font-size: 11px;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
+		margin: 0;
+	}
+
+	.title {
+		font-size: clamp(36px, 6vw, 80px);
+		margin: 0;
+		letter-spacing: -0.03em;
+		line-height: 0.95;
+	}
+
+	.subtitle {
+		font-size: 15px;
+		line-height: 1.55;
+		color: var(--k-text-mute);
+		margin: 0;
+		max-width: 60ch;
+	}
+
+	.board-frame {
+		border: 1px solid var(--k-line);
+		background: var(--ink);
+		margin-bottom: 32px;
+		overflow: hidden;
+	}
+
+	.board-bar {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 8px 14px;
+		border-bottom: 1px solid color-mix(in srgb, var(--paper) 12%, transparent);
+		font-size: 11px;
+		letter-spacing: 0.08em;
+		color: color-mix(in srgb, var(--paper) 60%, transparent);
+	}
+
+	.dot {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+	}
+	.dot-r { background: color-mix(in srgb, #ef4444 70%, transparent); }
+	.dot-y { background: color-mix(in srgb, #eab308 70%, transparent); }
+	.dot-g { background: color-mix(in srgb, #22c55e 70%, transparent); }
+
+	.bar-label { margin-left: 4px; }
+	.bar-id { margin-left: auto; color: var(--pulse); }
+
+	.board-stage {
+		padding: 32px 24px 40px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		overflow-x: auto;
+	}
+
+	.board-shrink {
+		min-width: 720px;
+		width: 100%;
+		max-width: 980px;
+	}
+
+	.controls {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 16px;
+	}
+
+	.ctrl {
+		background: var(--k-surface);
+		border: 1px solid var(--k-line);
+		padding: 20px;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	.ctrl-head {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.ctrl-jersey {
+		width: 14px;
+		height: 14px;
+		border-radius: 50%;
+		flex-shrink: 0;
+	}
+
+	.ctrl-name {
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-bold);
+		font-size: 16px;
+		color: var(--k-text);
+	}
+
+	.ctrl-meta {
+		margin-left: auto;
+		font-size: 11px;
+		letter-spacing: 0.1em;
+		color: var(--k-text-dim);
+	}
+
+	.ctrl-score-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+	}
+
+	.op {
+		width: 48px;
+		height: 48px;
+		border: 1px solid var(--k-line);
+		background: transparent;
+		color: var(--k-text);
+		font-size: 22px;
+		font-weight: 600;
+		cursor: pointer;
+		transition:
+			background var(--dur-fast) var(--ease-snap),
+			border-color var(--dur-fast) var(--ease-snap);
+	}
+	.op:hover:not(:disabled) {
+		border-color: var(--k-text-mute);
+		background: color-mix(in srgb, var(--k-text) 4%, transparent);
+	}
+	.op:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
+	.op-plus {
+		background: var(--pulse);
+		color: var(--paper);
+		border-color: var(--pulse);
+	}
+	.op-plus:hover:not(:disabled) {
+		background: var(--pulse-deep);
+		border-color: var(--pulse-deep);
+	}
+
+	.ctrl-score {
+		font-size: 48px;
+		font-weight: 700;
+		color: var(--k-text);
+		letter-spacing: -0.04em;
+		line-height: 1;
+	}
+
+	.ctrl-timeout {
+		font-family: var(--font-mono);
+		font-size: 12px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		padding: 10px;
+		background: transparent;
+		border: 1px solid var(--k-line);
+		color: var(--k-text-mute);
+		cursor: pointer;
+		transition:
+			color var(--dur-fast) var(--ease-snap),
+			border-color var(--dur-fast) var(--ease-snap),
+			background var(--dur-fast) var(--ease-snap);
+	}
+	.ctrl-timeout:hover:not(:disabled) {
+		color: var(--k-text);
+		border-color: var(--k-text-mute);
+	}
+	.ctrl-timeout.on {
+		color: #eab308;
+		border-color: #eab308;
+		background: color-mix(in srgb, #eab308 10%, transparent);
+	}
+	.ctrl-timeout:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+
+	.reset-row {
+		margin-top: 20px;
+		text-align: center;
+	}
+	.reset-link {
+		background: transparent;
+		border: none;
+		color: var(--k-text-dim);
+		font-size: 11px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		cursor: pointer;
+		padding: 8px;
+		transition: color var(--dur-fast) var(--ease-snap);
+	}
+	.reset-link:hover {
+		color: var(--k-text);
+	}
+
+	.winner {
+		text-align: center;
+		padding: 32px;
+		border: 1px solid var(--pulse);
+		background: color-mix(in srgb, var(--pulse) 6%, transparent);
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		align-items: center;
+	}
+	.winner-title {
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: 20px;
+		margin: 0;
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+	}
+	.winner-mark { color: var(--pulse); }
+	.winner-score {
+		font-size: 36px;
+		font-weight: 600;
+		color: var(--k-text);
+		margin: 0;
+	}
+	.reset-btn {
+		background: var(--pulse);
+		color: var(--paper);
+		font-weight: 600;
+		font-size: 13px;
+		padding: 10px 20px;
+		border: none;
+		border-radius: 999px;
+		cursor: pointer;
+		transition: background var(--dur-fast) var(--ease-snap);
+	}
+	.reset-btn:hover {
+		background: var(--pulse-deep);
+	}
+
+	@media (min-width: 640px) {
+		.controls {
+			grid-template-columns: 1fr 1fr;
+		}
+	}
+</style>
