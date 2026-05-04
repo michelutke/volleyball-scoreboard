@@ -222,12 +222,12 @@
 	}
 
 	.name-cell {
-		flex: 1 1 220px;
-		min-width: 180px;
+		flex: 1 1 260px;
+		min-width: 200px;
 		display: flex;
 		align-items: center;
 		gap: 12px;
-		padding: 0 18px;
+		padding: 0 22px;
 		border-right: 1px solid var(--k-line-board);
 		overflow: hidden;
 	}
@@ -265,7 +265,7 @@
 	}
 
 	.sets-cell {
-		flex: 0 0 56px;
+		flex: 0 0 64px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -294,17 +294,17 @@
 	}
 
 	.set-score {
-		flex: 0 0 40px;
+		flex: 0 0 56px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		font-family: var(--font-mono);
 		font-feature-settings: 'tnum';
-		font-size: 16px;
+		font-size: 18px;
 		font-weight: 500;
 		color: var(--k-text-dim-board);
 		border-right: 1px solid var(--k-line-board);
-		padding: 0 4px;
+		padding: 0 8px;
 	}
 	.set-score:last-child {
 		border-right: none;
@@ -319,7 +319,7 @@
 	}
 
 	.points-cell {
-		flex: 0 0 88px;
+		flex: 0 0 100px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -374,12 +374,12 @@
 	}
 
 	.timeouts {
-		flex: 0 0 32px;
+		flex: 0 0 40px;
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
 		gap: 4px;
-		padding: 0 8px;
+		padding: 0 10px;
 		align-items: center;
 	}
 
@@ -447,5 +447,12 @@
 	}
 	:global([data-motion='static']) .row-banner {
 		animation: none;
+	}
+
+	/* Narrow screens: hide set-scores entirely so the row stays compact and readable */
+	@media (max-width: 720px) {
+		.set-scores {
+			display: none !important;
+		}
 	}
 </style>
