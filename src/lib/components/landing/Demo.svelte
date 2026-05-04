@@ -287,12 +287,12 @@
 		justify-content: center;
 		align-items: center;
 		overflow-x: auto;
+		min-height: 200px;
 	}
 
 	.board-shrink {
-		min-width: 720px;
-		width: 100%;
-		max-width: 980px;
+		display: inline-flex;
+		justify-content: flex-start;
 	}
 
 	.controls {

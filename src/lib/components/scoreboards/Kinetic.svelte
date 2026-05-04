@@ -284,7 +284,7 @@
 	.set-scores {
 		display: flex;
 		align-items: stretch;
-		overflow: hidden;
+		flex-shrink: 0;
 	}
 	.kinetic[data-show-sets='true'] .set-scores {
 		border-right: 1px solid var(--k-line-board);
