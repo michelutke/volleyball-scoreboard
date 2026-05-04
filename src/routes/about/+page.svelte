@@ -12,14 +12,18 @@
 
 	const GITHUB_URL = 'https://github.com/michelutke/volleyball-scoreboard';
 
-	// Unsplash stock — sport / streaming / collaboration / code, darkened via CSS
+	// Unsplash stock, darkened via CSS
+	// Vision: volleyball court action (broadcast feel)
+	// Mission: Swiss sport / volunteer team huddle (community)
+	// Values: volleyball spike (energy)
+	// OSS: code on screen
 	const IMAGES = {
 		vision:
-			'https://images.unsplash.com/photo-1592656094267-7d29c1c2c1eb?auto=format&fit=crop&w=2000&q=70',
-		mission:
-			'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=2000&q=70',
-		values:
 			'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=2000&q=70',
+		mission:
+			'https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=2000&q=70',
+		values:
+			'https://images.unsplash.com/photo-1599058917765-a780eda07a3e?auto=format&fit=crop&w=2000&q=70',
 		oss:
 			'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=2000&q=70'
 	};
@@ -41,24 +45,24 @@
 				lead: 'Was uns leitet, wenn wir entwickeln, gestalten und entscheiden.',
 				items: [
 					{
-						title: 'Radikale Einfachheit',
-						desc: 'Ehrenamtliche arbeiten unter Stress. Plug & Play und intuitiv. Kein IT-Background nötig.'
+						title: 'Wir gewinnen zusammen oder gar nicht.',
+						desc: 'Wir verbringen viel Zeit miteinander, und das soll sich gut anfühlen. Wir nehmen unsere Arbeit ernst, uns selbst eher nicht. Wer im Team denkt, stellt nicht die eigene Agenda in den Vordergrund, sondern fragt zuerst: Was bringt uns als Ganzes weiter?'
 					},
 					{
-						title: 'Volles Community-Commitment',
-						desc: 'Entwickelt mit Feedback der Vereine und Open-Source-Community. Die freie Variante bleibt das Fundament.'
+						title: 'Wir bauen mit euch. Nicht für euch.',
+						desc: 'Unser Produkt entsteht im Dialog mit Vereinen und der Open-Source-Community. Wer Feedback gibt, prägt die Roadmap. Die freie Variante ist kein Kompromiss, sie ist unser Versprechen an den Vereinssport.'
 					},
 					{
-						title: 'Swiss Leagues First',
-						desc: 'Wir kennen den lokalen Sport und nutzen offizielle APIs für Schweizer Ligen.'
+						title: 'Lokal verwurzelt. Offiziell verbunden.',
+						desc: 'Wir kennen den Schweizer Sport von innen. Wir nutzen die offiziellen API-Schnittstellen der Schweizer Ligen und sprechen die Sprache der Vereine, Schiedsrichter und Verbände.'
 					},
 					{
-						title: 'Visual Excellence',
-						desc: 'Kleines Budget bedeutet keine kleine Qualität. Moderner Broadcast-Look in jeder Turnhalle.'
+						title: 'Mit Herz und Verstand.',
+						desc: 'Zweimal messen, einmal schneiden, ob wir ein Feature bauen oder eine Partnerschaft eingehen. Leidenschaft und Tempo treiben uns an, und wir nehmen uns die Zeit, Optionen wirklich durchzudenken. Dann erst entscheiden und liefern wir.'
 					},
 					{
-						title: 'Meisterschaft durch Fokus',
-						desc: 'Ein Problem richtig lösen, dann das nächste. Volleyball zuerst, weitere Sportarten Schritt für Schritt.'
+						title: 'Eines richtig. Dann das Nächste.',
+						desc: 'Wir lösen ein Problem erst richtig, bevor wir das Nächste angehen. Wir starten mit dem perfekten Flow für Volleyball und skalieren von dort Schritt für Schritt auf weitere Schweizer Sportarten. Kein Feature-Sprung ohne solides Fundament.'
 					}
 				]
 			},
@@ -84,24 +88,24 @@
 				lead: 'What guides us when we build, design and decide.',
 				items: [
 					{
-						title: 'Radical Simplicity',
-						desc: 'Volunteers work under stress. Plug & play and intuitive. No IT background required.'
+						title: 'We win together or not at all.',
+						desc: 'We spend a lot of time together, and it should feel good. We take our work seriously. Ourselves, less so. Anyone thinking as a team puts the collective first and asks: what moves us forward as a whole?'
 					},
 					{
-						title: 'Full Community Commitment',
-						desc: 'Built with feedback from clubs and the open-source community. The free version stays the foundation.'
+						title: 'We build with you. Not for you.',
+						desc: 'Our product takes shape in dialogue with clubs and the open-source community. Whoever gives feedback shapes the roadmap. The free version is not a compromise, it is our promise to club sport.'
 					},
 					{
-						title: 'Swiss Leagues First',
-						desc: 'We know local sport and use the official APIs for Swiss leagues.'
+						title: 'Locally rooted. Officially connected.',
+						desc: 'We know Swiss sport from the inside. We use the official API interfaces of the Swiss leagues and speak the language of clubs, referees and federations.'
 					},
 					{
-						title: 'Visual Excellence',
-						desc: 'A small budget does not mean small quality. Modern broadcast look in every sports hall.'
+						title: 'With heart and mind.',
+						desc: 'Measure twice, cut once, whether we ship a feature or sign a partnership. Passion and speed drive us, and we still take the time to think options through. Only then do we decide and deliver.'
 					},
 					{
-						title: 'Mastery through Focus',
-						desc: 'Solve one problem properly, then the next. Volleyball first, more sports step by step.'
+						title: 'One thing right. Then the next.',
+						desc: 'We solve one problem properly before tackling the next. We start with the perfect flow for volleyball and scale from there to more Swiss sports, step by step. No feature jump without a solid foundation.'
 					}
 				]
 			},
@@ -131,7 +135,7 @@
 			const stop = scroll(
 				animate(
 					img,
-					{ transform: ['translateY(-8%)', 'translateY(8%)'] } as DOMKeyframesDefinition,
+					{ transform: ['translateY(-30%) scale(1.15)', 'translateY(30%) scale(1.15)'] } as DOMKeyframesDefinition,
 					{ duration: 1, ease: 'linear' }
 				),
 				{ target: root, offset: ['start end', 'end start'] }
@@ -266,7 +270,7 @@
 
 	.bg {
 		position: absolute;
-		inset: -10% 0;
+		inset: -40% 0;
 		z-index: -2;
 		overflow: hidden;
 	}
@@ -276,6 +280,7 @@
 		object-fit: cover;
 		filter: brightness(0.32) saturate(1.05) contrast(1.05);
 		will-change: transform;
+		transform: scale(1.15);
 	}
 	.bg::after {
 		content: '';
