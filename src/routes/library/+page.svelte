@@ -7,6 +7,7 @@
 	import { SCOREBOARD_LAYOUTS, type ScoreboardOptions } from '$lib/components/scoreboards/index.js';
 	import { reveal } from '$lib/motion.js';
 	import LandingNav from '$lib/components/landing/LandingNav.svelte';
+	import Nav from '$lib/components/Nav.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -145,9 +146,13 @@
 	<title>Bibliothek · Scorely</title>
 </svelte:head>
 
-<LandingNav {lang} onLangToggle={() => (lang = lang === 'de' ? 'en' : 'de')} basePath="/" />
+{#if data.isLoggedIn}
+	<Nav clubName={data.clubName ?? ''} isAdmin={data.isAdmin} />
+{:else}
+	<LandingNav {lang} onLangToggle={() => (lang = lang === 'de' ? 'en' : 'de')} basePath="/" />
+{/if}
 
-<div class="page">
+<div class="page" class:compact={data.isLoggedIn}>
 	<header class="hero">
 		<div class="hero-inner">
 			<p class="overline k-mono">Bibliothek · Library</p>
@@ -311,6 +316,17 @@
 	.hero {
 		padding: 140px var(--grid-margin) 60px;
 		border-bottom: 1px solid var(--k-line);
+	}
+
+	.page.compact .hero {
+		padding: 48px var(--grid-margin) 32px;
+	}
+	.page.compact .title {
+		font-size: clamp(32px, 5vw, 56px);
+	}
+	.page.compact .layouts,
+	.page.compact .overlays {
+		padding: 48px var(--grid-margin);
 	}
 
 	.hero-inner {

@@ -38,13 +38,16 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	let orgLayoutId: string | null = null;
 	let orgLayoutOptions: Record<string, unknown> | null = null;
+	let clubName: string | null = null;
 	if (locals.orgId) {
 		const orgSettings = await db.query.settings.findMany({
 			where: eq(settings.orgId, locals.orgId)
 		});
 		const layoutRow = orgSettings.find((r) => r.key === 'defaultScoreboardLayout');
 		const optsRow = orgSettings.find((r) => r.key === 'defaultScoreboardOptions');
+		const clubRow = orgSettings.find((r) => r.key === 'clubName');
 		orgLayoutId = layoutRow?.value ?? null;
+		clubName = clubRow?.value ?? null;
 		if (optsRow?.value) {
 			try {
 				orgLayoutOptions = JSON.parse(optsRow.value);
@@ -54,5 +57,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 		}
 	}
 
-	return { overlays, isLoggedIn, orgLayoutId, orgLayoutOptions };
+	return {
+		overlays,
+		isLoggedIn,
+		orgLayoutId,
+		orgLayoutOptions,
+		clubName,
+		isAdmin: locals.isAdmin ?? false
+	};
 };
