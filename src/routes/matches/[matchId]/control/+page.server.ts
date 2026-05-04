@@ -66,6 +66,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	const permalinkOverlayMatchId = permalinkRow?.value ? parseInt(permalinkRow.value) : null;
 
+	const orgSettingsRows = await db.query.settings.findMany({
+		where: eq(settings.orgId, orgId)
+	});
+	const orgDefaultLayout = orgSettingsRows.find((r) => r.key === 'defaultScoreboardLayout')?.value ?? null;
+
 	return {
 		activeMatch: toMatchState(match, score),
 		timeouts: { home: homeTimeouts.length, guest: guestTimeouts.length },
@@ -74,6 +79,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		teamId: match.teamId,
 		permalinkOverlayMatchId,
 		controlToken: match.controlToken ?? null,
-		designTemplates: orgDesignTemplates
+		designTemplates: orgDesignTemplates,
+		scoreboardLayout: match.scoreboardLayout ?? null,
+		scoreboardOptions: (match.scoreboardOptions as Record<string, string | number | boolean> | null) ?? null,
+		orgDefaultLayout
 	};
 };

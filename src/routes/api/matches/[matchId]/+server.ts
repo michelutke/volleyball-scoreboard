@@ -132,8 +132,8 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		await applyTemplateToMatch(body.designTemplateId, matchId);
 	}
 
-	// Settings update (scorer-editable fields only: team names, jerseys, logos)
-	const settingsFields = ['homeTeamName', 'guestTeamName', 'homeJerseyColor', 'guestJerseyColor', 'showJerseyColors', 'showSetScores', 'homeTeamLogo', 'guestTeamLogo'] as const;
+	// Settings update (scorer-editable fields only: team names, jerseys, logos, scoreboard layout)
+	const settingsFields = ['homeTeamName', 'guestTeamName', 'homeJerseyColor', 'guestJerseyColor', 'showJerseyColors', 'showSetScores', 'homeTeamLogo', 'guestTeamLogo', 'scoreboardLayout', 'scoreboardOptions'] as const;
 	const updateData: Record<string, unknown> = { updatedAt: new Date() };
 	for (const field of settingsFields) {
 		if (body[field] !== undefined) updateData[field] = body[field];

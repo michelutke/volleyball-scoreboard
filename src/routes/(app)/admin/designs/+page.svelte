@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types.js';
 	import type { MatchState, LibraryOverlay } from '$lib/types.js';
 	import ScoreboardDisplay from '$lib/components/ScoreboardDisplay.svelte';
@@ -25,8 +26,8 @@
 		description?: string | null;
 	};
 
-	let templates = $state<Template[]>(data.templates ?? []);
-	let libraryTemplates = $state<LibraryOverlay[]>(data.library ?? []);
+	let templates = $state<Template[]>(untrack(() => data.templates ?? []));
+	let libraryTemplates = $state<LibraryOverlay[]>(untrack(() => data.library ?? []));
 	let showLibrary = $state(false);
 	let loading = $state(false);
 	let feedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -329,14 +330,13 @@ body{margin:0;background:transparent;}
 	});
 </script>
 
-<div class="min-h-screen bg-bg-base p-4">
-	<div class="max-w-2xl mx-auto">
-		<div class="flex items-center justify-between mb-6">
-			<div>
-				<h1 class="text-2xl font-bold text-text-primary">Overlay-Designs</h1>
-				<p class="text-text-secondary text-sm">Scoreboard-Designs verwalten</p>
-			</div>
-		</div>
+<div class="page-k">
+	<div class="max-w-2xl mx-auto px-4 py-12">
+		<header class="page-k-head">
+			<p class="kicker k-mono">Admin / Designs</p>
+			<h1 class="page-k-title k-display">Overlay-Designs</h1>
+			<p class="page-k-sub">Scoreboard-Designs verwalten · Custom-Templates, Standard-Auswahl, Library-Imports.</p>
+		</header>
 
 		{#if feedback}
 			<div class="mb-4 rounded-lg px-4 py-2 text-sm {feedback.type === 'success' ? 'bg-green-900/30 text-green-300' : 'bg-red-900/30 text-red-300'}">
@@ -588,7 +588,7 @@ body{margin:0;background:transparent;}
 											? `linear-gradient(to right, ${overlay.overlayBg}, ${overlay.overlayBg2})`
 											: overlay.overlayBg}
 									>
-										<span class="text-sm font-bold opacity-60" style:color={overlay.overlayText}>Aa 14 — 10 Aa</span>
+										<span class="text-sm font-bold opacity-60" style:color={overlay.overlayText}>Aa 14 · 10 Aa</span>
 									</div>
 									<div class="p-3 flex flex-col gap-2 flex-1">
 										<div>
@@ -627,6 +627,41 @@ body{margin:0;background:transparent;}
 </div>
 
 <style>
+	.page-k {
+		min-height: 100vh;
+		background: var(--k-surface);
+		color: var(--k-text);
+	}
+	.page-k-head {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding-bottom: 24px;
+		margin-bottom: 24px;
+		border-bottom: 1px solid var(--k-line);
+	}
+	.kicker {
+		font-size: 11px;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
+		margin: 0;
+	}
+	.page-k-title {
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-display);
+		font-size: clamp(28px, 4vw, 44px);
+		letter-spacing: -0.025em;
+		line-height: 1;
+		margin: 0;
+	}
+	.page-k-sub {
+		font-size: 14px;
+		color: var(--k-text-mute);
+		margin: 0;
+		max-width: 60ch;
+	}
+
 	.color-picker {
 		width: 32px;
 		height: 32px;

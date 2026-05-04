@@ -4,6 +4,7 @@
 	import { loadStripe } from '@stripe/stripe-js';
 	import { env } from '$env/dynamic/public';
 	import type { PageData } from './$types';
+	import { KSection, KButton } from '$lib/components/k';
 
 	let { data }: { data: PageData } = $props();
 	let loading = $state(false);
@@ -64,87 +65,139 @@
 	});
 </script>
 
-<div class="min-h-screen bg-bg-base p-4">
-	<div class="max-w-2xl mx-auto">
-		<div class="mb-6">
-			<h1 class="text-2xl font-bold text-text-primary">Abonnement</h1>
-		</div>
-
+<div class="page">
+	<KSection kicker="Konto · Abrechnung" title="Abonnement" subtitle="Plan, Zahlung und Status für deine Organisation.">
 		{#if showCheckout}
-			<div class="bg-bg-panel-alt rounded-xl p-4 mb-4">
+			<div class="panel checkout-panel">
 				<div id="stripe-checkout"></div>
 			</div>
-			<button
-				onclick={() => { checkout?.destroy(); checkout = null; showCheckout = false; }}
-				class="text-text-tertiary text-sm hover:text-text-secondary"
+			<KButton
+				variant="ghost"
+				onclick={() => {
+					checkout?.destroy();
+					checkout = null;
+					showCheckout = false;
+				}}
 			>
 				← Abbrechen
-			</button>
+			</KButton>
 		{:else if data.subscriptionStatus === 'active'}
-			<div class="bg-bg-panel-alt rounded-xl p-6 mb-4">
-				<div class="flex items-center gap-3 mb-4">
-					<span class="text-xs bg-green-900/30 text-green-300 px-3 py-1 rounded-full font-medium">Aktiv</span>
-					<p class="text-text-secondary text-sm">Abonnement läuft</p>
+			<div class="panel">
+				<div class="status-row">
+					<span class="badge badge-active k-mono">Aktiv</span>
+					<p class="status-text">Abonnement läuft.</p>
 				</div>
-				<button
-					onclick={openPortal}
-					disabled={loading}
-					class="w-full bg-bg-base hover:bg-bg-panel-hover disabled:opacity-50 text-text-secondary rounded-lg px-4 py-2 transition-colors text-sm"
-				>
+				<KButton variant="secondary" full onclick={openPortal} disabled={loading}>
 					Abonnement verwalten
-				</button>
+				</KButton>
 			</div>
 		{:else if data.subscriptionStatus === 'trialing'}
-			<div class="bg-bg-panel-alt rounded-xl p-6 mb-4">
-				<div class="mb-4">
-					<p class="text-text-primary font-semibold">Testphase aktiv</p>
-					<p class="text-text-secondary text-sm mt-1">
+			<div class="panel">
+				<div class="status-row">
+					<span class="badge badge-trial k-mono">Testphase</span>
+					<p class="status-text">
 						Dein Abo startet automatisch nach Ablauf der Testphase. Du kannst jederzeit kündigen.
 					</p>
 				</div>
-				<button
-					onclick={openPortal}
-					disabled={loading}
-					class="w-full bg-bg-base hover:bg-bg-panel-hover disabled:opacity-50 text-text-secondary rounded-lg px-4 py-2 transition-colors text-sm"
-				>
+				<KButton variant="secondary" full onclick={openPortal} disabled={loading}>
 					Abo verwalten
-				</button>
+				</KButton>
 			</div>
 		{:else if data.subscriptionStatus === null}
-			<div class="bg-bg-panel-alt rounded-xl p-6 mb-4">
-				<div class="mb-4">
-					<p class="text-text-primary font-semibold">Starte deine 3-Tage Gratis-Testphase</p>
-				</div>
-				<button
-					onclick={startCheckout}
-					disabled={loading}
-					class="w-full bg-accent-mid hover:bg-accent-dark disabled:opacity-50 text-white font-semibold rounded-lg px-4 py-3 transition-colors"
-				>
-					{loading ? '...' : 'Kostenlos testen — Keine Kosten für 3 Tage'}
-				</button>
+			<div class="panel">
+				<p class="title-text">Starte deine 3-Tage Gratis-Testphase.</p>
+				<p class="status-text">Keine Kosten für 3 Tage. Erst danach wird abgebucht.</p>
+				<KButton variant="primary" size="lg" full onclick={startCheckout} disabled={loading}>
+					{loading ? '...' : 'Kostenlos testen'}
+				</KButton>
 			</div>
 		{:else}
-			<div class="bg-bg-panel-alt rounded-xl p-6 mb-4">
+			<div class="panel">
 				{#if data.subscriptionStatus === 'past_due'}
-					<div class="mb-4 bg-red-900/30 text-red-300 rounded-lg px-4 py-2 text-sm">
-						Zahlung fehlgeschlagen — bitte Zahlungsmethode aktualisieren.
-					</div>
+					<div class="banner-error">Zahlung fehlgeschlagen. Bitte Zahlungsmethode aktualisieren.</div>
 				{:else if data.subscriptionStatus === 'canceled'}
-					<div class="mb-4 bg-bg-base text-text-secondary rounded-lg px-4 py-2 text-sm">
-						Abonnement gekündigt.
-					</div>
+					<div class="banner-neutral">Abonnement gekündigt.</div>
 				{/if}
-				<p class="text-text-secondary text-sm mb-4">
+				<p class="status-text">
 					Deine Testphase ist abgelaufen. Um Scorely weiter zu nutzen, schliesse ein Abo ab.
 				</p>
-				<button
-					onclick={startCheckout}
-					disabled={loading}
-					class="w-full bg-accent-mid hover:bg-accent-dark disabled:opacity-50 text-white font-semibold rounded-lg px-4 py-3 transition-colors"
-				>
+				<KButton variant="primary" size="lg" full onclick={startCheckout} disabled={loading}>
 					{loading ? '...' : 'Abonnieren'}
-				</button>
+				</KButton>
 			</div>
 		{/if}
-	</div>
+	</KSection>
 </div>
+
+<style>
+	.page {
+		min-height: 100vh;
+		background: var(--k-surface);
+		color: var(--k-text);
+	}
+
+	.panel {
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+		padding: 28px;
+		background: var(--k-surface-alt);
+		border: 1px solid var(--k-line);
+	}
+
+	.checkout-panel {
+		padding: 16px;
+	}
+
+	.status-row {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.badge {
+		font-size: 11px;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		padding: 4px 10px;
+		align-self: flex-start;
+		border: 1px solid currentColor;
+	}
+	.badge-active {
+		color: var(--color-success);
+	}
+	.badge-trial {
+		color: #eab308;
+	}
+
+	.title-text {
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-bold);
+		font-size: 22px;
+		margin: 0;
+		color: var(--k-text);
+		letter-spacing: -0.01em;
+	}
+
+	.status-text {
+		font-size: 14px;
+		color: var(--k-text-mute);
+		margin: 0;
+	}
+
+	.banner-error {
+		font-size: 13px;
+		padding: 12px 14px;
+		background: color-mix(in srgb, var(--color-error) 10%, transparent);
+		border: 1px solid var(--color-error);
+		color: var(--color-error-light);
+	}
+
+	.banner-neutral {
+		font-size: 13px;
+		padding: 12px 14px;
+		background: var(--k-surface);
+		border: 1px solid var(--k-line);
+		color: var(--k-text-mute);
+	}
+</style>

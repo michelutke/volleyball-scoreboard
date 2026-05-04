@@ -1,8 +1,12 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
+	import { untrack } from 'svelte';
 	import type { MatchState, DesignTemplate, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
 	import QRCode from 'qrcode';
+	import MatchLayoutOverride from '$lib/components/MatchLayoutOverride.svelte';
+	import Trophy from 'lucide-svelte/icons/trophy';
+	import Timer from 'lucide-svelte/icons/timer';
 
 	let { data } = $props();
 
@@ -29,7 +33,7 @@
 	let editGuestLogo = $state('');
 
 	// Design template selection
-	let designTemplates = $state<DesignTemplate[]>(data.designTemplates ?? []);
+	let designTemplates = $state<DesignTemplate[]>(untrack(() => data.designTemplates ?? []));
 	let selectedTemplateId = $state<number | null>(null);
 
 	let settingsDirty = $derived(
@@ -405,7 +409,7 @@
 </script>
 
 <svelte:head>
-	<title>Scoring Control — Match #{matchId}</title>
+	<title>Scoring Control · Match #{matchId}</title>
 </svelte:head>
 
 <div class="control">
@@ -517,7 +521,7 @@
 						</div>
 						{#if match?.status === 'finished'}
 							<div class="finished-banner {homeWon ? 'banner-winner' : 'banner-loser'}">
-								<div class="banner-icon">{homeWon ? '🏆' : ''}</div>
+								<div class="banner-icon">{#if homeWon}<Trophy size="28" strokeWidth="1.5" />{/if}</div>
 								<div class="banner-result">{homeWon ? 'Sieger' : 'Verlierer'}</div>
 								<div class="banner-sets">{match.homeSets} {match.homeSets === 1 ? 'Satz' : 'Sätze'}</div>
 							</div>
@@ -525,7 +529,7 @@
 							<div class="scoring-team-btns">
 								<button onclick={() => addPoint('home')} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
 								<div class="scoring-secondary">
-									<button onclick={() => callTimeout('home')} disabled={matchTimeouts.home >= 2 || !!activeTimeout} class="btn-action">&#9201; Auszeit</button>
+									<button onclick={() => callTimeout('home')} disabled={matchTimeouts.home >= 2 || !!activeTimeout} class="btn-action"><Timer size="14" strokeWidth="2" /> Auszeit</button>
 									<button onclick={() => { if (match?.serviceTeam !== 'home') switchService(); }} class="btn-service" class:btn-service-active={match?.serviceTeam === 'home'} disabled={match?.serviceTeam === 'home'}>
 										&#127952; Service
 									</button>
@@ -540,7 +544,7 @@
 						</div>
 						{#if match?.status === 'finished'}
 							<div class="finished-banner {guestWon ? 'banner-winner' : 'banner-loser'}">
-								<div class="banner-icon">{guestWon ? '🏆' : ''}</div>
+								<div class="banner-icon">{#if guestWon}<Trophy size="28" strokeWidth="1.5" />{/if}</div>
 								<div class="banner-result">{guestWon ? 'Sieger' : 'Verlierer'}</div>
 								<div class="banner-sets">{match.guestSets} {match.guestSets === 1 ? 'Satz' : 'Sätze'}</div>
 							</div>
@@ -548,7 +552,7 @@
 							<div class="scoring-team-btns">
 								<button onclick={() => addPoint('guest')} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
 								<div class="scoring-secondary">
-									<button onclick={() => callTimeout('guest')} disabled={matchTimeouts.guest >= 2 || !!activeTimeout} class="btn-action">&#9201; Auszeit</button>
+									<button onclick={() => callTimeout('guest')} disabled={matchTimeouts.guest >= 2 || !!activeTimeout} class="btn-action"><Timer size="14" strokeWidth="2" /> Auszeit</button>
 									<button onclick={() => { if (match?.serviceTeam !== 'guest') switchService(); }} class="btn-service" class:btn-service-active={match?.serviceTeam === 'guest'} disabled={match?.serviceTeam === 'guest'}>
 										&#127952; Service
 									</button>
@@ -560,7 +564,7 @@
 
 				{#if activeTimeout}
 					<div class="timeout-banner">
-						Auszeit {activeTimeout.teamName} — {activeTimeout.secondsLeft}s
+						Auszeit {activeTimeout.teamName} · {activeTimeout.secondsLeft}s
 						<button onclick={cancelTimeout} class="btn-timeout-cancel">&#10005; Abbrechen</button>
 					</div>
 				{/if}
@@ -801,13 +805,21 @@
 						value={selectedTemplateId ?? ''}
 						onchange={(e) => { const v = (e.target as HTMLSelectElement).value; selectedTemplateId = v ? parseInt(v) : null; }}
 					>
-						<option value="">— Kein Template —</option>
+						<option value="">Kein Template</option>
 						{#each designTemplates as template}
 							<option value={template.id}>{template.name}{template.isDefault ? ' (Standard)' : ''}</option>
 						{/each}
 					</select>
 				</div>
 				{/if}
+				<div class="dialog-section">
+					<MatchLayoutOverride
+						matchId={parseInt(page.params.matchId ?? '0')}
+						current={data.scoreboardLayout ?? null}
+						currentOptions={data.scoreboardOptions ?? null}
+						orgDefault={data.orgDefaultLayout ?? null}
+					/>
+				</div>
 			</div>
 			<div class="dialog-footer">
 				<button onclick={() => settingsOpen = false} class="btn-action">
@@ -824,10 +836,10 @@
 <style>
 	.control {
 		min-height: 100vh;
-		background: var(--color-bg-base);
-		color: var(--color-text-primary);
+		background: var(--k-surface);
+		color: var(--k-text);
 		padding: 20px;
-		font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+		font-family: var(--font-sans);
 	}
 
 	.nav-bar {
@@ -869,9 +881,9 @@
 	.col-span-full { grid-column: 1 / -1; }
 
 	.card {
-		background: var(--color-bg-panel);
-		border: 1px solid var(--color-border-default);
-		border-radius: 12px;
+		background: var(--k-surface-alt);
+		border: 1px solid var(--k-line);
+		border-radius: 0;
 		overflow: hidden;
 	}
 
@@ -880,13 +892,15 @@
 		align-items: center;
 		gap: 10px;
 		padding: 14px 20px;
-		border-bottom: 1px solid var(--color-border-default);
-		font-weight: 700;
-		font-size: 16px;
+		border-bottom: 1px solid var(--k-line);
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-bold);
+		font-size: 15px;
+		letter-spacing: -0.01em;
 	}
 
-	.card-header h2 { margin: 0; font-size: 16px; }
-	.card-icon { color: var(--color-accent); font-size: 18px; }
+	.card-header h2 { margin: 0; font-size: 15px; letter-spacing: -0.01em; }
+	.card-icon { color: var(--pulse); font-size: 16px; }
 
 	.card-body {
 		padding: 16px 20px;
@@ -1093,18 +1107,21 @@
 	.btn-point {
 		width: 100%;
 		height: 64px;
-		border: 2px solid var(--color-accent-mid);
-		background: linear-gradient(135deg, var(--color-accent-deepest), var(--color-accent-deep));
-		color: white;
-		font-size: 24px;
-		font-weight: 700;
-		border-radius: 12px;
+		border: none;
+		background: var(--pulse);
+		color: var(--paper);
+		font-family: var(--font-mono);
+		font-feature-settings: 'tnum';
+		font-size: 22px;
+		font-weight: 600;
+		border-radius: 0;
 		cursor: pointer;
-		transition: all 0.15s;
+		transition: background var(--dur-fast) var(--ease-snap), transform var(--dur-fast) var(--ease-snap);
 		margin-bottom: 12px;
+		letter-spacing: 0.02em;
 	}
 
-	.btn-point:hover { background: linear-gradient(135deg, var(--color-accent-deep), var(--color-accent-dark)); }
+	.btn-point:hover { background: var(--pulse-deep); }
 	.btn-point:active { transform: scale(0.97); }
 	.btn-point:disabled { opacity: 0.4; cursor: not-allowed; }
 
@@ -1149,18 +1166,18 @@
 
 	/* Buttons */
 	.btn-action {
-		padding: 10px 20px;
-		border: 1px solid var(--color-accent-border);
-		background: var(--color-bg-elevated);
-		color: var(--color-accent);
-		border-radius: 8px;
-		font-size: 14px;
-		font-weight: 600;
+		padding: 9px 18px;
+		border: 1px solid var(--k-line);
+		background: transparent;
+		color: var(--k-text);
+		border-radius: 0;
+		font-size: 13px;
+		font-weight: 500;
 		cursor: pointer;
-		transition: all 0.2s;
+		transition: border-color var(--dur-fast) var(--ease-snap), background var(--dur-fast) var(--ease-snap), color var(--dur-fast) var(--ease-snap);
 	}
 
-	.btn-action:hover { background: var(--color-bg-elevated-hover); border-color: var(--color-accent); }
+	.btn-action:hover { background: color-mix(in srgb, var(--k-text) 4%, transparent); border-color: var(--k-text-mute); color: var(--k-text); }
 	.btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
 
 	.btn-action-danger { border-color: color-mix(in srgb, var(--color-error) 30%, var(--color-bg-panel)); background: color-mix(in srgb, var(--color-error) 10%, var(--color-bg-panel)); color: var(--color-error-light); }
@@ -1188,19 +1205,19 @@
 	}
 
 	.btn-primary {
-		padding: 10px 20px;
-		background: linear-gradient(135deg, var(--color-accent-mid), var(--color-accent-dark));
-		color: white;
+		padding: 10px 22px;
+		background: var(--pulse);
+		color: var(--paper);
 		border: none;
-		border-radius: 8px;
+		border-radius: 999px;
 		font-weight: 600;
-		font-size: 14px;
+		font-size: 13px;
 		cursor: pointer;
-		transition: opacity 0.2s;
+		transition: background var(--dur-fast) var(--ease-snap);
 		text-align: center;
 	}
 
-	.btn-primary:hover { opacity: 0.9; }
+	.btn-primary:hover { background: var(--pulse-deep); }
 	.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
 	/* Dialogs */
@@ -1298,7 +1315,6 @@
 	.color-row-compact { display: flex; align-items: center; gap: 16px; }
 	.color-field-inline { display: flex; align-items: center; gap: 8px; }
 	.color-picker { width: 40px; height: 40px; border: none; border-radius: 6px; cursor: pointer; padding: 0; }
-	.color-hex { font-family: monospace; font-size: 14px; color: var(--color-text-secondary); }
 
 	/* Share link */
 	.share-link-row { display: flex; gap: 8px; align-items: center; }
@@ -1361,10 +1377,8 @@
 
 	/* Utilities */
 	.font-bold { font-weight: 700; }
-	.text-xl { font-size: 20px; }
 	.text-sm { font-size: 13px; }
 	.text-gray-400 { color: var(--color-text-secondary); }
-	.text-gray-300 { color: var(--color-text-secondary); }
 	.flex { display: flex; }
 	.items-center { align-items: center; }
 	.justify-center { justify-content: center; }

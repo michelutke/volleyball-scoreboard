@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Lang } from '$lib/i18n/landing.js';
+	import { reveal } from '$lib/motion.js';
 
 	interface Props {
 		lang: Lang;
@@ -9,7 +10,8 @@
 
 	const translations = {
 		de: {
-			title: 'Häufige Fragen',
+			overline: 'Häufige Fragen',
+			title: 'FAQ.',
 			items: [
 				{
 					q: 'Brauche ich spezielle Hardware?',
@@ -39,7 +41,8 @@
 			]
 		},
 		en: {
-			title: 'FAQ',
+			overline: 'FAQ',
+			title: 'Questions.',
 			items: [
 				{
 					q: 'Do I need special hardware?',
@@ -79,42 +82,168 @@
 	}
 </script>
 
-<section id="faq" class="py-24 px-4">
-	<div class="mx-auto max-w-2xl">
-		<h2
-			class="mb-12 text-center text-3xl font-bold text-[var(--color-text-primary)]"
-			style="font-family: 'Montserrat', sans-serif;"
-		>
-			{tr.title}
-		</h2>
+<section id="faq" class="faq">
+	<div class="inner">
+		<header class="head">
+			<p class="overline k-mono">{tr.overline}</p>
+			<h2 class="title k-display" use:reveal={{ y: 32 }}>{tr.title}</h2>
+		</header>
 
-		<div>
+		<div class="list">
 			{#each tr.items as item, i}
-				<div class="border-b border-[var(--color-border-subtle)]">
-					<button
-						onclick={() => toggle(i)}
-						class="flex w-full items-center justify-between py-5 text-left text-[var(--color-text-primary)] transition-colors hover:text-[var(--color-accent-mid)]"
-					>
-						<span class="font-medium">{item.q}</span>
-						<span class="ml-4 shrink-0 text-lg text-[var(--color-text-secondary)]">
-							{openIndex === i ? '▾' : '▸'}
+				<div class="row" class:open={openIndex === i} use:reveal={{ y: 18, delay: i * 0.04 }}>
+					<button class="trigger" onclick={() => toggle(i)} aria-expanded={openIndex === i}>
+						<span class="num k-mono">0{i + 1}</span>
+						<span class="q">{item.q}</span>
+						<span class="chev" aria-hidden="true">
+							<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+								<path d="M6 9l6 6 6-6" stroke-linecap="round" />
+							</svg>
 						</span>
 					</button>
-					{#if openIndex === i}
-						<p class="pb-5 text-[var(--color-text-secondary)] leading-relaxed">
-							{item.a}
-							{#if item.link}
-								<a
-									href={item.link.url}
-									target="_blank"
-									rel="noopener noreferrer"
-									class="underline hover:text-[var(--color-accent-mid)]"
-								>{item.link.text}</a>
-							{/if}
-						</p>
-					{/if}
+					<div class="answer-wrap">
+						<div class="answer">
+							<p>
+								{item.a}
+								{#if item.link}
+									<a href={item.link.url} target="_blank" rel="noopener noreferrer" class="ext">
+										{item.link.text} →
+									</a>
+								{/if}
+							</p>
+						</div>
+					</div>
 				</div>
 			{/each}
 		</div>
 	</div>
 </section>
+
+<style>
+	.faq {
+		background: var(--k-surface);
+		color: var(--k-text);
+		padding: 140px var(--grid-margin);
+	}
+
+	.inner {
+		max-width: 960px;
+		margin: 0 auto;
+	}
+
+	.head {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		margin-bottom: 64px;
+	}
+
+	.overline {
+		font-size: 11px;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
+		margin: 0;
+	}
+
+	.title {
+		font-size: clamp(36px, 6vw, 80px);
+		margin: 0;
+		letter-spacing: -0.03em;
+		line-height: 0.95;
+	}
+
+	.list {
+		display: flex;
+		flex-direction: column;
+		border-top: 1px solid var(--k-line);
+	}
+
+	.row {
+		border-bottom: 1px solid var(--k-line);
+	}
+
+	.trigger {
+		width: 100%;
+		display: grid;
+		grid-template-columns: 56px 1fr 32px;
+		gap: 16px;
+		align-items: center;
+		background: transparent;
+		border: none;
+		padding: 24px 0;
+		cursor: pointer;
+		text-align: left;
+		color: var(--k-text);
+		transition: color var(--dur-fast) var(--ease-snap);
+	}
+	.trigger:hover {
+		color: var(--pulse);
+	}
+
+	.num {
+		font-size: 12px;
+		letter-spacing: 0.1em;
+		color: var(--k-text-dim);
+	}
+
+	.q {
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-medium);
+		font-size: clamp(18px, 2vw, 22px);
+		letter-spacing: -0.01em;
+	}
+
+	.chev {
+		display: inline-flex;
+		justify-self: end;
+		color: var(--k-text-mute);
+		transition: transform var(--dur-mid) var(--ease-mass),
+			color var(--dur-fast) var(--ease-snap);
+	}
+	.row.open .chev {
+		transform: rotate(180deg);
+		color: var(--pulse);
+	}
+
+	.answer-wrap {
+		display: grid;
+		grid-template-rows: 0fr;
+		transition: grid-template-rows var(--dur-mid) var(--ease-mass);
+	}
+	.row.open .answer-wrap {
+		grid-template-rows: 1fr;
+	}
+
+	.answer {
+		overflow: hidden;
+		min-height: 0;
+	}
+	.answer p {
+		padding: 0 0 24px 72px;
+		margin: 0;
+		font-size: 15px;
+		line-height: 1.65;
+		color: var(--k-text-mute);
+		max-width: 720px;
+	}
+
+	.ext {
+		color: var(--cool-soft);
+		text-decoration: none;
+		border-bottom: 1px solid currentColor;
+	}
+	.ext:hover {
+		color: var(--cool);
+	}
+
+	@media (max-width: 640px) {
+		.trigger {
+			grid-template-columns: 36px 1fr 24px;
+			gap: 12px;
+		}
+		.answer p {
+			padding-left: 48px;
+		}
+	}
+</style>

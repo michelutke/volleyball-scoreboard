@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Lang } from '$lib/i18n/landing.js';
+	import { countUp, magnetic, reveal } from '$lib/motion.js';
 
 	interface Props {
 		lang: Lang;
@@ -12,6 +13,7 @@
 
 	const translations = {
 		de: {
+			overline: 'Preise',
 			title: 'Alles was dein Verein braucht.',
 			saas: {
 				name: 'Scorely SaaS',
@@ -26,7 +28,7 @@
 					'Hosting inklusive'
 				],
 				cta: '3 Tage kostenlos testen',
-				note: 'Keine Kreditkarte erforderlich · Jederzeit kündbar',
+				note: 'Keine Kreditkarte · Jederzeit kündbar',
 				badge: 'Empfohlen'
 			},
 			selfHosted: {
@@ -40,10 +42,11 @@
 					'Community Support'
 				],
 				cta: 'Auf GitHub ansehen',
-				note: 'Contributions willkommen ✌️'
+				note: 'Contributions willkommen'
 			}
 		},
 		en: {
+			overline: 'Pricing',
 			title: 'Everything your club needs.',
 			saas: {
 				name: 'Scorely SaaS',
@@ -58,7 +61,7 @@
 					'Hosting included'
 				],
 				cta: 'Try free for 3 days',
-				note: 'No credit card required · Cancel anytime',
+				note: 'No credit card · Cancel anytime',
 				badge: 'Recommended'
 			},
 			selfHosted: {
@@ -72,7 +75,7 @@
 					'Community support'
 				],
 				cta: 'View on GitHub',
-				note: 'Contributions welcome ✌️'
+				note: 'Contributions welcome'
 			}
 		}
 	} as const;
@@ -80,86 +83,292 @@
 	const tr = $derived(translations[lang]);
 </script>
 
-<section id="pricing" class="py-24 px-4">
-	<div class="mx-auto max-w-6xl">
-		<h2
-			class="mb-12 text-center text-3xl font-bold text-[var(--color-text-primary)]"
-			style="font-family: 'Montserrat', sans-serif;"
-		>
-			{tr.title}
-		</h2>
+<section id="pricing" class="pricing">
+	<div class="inner">
+		<header class="head">
+			<p class="overline k-mono">{tr.overline}</p>
+			<h2 class="title k-display" use:reveal={{ y: 32 }}>{tr.title}</h2>
+		</header>
 
-		<div class="mx-auto flex max-w-3xl flex-col gap-6 sm:flex-row sm:items-stretch">
-			<!-- SaaS Card -->
-			<div class="relative flex flex-1 flex-col rounded-2xl border-2 border-[var(--color-accent-mid)] bg-[var(--color-bg-panel-alt)] p-8">
-				<span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[var(--color-accent-mid)] px-3 py-0.5 text-xs font-semibold text-white">
-					{tr.saas.badge}
-				</span>
+		<div class="cards">
+			<article class="card saas" use:reveal={{ y: 40 }}>
+				<span class="badge k-mono">{tr.saas.badge}</span>
 
-				<p class="mb-2 text-xl font-bold text-[var(--color-text-primary)]">{tr.saas.name}</p>
+				<header class="card-head">
+					<p class="kicker k-mono">01 / SaaS</p>
+					<h3 class="card-title">{tr.saas.name}</h3>
+				</header>
 
-				<div class="mb-6 flex items-baseline gap-2">
+				<div class="price-row">
 					{#if price}
-						<span class="text-4xl font-extrabold text-[var(--color-text-primary)]">
-							{price.currency} {price.amount}
-						</span>
-						<span class="text-[var(--color-text-secondary)]">{tr.saas.priceLabel}</span>
+						<span class="currency k-mono">{price.currency}</span>
+						<span
+							class="amount k-mono k-tabular"
+							use:countUp={{ to: price.amount, format: (n) => Math.round(n).toString() }}
+						></span>
+						<span class="period">{tr.saas.priceLabel}</span>
 					{:else}
-						<span class="text-4xl font-extrabold text-[var(--color-text-primary)]">
-							{tr.saas.fallbackPrice}
-						</span>
+						<span class="amount k-mono">{tr.saas.fallbackPrice}</span>
 					{/if}
 				</div>
 
-				<ul class="mb-8 flex-1 space-y-1">
+				<ul class="features">
 					{#each tr.saas.features as feature}
-						<li class="flex items-center gap-3 py-1">
-							<span class="font-semibold text-[var(--color-accent-mid)]">✓</span>
-							<span class="text-[var(--color-text-secondary)]">{feature}</span>
+						<li>
+							<span class="tick" aria-hidden="true">→</span>
+							<span>{feature}</span>
 						</li>
 					{/each}
 				</ul>
 
-				<a
-					href="/signup"
-					class="block w-full rounded-xl bg-[var(--color-accent-mid)] py-3 text-center font-semibold text-white transition-opacity hover:opacity-90"
-				>
-					{tr.saas.cta}
+				<a href="/signup" class="cta-primary" use:magnetic={{ strength: 0.2, radius: 60 }}>
+					<span>{tr.saas.cta}</span>
+					<span class="arrow" aria-hidden="true">→</span>
 				</a>
 
-				<p class="mt-3 text-center text-sm text-[var(--color-text-tertiary)]">{tr.saas.note}</p>
-			</div>
+				<p class="note k-mono">{tr.saas.note}</p>
+			</article>
 
-			<!-- Self-Hosted Card -->
-			<div class="flex flex-1 flex-col rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-bg-panel-alt)] p-8">
-				<p class="mb-2 text-xl font-bold text-[var(--color-text-primary)]">{tr.selfHosted.name}</p>
+			<article class="card self" use:reveal={{ y: 40, delay: 0.08 }}>
+				<header class="card-head">
+					<p class="kicker k-mono">02 / Open Source</p>
+					<h3 class="card-title">{tr.selfHosted.name}</h3>
+				</header>
 
-				<div class="mb-6 flex items-baseline gap-2">
-					<span class="text-4xl font-extrabold text-[var(--color-text-primary)]">
-						{tr.selfHosted.price}
-					</span>
+				<div class="price-row">
+					<span class="amount k-mono">{tr.selfHosted.price}</span>
 				</div>
 
-				<ul class="mb-8 flex-1 space-y-1">
+				<ul class="features">
 					{#each tr.selfHosted.features as feature}
-						<li class="flex items-center gap-3 py-1">
-							<span class="font-semibold text-[var(--color-text-tertiary)]">✓</span>
-							<span class="text-[var(--color-text-secondary)]">{feature}</span>
+						<li>
+							<span class="tick" aria-hidden="true">→</span>
+							<span>{feature}</span>
 						</li>
 					{/each}
 				</ul>
 
-				<a
-					href={GITHUB_URL}
-					target="_blank"
-					rel="noopener noreferrer"
-					class="block w-full rounded-xl border border-[var(--color-border-subtle)] py-3 text-center font-semibold text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-accent-mid)] hover:text-[var(--color-accent-mid)]"
-				>
-					{tr.selfHosted.cta}
+				<a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" class="cta-secondary">
+					<span>{tr.selfHosted.cta}</span>
+					<span class="arrow" aria-hidden="true">→</span>
 				</a>
 
-				<p class="mt-3 text-center text-sm text-[var(--color-text-tertiary)]">{tr.selfHosted.note}</p>
-			</div>
+				<p class="note k-mono">{tr.selfHosted.note}</p>
+			</article>
 		</div>
 	</div>
 </section>
+
+<style>
+	.pricing {
+		background: var(--k-surface);
+		color: var(--k-text);
+		padding: 140px var(--grid-margin);
+	}
+
+	.inner {
+		max-width: var(--container-max);
+		margin: 0 auto;
+	}
+
+	.head {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		margin-bottom: 72px;
+		text-align: center;
+		align-items: center;
+	}
+
+	.overline {
+		font-size: 11px;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
+		margin: 0;
+	}
+
+	.title {
+		font-size: clamp(36px, 6vw, 80px);
+		margin: 0;
+		letter-spacing: -0.03em;
+		line-height: 0.95;
+	}
+
+	.cards {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 24px;
+		max-width: 960px;
+		margin: 0 auto;
+	}
+
+	.card {
+		position: relative;
+		padding: 48px 36px 36px;
+		background: var(--k-surface-alt);
+		display: flex;
+		flex-direction: column;
+		gap: 28px;
+		transition: transform var(--dur-mid) var(--ease-snap),
+			border-color var(--dur-mid) var(--ease-snap);
+	}
+
+	.card.saas {
+		border: 2px solid var(--pulse);
+	}
+	.card.saas:hover {
+		border-color: var(--pulse-deep);
+	}
+
+	.card.self {
+		border: 1px solid var(--k-line);
+	}
+	.card.self:hover {
+		border-color: var(--k-text-mute);
+	}
+
+	.badge {
+		position: absolute;
+		top: -12px;
+		left: 24px;
+		background: var(--pulse);
+		color: var(--paper);
+		font-size: 10px;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		padding: 6px 12px;
+		font-weight: 600;
+	}
+
+	.kicker {
+		font-size: 11px;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
+		margin: 0 0 8px;
+	}
+
+	.card-title {
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-bold);
+		font-size: 24px;
+		margin: 0;
+		color: var(--k-text);
+	}
+
+	.price-row {
+		display: flex;
+		align-items: baseline;
+		gap: 10px;
+		flex-wrap: wrap;
+		padding: 16px 0;
+		border-top: 1px solid var(--k-line);
+		border-bottom: 1px solid var(--k-line);
+	}
+
+	.currency {
+		font-size: 18px;
+		color: var(--k-text-mute);
+		font-weight: 500;
+	}
+	.amount {
+		font-size: clamp(56px, 8vw, 88px);
+		font-weight: 600;
+		color: var(--k-text);
+		letter-spacing: -0.04em;
+		line-height: 1;
+	}
+	.period {
+		font-size: 14px;
+		color: var(--k-text-dim);
+	}
+
+	.features {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		flex: 1;
+	}
+	.features li {
+		display: flex;
+		align-items: baseline;
+		gap: 14px;
+		font-size: 15px;
+		color: var(--k-text-mute);
+	}
+	.tick {
+		color: var(--pulse);
+		font-family: var(--font-mono);
+		font-weight: 600;
+		font-size: 14px;
+	}
+	.card.saas .tick {
+		color: var(--pulse);
+	}
+
+	.cta-primary,
+	.cta-secondary {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 12px;
+		text-decoration: none;
+		font-weight: 600;
+		font-size: 15px;
+		padding: 16px 24px;
+		will-change: transform;
+		transition: background var(--dur-fast) var(--ease-snap),
+			border-color var(--dur-fast) var(--ease-snap);
+	}
+
+	.cta-primary {
+		background: var(--pulse);
+		color: var(--paper);
+	}
+	.cta-primary:hover {
+		background: var(--pulse-deep);
+	}
+
+	.cta-secondary {
+		background: transparent;
+		color: var(--k-text);
+		border: 1px solid var(--k-line);
+	}
+	.cta-secondary:hover {
+		border-color: var(--k-text-mute);
+		background: color-mix(in srgb, var(--k-text) 4%, transparent);
+	}
+
+	.cta-primary .arrow,
+	.cta-secondary .arrow {
+		transition: transform var(--dur-mid) var(--ease-snap);
+	}
+	.cta-primary:hover .arrow,
+	.cta-secondary:hover .arrow {
+		transform: translateX(4px);
+	}
+
+	.note {
+		font-size: 11px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
+		margin: 0;
+		text-align: center;
+	}
+
+	@media (min-width: 768px) {
+		.cards {
+			grid-template-columns: 1fr 1fr;
+			align-items: stretch;
+		}
+		.head {
+			text-align: left;
+			align-items: flex-start;
+		}
+	}
+</style>

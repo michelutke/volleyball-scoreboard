@@ -135,7 +135,7 @@
 </script>
 
 <svelte:head>
-	<title>Overlay — Match #{matchId}</title>
+	<title>Overlay · Match #{matchId}</title>
 	<style>
 		html, body {
 			background: transparent !important;
@@ -161,6 +161,8 @@
 				{homeTimeoutsUsed}
 				{guestTimeoutsUsed}
 				{timeoutTeam}
+				layoutId={data.scoreboardLayout}
+				options={(data.scoreboardOptions ?? {}) as Record<string, string | number | boolean>}
 			/>
 		{/if}
 	</div>

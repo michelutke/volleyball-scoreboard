@@ -1,131 +1,397 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { onMount, tick } from 'svelte';
+	import KThemeToggle from './k/KThemeToggle.svelte';
+	import KMotionToggle from './k/KMotionToggle.svelte';
 
 	let { clubName, isAdmin }: { clubName: string; isAdmin: boolean } = $props();
 
 	type NavLink = { href: string; label: string; adminOnly?: boolean };
 
 	const links: NavLink[] = [
+		{ href: '/dashboard', label: 'Dashboard' },
 		{ href: '/teams', label: 'Teams' },
-		{ href: '/admin/users', label: 'Nutzerverwaltung', adminOnly: true },
+		{ href: '/library', label: 'Bibliothek' },
+		{ href: '/admin/users', label: 'Nutzer', adminOnly: true },
 		{ href: '/admin/designs', label: 'Designs', adminOnly: true },
 		{ href: '/settings', label: 'Einstellungen' },
 		{ href: '/profile', label: 'Profil' }
 	];
 
 	let menuOpen = $state(false);
-	function closeMenu() { menuOpen = false; }
+	let userOpen = $state(false);
+	let linksWrap = $state<HTMLDivElement | null>(null);
+	let indicatorStyle = $state('opacity:0');
 
 	function isActive(href: string): boolean {
 		if (href === '/dashboard') return page.url.pathname === '/dashboard';
 		return page.url.pathname.startsWith(href);
 	}
+
+	const visibleLinks = $derived(links.filter((l) => !l.adminOnly || isAdmin));
+	const activeHref = $derived(visibleLinks.find((l) => isActive(l.href))?.href ?? null);
+
+	async function positionIndicator() {
+		if (!linksWrap) return;
+		await tick();
+		const active = linksWrap.querySelector<HTMLAnchorElement>('a.active');
+		if (!active) {
+			indicatorStyle = 'opacity:0';
+			return;
+		}
+		const wrapRect = linksWrap.getBoundingClientRect();
+		const r = active.getBoundingClientRect();
+		const left = r.left - wrapRect.left;
+		const width = r.width;
+		indicatorStyle = `transform:translateX(${left}px);width:${width}px;opacity:1`;
+	}
+
+	$effect(() => {
+		// rerun on route change
+		void activeHref;
+		positionIndicator();
+	});
+
+	onMount(() => {
+		positionIndicator();
+		const onResize = () => positionIndicator();
+		window.addEventListener('resize', onResize);
+		return () => window.removeEventListener('resize', onResize);
+	});
+
+	function closeAll() {
+		menuOpen = false;
+		userOpen = false;
+	}
+
+	function onDocClick(e: MouseEvent) {
+		const target = e.target as HTMLElement;
+		if (!target.closest('.user-menu') && !target.closest('.user-trigger')) {
+			userOpen = false;
+		}
+	}
+
+	$effect(() => {
+		if (userOpen) {
+			document.addEventListener('click', onDocClick);
+			return () => document.removeEventListener('click', onDocClick);
+		}
+	});
 </script>
 
-<nav>
-	<a href="/dashboard" class="club-name">Scorely</a>
-	<div class="links">
-		{#each links as link}
-			{#if !link.adminOnly || isAdmin}
-				<a href={link.href} class:active={isActive(link.href)}>{link.label}</a>
-			{/if}
+<nav class="app-nav">
+	<a href="/dashboard" class="brand">
+		<span class="word">Scorely</span>
+		<span class="dot" aria-hidden="true"></span>
+		{#if clubName}
+			<span class="club k-mono">/ {clubName}</span>
+		{/if}
+	</a>
+
+	<div class="links" bind:this={linksWrap}>
+		<span class="indicator" style={indicatorStyle} aria-hidden="true"></span>
+		{#each visibleLinks as link}
+			<a href={link.href} class:active={isActive(link.href)}>{link.label}</a>
 		{/each}
 	</div>
-	<button class="burger" onclick={() => menuOpen = !menuOpen} aria-label="Menü">
-		{menuOpen ? '✕' : '☰'}
-	</button>
-	{#if menuOpen}
-		<div class="mobile-menu">
-			{#each links as link}
-				{#if !link.adminOnly || isAdmin}
-					<a href={link.href} class:active={isActive(link.href)} onclick={closeMenu}>{link.label}</a>
+
+	<div class="actions">
+		<button class="user-trigger" onclick={() => (userOpen = !userOpen)} aria-expanded={userOpen} aria-label="User menu">
+			<span class="avatar">
+				<span class="avatar-glyph k-mono">{(clubName?.[0] ?? 'S').toUpperCase()}</span>
+			</span>
+		</button>
+
+		<button class="burger" onclick={() => (menuOpen = !menuOpen)} aria-label="Menü" aria-expanded={menuOpen}>
+			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				{#if menuOpen}
+					<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" />
+				{:else}
+					<path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round" />
 				{/if}
+			</svg>
+		</button>
+	</div>
+
+	{#if userOpen}
+		<div class="user-menu">
+			<div class="menu-section">
+				<p class="menu-label k-mono">Theme</p>
+				<KThemeToggle />
+			</div>
+			<div class="menu-section">
+				<p class="menu-label k-mono">Motion</p>
+				<KMotionToggle />
+			</div>
+			<div class="menu-divider"></div>
+			<a href="/profile" class="menu-link" onclick={closeAll}>Profil</a>
+			<form method="POST" action="/signout" class="signout-form">
+				<button type="submit" class="menu-link signout">Abmelden</button>
+			</form>
+		</div>
+	{/if}
+
+	{#if menuOpen}
+		<div class="drawer">
+			{#each visibleLinks as link}
+				<a href={link.href} class:active={isActive(link.href)} onclick={closeAll}>{link.label}</a>
 			{/each}
+			<div class="drawer-divider"></div>
+			<div class="drawer-section">
+				<p class="menu-label k-mono">Theme</p>
+				<KThemeToggle />
+			</div>
+			<div class="drawer-section">
+				<p class="menu-label k-mono">Motion</p>
+				<KMotionToggle />
+			</div>
+			<form method="POST" action="/signout" class="signout-form">
+				<button type="submit" class="menu-link signout">Abmelden</button>
+			</form>
 		</div>
 	{/if}
 </nav>
 
 <style>
-	nav {
-		width: 100%;
+	.app-nav {
+		position: sticky;
+		top: 0;
+		z-index: 40;
 		display: flex;
-		flex-wrap: wrap;
-		justify-content: space-between;
 		align-items: center;
-		padding: 0.75rem 1.5rem;
-		border-bottom: 1px solid var(--color-border-subtle);
-		background: var(--color-bg-base);
-		position: relative;
+		justify-content: space-between;
+		gap: 24px;
+		padding: 14px var(--grid-margin);
+		background: var(--k-surface);
+		border-bottom: 1px solid var(--k-line);
 	}
 
-	.club-name {
-		color: var(--color-text-primary);
+	.brand {
+		display: inline-flex;
+		align-items: baseline;
+		gap: 8px;
 		text-decoration: none;
-		font-weight: 700;
+		color: var(--k-text);
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-bold);
+		font-size: 17px;
+		letter-spacing: -0.02em;
+	}
+	.brand .dot {
+		width: 5px;
+		height: 5px;
+		border-radius: 50%;
+		background: var(--pulse);
+		display: inline-block;
+		align-self: center;
+	}
+	.brand .club {
+		font-size: 11px;
+		color: var(--k-text-dim);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		font-weight: 400;
+		max-width: 200px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.links {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
+		display: none;
+		position: relative;
+		gap: 4px;
+		flex: 1;
+		justify-content: center;
 	}
 
 	.links a {
-		color: var(--color-text-primary);
+		position: relative;
+		font-size: 14px;
+		font-weight: 500;
+		color: var(--k-text-mute);
 		text-decoration: none;
-		padding: 0.25rem 0.5rem;
-		border-radius: 4px;
-		outline: 2px solid transparent;
+		padding: 8px 14px;
+		transition: color var(--dur-fast) var(--ease-snap);
+		z-index: 1;
 	}
-
 	.links a:hover {
-		outline-color: var(--color-text-primary);
-		text-decoration: none;
+		color: var(--k-text);
 	}
-
 	.links a.active {
-		outline-color: var(--color-accent);
-		text-decoration: none;
+		color: var(--k-text);
 	}
 
-	.burger {
-		display: none;
-		background: none;
-		border: none;
-		cursor: pointer;
-		color: var(--color-text-primary);
-		font-size: 1.5rem;
-		padding: 0.25rem;
-		line-height: 1;
+	.indicator {
+		position: absolute;
+		left: 0;
+		bottom: 0;
+		height: 2px;
+		background: var(--pulse);
+		transition:
+			transform var(--dur-mid) var(--ease-snap),
+			width var(--dur-mid) var(--ease-snap),
+			opacity var(--dur-fast) var(--ease-snap);
+		pointer-events: none;
 	}
 
-	.mobile-menu {
-		width: 100%;
-		background: var(--color-bg-base);
+	.actions {
 		display: flex;
-		flex-direction: column;
-		padding: 0.5rem 1.5rem 1rem;
-		gap: 0.25rem;
+		align-items: center;
+		gap: 8px;
 	}
 
-	.mobile-menu a {
-		color: var(--color-text-primary);
-		text-decoration: none;
-		padding: 0.75rem 0.5rem;
-		font-size: 1.1rem;
+	.user-trigger {
+		display: none;
+		background: transparent;
+		border: 1px solid var(--k-line);
+		padding: 4px;
+		cursor: pointer;
+		transition: border-color var(--dur-fast) var(--ease-snap);
+	}
+	.user-trigger:hover {
+		border-color: var(--k-text-mute);
+	}
+	.user-trigger:hover .avatar {
+		transform: rotate(3deg);
+	}
+
+	.avatar {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 28px;
+		height: 28px;
+		background: var(--k-surface-alt);
+		color: var(--k-text);
+		transition: transform var(--dur-mid) var(--ease-mass);
+	}
+	.avatar-glyph {
+		font-size: 12px;
 		font-weight: 600;
 	}
 
-	.mobile-menu a.active {
-		color: var(--color-accent);
+	.burger {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		background: transparent;
+		border: 1px solid var(--k-line);
+		color: var(--k-text);
+		padding: 6px;
+		cursor: pointer;
 	}
 
-	@media (max-width: 640px) {
-		.links { display: none; }
-		.burger { display: block; }
+	.user-menu {
+		position: absolute;
+		top: 100%;
+		right: var(--grid-margin);
+		margin-top: 6px;
+		min-width: 260px;
+		background: var(--k-surface);
+		border: 1px solid var(--k-line);
+		display: flex;
+		flex-direction: column;
+		padding: 14px;
+		gap: 12px;
+		box-shadow: 0 12px 32px color-mix(in srgb, var(--ink) 22%, transparent);
+		z-index: 60;
 	}
 
-	@media (min-width: 641px) {
-		.mobile-menu { display: none; }
+	.menu-section {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	.menu-label {
+		font-size: 10px;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
+		margin: 0;
+	}
+
+	.menu-divider {
+		height: 1px;
+		background: var(--k-line);
+	}
+
+	.menu-link {
+		display: block;
+		padding: 8px 4px;
+		text-decoration: none;
+		background: transparent;
+		border: none;
+		font: inherit;
+		font-size: 14px;
+		color: var(--k-text-mute);
+		cursor: pointer;
+		text-align: left;
+		transition: color var(--dur-fast) var(--ease-snap);
+	}
+	.menu-link:hover {
+		color: var(--k-text);
+	}
+
+	.signout {
+		color: var(--color-error);
+	}
+	.signout:hover {
+		color: var(--color-error-light);
+	}
+
+	.signout-form {
+		margin: 0;
+	}
+
+	.drawer {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		right: 0;
+		display: flex;
+		flex-direction: column;
+		padding: 16px var(--grid-margin) 24px;
+		background: var(--k-surface);
+		border-bottom: 1px solid var(--k-line);
+		gap: 4px;
+		box-shadow: 0 12px 32px color-mix(in srgb, var(--ink) 22%, transparent);
+		z-index: 30;
+	}
+	.drawer a {
+		padding: 14px 0;
+		text-decoration: none;
+		color: var(--k-text-mute);
+		font-size: 16px;
+		font-weight: 500;
+		border-bottom: 1px solid color-mix(in srgb, var(--k-line) 50%, transparent);
+		transition: color var(--dur-fast) var(--ease-snap);
+	}
+	.drawer a.active {
+		color: var(--pulse);
+	}
+	.drawer a:hover {
+		color: var(--k-text);
+	}
+
+	.drawer-divider {
+		height: 1px;
+		background: var(--k-line);
+		margin: 12px 0;
+	}
+
+	.drawer-section {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 8px 0;
+	}
+
+	@media (min-width: 768px) {
+		.links { display: flex; }
+		.user-trigger { display: inline-flex; }
+		.burger { display: none; }
+		.drawer { display: none; }
 	}
 </style>

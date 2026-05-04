@@ -30,9 +30,10 @@
 	}
 </script>
 
-<div class="min-h-screen bg-bg-base p-4">
-<div class="max-w-2xl mx-auto">
-	<h1 class="text-2xl font-bold text-text-primary mb-6">Profil</h1>
+<div class="min-h-screen p-4" style="background: var(--k-surface); color: var(--k-text);">
+<div class="max-w-2xl mx-auto pt-12">
+	<p class="kicker k-mono">Profil / Profile</p>
+	<h1 class="profile-title k-display">Profil</h1>
 
 	<div class="bg-bg-panel-alt rounded-xl p-6 space-y-4 mb-4">
 		{#if page.data.session?.user?.name}
@@ -103,6 +104,23 @@
 </div>
 
 <style>
+	.kicker {
+		font-size: 11px;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
+		margin: 0 0 12px;
+	}
+	.profile-title {
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-display);
+		font-size: clamp(32px, 5vw, 56px);
+		line-height: 1;
+		letter-spacing: -0.025em;
+		color: var(--k-text);
+		margin: 0 0 32px;
+	}
+
 	.status-badge {
 		display: inline-flex;
 		align-items: center;

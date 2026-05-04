@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types.js';
+	import { KSection, KButton, KEmpty, KInput, KField } from '$lib/components/k';
 
 	let { data }: { data: PageData } = $props();
 
-	let activeUsers = $state(data.activeUsers ?? []);
-	let pendingInvites = $state(data.pendingInvites ?? []);
-	const kcOrgIdMissing = data.kcOrgIdMissing ?? false;
+	let activeUsers = $state(untrack(() => data.activeUsers ?? []));
+	let pendingInvites = $state(untrack(() => data.pendingInvites ?? []));
+	const kcOrgIdMissing = untrack(() => data.kcOrgIdMissing ?? false);
 	let showInvite = $state(false);
 	let email = $state('');
 	let loading = $state(false);
@@ -15,6 +17,7 @@
 	let feedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 
 	const totalCount = $derived(activeUsers.length + pendingInvites.length);
+	const atLimit = $derived(totalCount >= 5);
 
 	async function inviteUser() {
 		if (!email.trim()) return;
@@ -58,7 +61,7 @@
 				feedback = { type: 'error', message: err.error ?? 'Rollenänderung fehlgeschlagen' };
 				return;
 			}
-			activeUsers = activeUsers.map((u) => u.id === userId ? { ...u, isAdmin: !currentIsAdmin } : u);
+			activeUsers = activeUsers.map((u) => (u.id === userId ? { ...u, isAdmin: !currentIsAdmin } : u));
 			feedback = { type: 'success', message: currentIsAdmin ? 'Zu Scorer geändert' : 'Zu Admin ernannt' };
 		} catch {
 			feedback = { type: 'error', message: 'Netzwerkfehler' };
@@ -122,129 +125,289 @@
 	}
 </script>
 
-<div class="min-h-screen bg-bg-base p-4">
-	<div class="max-w-2xl mx-auto">
-		<div class="flex items-center justify-between mb-6">
-			<div>
-				<h1 class="text-2xl font-bold text-text-primary">Nutzerverwaltung</h1>
-				<p class="text-text-secondary text-sm">Scorer einladen und verwalten · <span class="{totalCount >= 5 ? 'text-red-400' : 'text-text-tertiary'}">{totalCount} / 5 Nutzer</span></p>
-			</div>
-		</div>
+<div class="page">
+	<KSection
+		kicker="Admin / Users"
+		title="Nutzerverwaltung"
+		subtitle="Scorer einladen und verwalten."
+	>
+		{#snippet actions()}
+			<span class="count k-mono" class:max={atLimit}>{totalCount} / 5</span>
+			{#if !atLimit}
+				<KButton variant="primary" size="md" onclick={() => (showInvite = !showInvite)}>
+					+ Einladen
+				</KButton>
+			{/if}
+		{/snippet}
 
 		{#if feedback}
-			<div class="mb-4 rounded-lg px-4 py-2 text-sm {feedback.type === 'success' ? 'bg-green-900/30 text-green-300' : 'bg-red-900/30 text-red-300'}">
-				{feedback.message}
-			</div>
+			<div class="banner banner-{feedback.type}" role="alert">{feedback.message}</div>
+		{/if}
+
+		{#if showInvite}
+			<form
+				class="invite-form"
+				onsubmit={(e) => {
+					e.preventDefault();
+					inviteUser();
+				}}
+			>
+				<KField label="E-Mail-Adresse" for="invite-email">
+					<KInput id="invite-email" type="email" bind:value={email} placeholder="scorer@example.com" />
+				</KField>
+				<div class="form-actions">
+					<KButton variant="primary" disabled={loading}>
+						{loading ? '...' : 'Einladung senden'}
+					</KButton>
+					<KButton variant="ghost" onclick={() => (showInvite = false)}>Abbrechen</KButton>
+				</div>
+			</form>
 		{/if}
 
 		{#if kcOrgIdMissing}
-			<div class="bg-bg-panel-alt rounded-xl p-8 text-center">
-				<p class="text-text-secondary">Organisation nicht konfiguriert</p>
-				<p class="text-text-tertiary text-sm mt-2">kcOrgId fehlt in den Einstellungen.</p>
-			</div>
+			<KEmpty
+				numeral="!!"
+				title="Organisation nicht konfiguriert"
+				body="kcOrgId fehlt in den Einstellungen. Bitte einen Admin oder Support kontaktieren."
+			/>
 		{:else if activeUsers.length === 0 && pendingInvites.length === 0}
-			<div class="bg-bg-panel-alt rounded-xl p-8 text-center">
-				<p class="text-text-secondary">Keine Nutzer vorhanden</p>
-			</div>
+			<KEmpty numeral="00" title="Keine Nutzer vorhanden" body="Lade Scorer per E-Mail-Einladung ein." />
 		{:else}
-			<div class="space-y-2">
-				{#each activeUsers as user}
-					<div class="flex items-center justify-between bg-bg-panel-alt rounded-xl p-4 gap-4">
-						<div class="flex flex-col gap-1 min-w-0">
-							<span class="text-text-primary truncate">{user.email}</span>
-							<div class="flex items-center gap-2">
+			<ul class="user-list">
+				{#each activeUsers as user, i}
+					<li class="user-row">
+						<span class="row-num k-mono">{String(i + 1).padStart(2, '0')}</span>
+						<div class="row-body">
+							<span class="row-email">{user.email}</span>
+							<div class="row-tags">
 								{#if user.isAdmin}
-									<span class="text-xs bg-accent-deepest/30 text-accent px-2 py-0.5 rounded font-medium">Admin</span>
+									<span class="tag tag-admin">Admin</span>
 								{:else}
-									<span class="text-xs bg-bg-base text-text-tertiary px-2 py-0.5 rounded font-medium border border-border-subtle">Scorer</span>
+									<span class="tag">Scorer</span>
 								{/if}
 								{#if !user.enabled}
-									<span class="text-xs bg-red-900/30 text-red-300 px-2 py-0.5 rounded">Deaktiviert</span>
+									<span class="tag tag-error">Deaktiviert</span>
 								{/if}
 							</div>
 						</div>
-						<div class="flex items-center gap-3 flex-shrink-0">
+						<div class="row-actions">
 							<button
+								class="row-act"
 								onclick={() => toggleRole(user.id, user.isAdmin)}
 								disabled={loading || user.email === page.data.session?.user?.email}
-								class="text-sm text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed"
-								title={user.isAdmin ? 'Zu Scorer machen' : 'Zum Admin machen'}
+								title={user.isAdmin ? 'Zu Scorer' : 'Zum Admin'}
 							>
 								{user.isAdmin ? '→ Scorer' : '→ Admin'}
 							</button>
-							<button
-								onclick={() => removeUser(user.id)}
-								disabled={loading}
-								class="text-sm text-red-400 hover:text-red-300 disabled:opacity-50"
-							>
+							<button class="row-act danger" onclick={() => removeUser(user.id)} disabled={loading}>
 								Entfernen
 							</button>
 						</div>
-					</div>
+					</li>
 				{/each}
-			</div>
+			</ul>
 
 			{#if pendingInvites.length > 0}
-				<div class="flex items-center gap-2 mt-6 mb-2">
-					<h2 class="text-sm font-semibold text-text-secondary uppercase tracking-wide">Ausstehende Einladungen</h2>
-					<span class="text-xs bg-bg-panel-alt text-text-tertiary px-2 py-0.5 rounded-full border border-border-subtle">{pendingInvites.length}</span>
-				</div>
-				<div class="space-y-2">
+				<h2 class="group-label k-mono">Ausstehende Einladungen ({pendingInvites.length})</h2>
+				<ul class="user-list">
 					{#each pendingInvites as invite (invite.id)}
-						<div class="flex items-center justify-between bg-bg-panel-alt rounded-xl p-4 gap-4">
-							<div class="flex flex-col gap-1 min-w-0">
-								<span class="text-text-primary truncate">{invite.email}</span>
-								<div class="flex items-center gap-2">
-									<span class="text-xs bg-yellow-900/30 text-yellow-300 px-2 py-0.5 rounded font-medium">Ausstehend</span>
+						<li class="user-row">
+							<span class="row-num k-mono">··</span>
+							<div class="row-body">
+								<span class="row-email">{invite.email}</span>
+								<div class="row-tags">
+									<span class="tag tag-pending">Ausstehend</span>
 								</div>
 							</div>
-							<div class="flex items-center gap-3 flex-shrink-0">
+							<div class="row-actions">
 								<button
+									class="row-act"
 									onclick={() => resendInvitation(invite.id, invite.email)}
 									disabled={resending === invite.id}
-									class="text-sm text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed"
 								>
-									{resending === invite.id ? 'Wird gesendet…' : 'Erneut senden'}
+									{resending === invite.id ? '...' : 'Erneut senden'}
 								</button>
 								<button
+									class="row-act danger"
 									onclick={() => revokeInvitation(invite.id, invite.email)}
 									disabled={revoking === invite.id}
-									class="text-sm text-red-400 hover:text-red-300 disabled:opacity-50"
 								>
-									{revoking === invite.id ? 'Wird widerrufen…' : 'Widerrufen'}
+									{revoking === invite.id ? '...' : 'Widerrufen'}
 								</button>
 							</div>
-						</div>
+						</li>
 					{/each}
-				</div>
+				</ul>
 			{/if}
 		{/if}
 
-		<div class="mt-4">
-			{#if showInvite}
-				<form onsubmit={(e) => { e.preventDefault(); inviteUser(); }} class="bg-bg-panel-alt rounded-xl p-4 flex gap-2">
-					<input
-						type="email"
-						bind:value={email}
-						placeholder="E-Mail-Adresse"
-						class="flex-1 bg-bg-base border border-border-subtle rounded-lg px-4 py-2 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent"
-					/>
-					<button type="submit" disabled={loading} class="bg-accent-mid hover:bg-accent-dark disabled:opacity-50 text-white font-semibold rounded-lg px-4 py-2">
-						{loading ? '...' : 'Einladen'}
-					</button>
-					<button type="button" onclick={() => { showInvite = false; }} class="text-text-secondary hover:text-text-primary px-2">
-						&times;
-					</button>
-				</form>
-			{:else if totalCount >= 5}
-				<div class="w-full bg-bg-panel-alt rounded-xl p-4 text-center text-text-tertiary text-sm">
-					Maximale Anzahl Nutzer erreicht (5 / 5)
-				</div>
-			{:else}
-				<button onclick={() => { showInvite = true; }} class="w-full bg-bg-panel-alt hover:bg-bg-panel-hover text-text-secondary rounded-xl p-4 transition-colors">
-					+ Scorer einladen
-				</button>
-			{/if}
-		</div>
-	</div>
+		{#if atLimit}
+			<p class="limit-hint k-mono">Maximale Anzahl Nutzer erreicht (5 / 5)</p>
+		{/if}
+	</KSection>
 </div>
+
+<style>
+	.page {
+		min-height: 100vh;
+		background: var(--k-surface);
+		color: var(--k-text);
+	}
+
+	.count {
+		font-size: 12px;
+		letter-spacing: 0.1em;
+		color: var(--k-text-mute);
+	}
+	.count.max {
+		color: var(--color-error);
+	}
+
+	.banner {
+		font-size: 13px;
+		padding: 12px 14px;
+		border: 1px solid currentColor;
+	}
+	.banner-success {
+		color: var(--color-success);
+		background: color-mix(in srgb, var(--color-success) 8%, transparent);
+	}
+	.banner-error {
+		color: var(--color-error);
+		background: color-mix(in srgb, var(--color-error) 10%, transparent);
+	}
+
+	.invite-form {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		padding: 24px;
+		background: var(--k-surface-alt);
+		border: 1px solid var(--k-line);
+	}
+
+	.form-actions {
+		display: flex;
+		gap: 8px;
+	}
+
+	.group-label {
+		font-size: 11px;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
+		margin: 16px 0 0;
+	}
+
+	.user-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		border-top: 1px solid var(--k-line);
+	}
+
+	.user-row {
+		display: grid;
+		grid-template-columns: 36px 1fr auto;
+		align-items: center;
+		gap: 16px;
+		padding: 16px;
+		border-bottom: 1px solid var(--k-line);
+		transition: background var(--dur-fast) var(--ease-snap);
+	}
+	.user-row:hover {
+		background: color-mix(in srgb, var(--k-text) 3%, transparent);
+	}
+
+	.row-num {
+		font-size: 11px;
+		letter-spacing: 0.1em;
+		color: var(--k-text-dim);
+	}
+
+	.row-body {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		min-width: 0;
+	}
+
+	.row-email {
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-medium);
+		font-size: 15px;
+		color: var(--k-text);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.row-tags {
+		display: inline-flex;
+		gap: 6px;
+	}
+
+	.tag {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		padding: 2px 6px;
+		border: 1px solid var(--k-line);
+		color: var(--k-text-dim);
+	}
+	.tag-admin {
+		color: var(--pulse);
+		border-color: var(--pulse);
+	}
+	.tag-pending {
+		color: #eab308;
+		border-color: #eab308;
+	}
+	.tag-error {
+		color: var(--color-error);
+		border-color: var(--color-error);
+	}
+
+	.row-actions {
+		display: flex;
+		gap: 4px;
+	}
+
+	.row-act {
+		font-family: var(--font-sans);
+		font-size: 12px;
+		font-weight: 500;
+		padding: 6px 12px;
+		background: transparent;
+		border: 1px solid var(--k-line);
+		color: var(--k-text-mute);
+		cursor: pointer;
+		transition:
+			color var(--dur-fast) var(--ease-snap),
+			border-color var(--dur-fast) var(--ease-snap);
+	}
+	.row-act:hover:not(:disabled) {
+		color: var(--k-text);
+		border-color: var(--k-text-mute);
+	}
+	.row-act:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
+	.row-act.danger {
+		color: var(--color-error);
+		border-color: color-mix(in srgb, var(--color-error) 50%, transparent);
+	}
+	.row-act.danger:hover:not(:disabled) {
+		border-color: var(--color-error);
+	}
+
+	.limit-hint {
+		font-size: 11px;
+		letter-spacing: 0.1em;
+		color: var(--k-text-dim);
+		margin: 16px 0 0;
+		text-align: center;
+	}
+</style>

@@ -59,7 +59,11 @@ export const matchIdSettingsSchema = z.object({
 	showSetScores: z.boolean().optional(),
 	homeTeamLogo: z.string().url().nullish(),
 	guestTeamLogo: z.string().url().nullish(),
-	designTemplateId: z.number().int().nullish()
+	designTemplateId: z.number().int().nullish(),
+	scoreboardLayout: z.string().min(1).max(64).nullish(),
+	scoreboardOptions: z
+		.record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
+		.nullish()
 });
 
 export const teamCreateSchema = z.object({

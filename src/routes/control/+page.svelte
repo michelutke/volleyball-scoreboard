@@ -389,7 +389,7 @@
 
 				{#if activeTimeout}
 					<div class="timeout-banner">
-						Auszeit {activeTimeout.teamName} — {activeTimeout.secondsLeft}s
+						Auszeit {activeTimeout.teamName} · {activeTimeout.secondsLeft}s
 						<button onclick={cancelTimeout} class="btn-timeout-cancel">&#10005; Abbrechen</button>
 					</div>
 				{/if}
@@ -583,10 +583,10 @@
 <style>
 	.control {
 		min-height: 100vh;
-		background: var(--color-bg-base);
-		color: var(--color-text-primary);
+		background: var(--k-surface);
+		color: var(--k-text);
 		padding: 20px;
-		font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+		font-family: var(--font-sans);
 	}
 
 	.start-screen {

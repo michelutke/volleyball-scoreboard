@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { t } from '$lib/i18n/landing.js';
 	import type { Lang } from '$lib/i18n/landing.js';
+	import { reveal } from '$lib/motion.js';
 
 	interface Props {
 		lang: Lang;
@@ -9,31 +10,169 @@
 	let { lang }: Props = $props();
 </script>
 
-<section id="how-it-works" class="bg-[var(--color-bg-base)] px-4 py-20 md:px-8">
-	<div class="mx-auto max-w-4xl">
-		<h2 class="mb-12 text-center text-3xl font-bold text-[var(--color-text-primary)]">
-			{t[lang].howItWorks.title}
-		</h2>
+<section id="how-it-works" class="how">
+	<div class="bg-tint" aria-hidden="true"></div>
+	<div class="inner">
+		<header class="head">
+			<p class="overline k-mono">Ablauf · Workflow</p>
+			<h2 class="title k-display" use:reveal={{ y: 32 }}>
+				{t[lang].howItWorks.title}
+			</h2>
+		</header>
 
-		<div class="flex flex-col items-start gap-8 md:flex-row md:items-start">
+		<ol class="steps">
 			{#each t[lang].howItWorks.steps as step, i}
-				<div class="flex flex-1 flex-col items-center text-center">
-					<div
-						class="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-accent-mid)] text-xl font-bold text-white shadow-md"
-					>
-						{step.num}
+				<li class="step" use:reveal={{ y: 48, delay: i * 0.08 }}>
+					<div class="numeral-wrap">
+						<span class="numeral k-mono k-tabular">{String(i + 1).padStart(2, '0')}</span>
+						<span class="numeral-line" aria-hidden="true"></span>
 					</div>
-					<h3 class="mb-2 font-semibold text-[var(--color-text-primary)]">{step.title}</h3>
-					<p class="text-sm leading-relaxed text-[var(--color-text-secondary)]">{step.desc}</p>
-				</div>
-
-				{#if i < t[lang].howItWorks.steps.length - 1}
-					<!-- Arrow connector: visible on md+, hidden on mobile -->
-					<div class="hidden items-center self-start pt-6 text-2xl text-[var(--color-text-tertiary)] md:flex">
-						→
+					<div class="copy">
+						<h3 class="step-title">{step.title}</h3>
+						<p class="step-desc">{step.desc}</p>
 					</div>
-				{/if}
+					<span class="rule" aria-hidden="true"></span>
+				</li>
 			{/each}
-		</div>
+		</ol>
 	</div>
 </section>
+
+<style>
+	.how {
+		position: relative;
+		background: var(--k-surface-alt);
+		color: var(--k-text);
+		padding: 140px var(--grid-margin);
+		overflow: hidden;
+	}
+
+	.bg-tint {
+		position: absolute;
+		inset: 0;
+		background: radial-gradient(
+			ellipse 60% 80% at 90% 50%,
+			color-mix(in srgb, var(--pulse) 14%, transparent) 0%,
+			transparent 60%
+		);
+		pointer-events: none;
+	}
+
+	.inner {
+		max-width: var(--container-max);
+		margin: 0 auto;
+		position: relative;
+	}
+
+	.head {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		margin-bottom: 80px;
+		max-width: 800px;
+	}
+
+	.overline {
+		font-size: 11px;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--pulse);
+		margin: 0;
+	}
+
+	.title {
+		font-size: clamp(36px, 6vw, 80px);
+		margin: 0;
+		letter-spacing: -0.03em;
+		line-height: 0.95;
+	}
+
+	.steps {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.step {
+		display: grid;
+		grid-template-columns: minmax(140px, 22%) 1fr;
+		gap: 32px;
+		padding: 56px 0;
+		align-items: start;
+		position: relative;
+	}
+	.step:last-child .rule {
+		display: none;
+	}
+
+	.numeral-wrap {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		align-items: flex-start;
+	}
+
+	.numeral {
+		font-size: clamp(56px, 10vw, 140px);
+		font-weight: 600;
+		line-height: 0.9;
+		color: var(--pulse);
+		letter-spacing: -0.04em;
+	}
+
+	.numeral-line {
+		display: block;
+		width: 64px;
+		height: 2px;
+		background: var(--pulse);
+	}
+
+	.copy {
+		padding-top: 8px;
+	}
+
+	.step-title {
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-bold);
+		font-size: clamp(24px, 3vw, 36px);
+		margin: 0 0 12px;
+		color: var(--k-text);
+		letter-spacing: -0.01em;
+	}
+
+	.step-desc {
+		font-size: 16px;
+		line-height: 1.6;
+		color: var(--k-text-mute);
+		margin: 0;
+		max-width: 520px;
+	}
+
+	.rule {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 1px;
+		background: linear-gradient(
+			to right,
+			transparent 0%,
+			var(--k-line) 20%,
+			var(--k-line) 80%,
+			transparent 100%
+		);
+	}
+
+	@media (max-width: 640px) {
+		.step {
+			grid-template-columns: 1fr;
+			gap: 16px;
+			padding: 40px 0;
+		}
+		.numeral {
+			font-size: 72px;
+		}
+	}
+</style>

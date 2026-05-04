@@ -21,7 +21,7 @@
 					: ''
 		)
 	);
-	let successMsg = $state(untrack(() => (data.registered ? 'Konto erstellt — bitte melden Sie sich an.' : '')));
+	let successMsg = $state(untrack(() => (data.registered ? 'Konto erstellt · bitte melden Sie sich an.' : '')));
 
 	async function handleSubmit(e: SubmitEvent) {
 		e.preventDefault();
@@ -125,8 +125,13 @@
 <style>
 	.page-bg {
 		min-height: 100vh;
-		background: radial-gradient(ellipse at 20% 0%, #3d0000 0%, #0a0a0a 55%);
-		font-family: 'Montserrat', sans-serif;
+		background: radial-gradient(
+				ellipse 60% 50% at 20% 0%,
+				color-mix(in srgb, var(--pulse) 22%, transparent) 0%,
+				transparent 55%
+			),
+			var(--ink);
+		font-family: var(--font-sans);
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -143,10 +148,12 @@
 	}
 
 	.title {
+		font-family: var(--font-display);
 		font-size: clamp(2.5rem, 10vw, 5rem);
-		font-weight: 900;
+		font-weight: 800;
+		font-variation-settings: 'wght' 800, 'opsz' 36;
 		color: #fff;
-		letter-spacing: 0.1em;
+		letter-spacing: -0.02em;
 		margin-bottom: 2rem;
 		text-align: center;
 	}
@@ -292,9 +299,9 @@
 		background: transparent;
 		border: none;
 		color: #fff;
-		font-weight: 300;
+		font-weight: 400;
 		font-size: 22px;
-		font-family: 'Montserrat', sans-serif;
+		font-family: var(--font-sans);
 		width: 100%;
 		outline: none;
 	}
@@ -313,19 +320,20 @@
 
 	button[type='submit'] {
 		width: 100%;
-		background: #0ea5e9;
-		color: #fff;
+		background: var(--pulse);
+		color: var(--paper);
 		font-size: 0.9375rem;
 		font-weight: 600;
 		font-family: inherit;
-		padding: 0.75rem 1rem;
+		padding: 0.875rem 1rem;
 		border: none;
-		border-radius: 0.5rem;
+		border-radius: 999px;
 		cursor: pointer;
-		transition: opacity 0.15s;
+		transition: background var(--dur-fast) var(--ease-snap);
+		letter-spacing: 0.02em;
 	}
 	button[type='submit']:hover {
-		opacity: 0.88;
+		background: var(--pulse-deep);
 	}
 	button[type='submit']:disabled {
 		opacity: 0.5;

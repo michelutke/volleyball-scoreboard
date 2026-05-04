@@ -1,12 +1,18 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource/montserrat/400.css';
+@import '@fontsource/montserrat/700.css';
+@import '@fontsource/montserrat/800.css';
 
 html,
 body {
-	background-color: #0b0e1a;
+	background-color: var(--color-bg-base);
+	font-family: var(--font-sans);
+	font-feature-settings: 'cv11', 'ss01';
 }
 
 :root {
-	/* Surfaces */
+	/* === Existing app surfaces (dark default) === */
 	--color-bg-base: #0b0e1a;
 	--color-bg-panel: #111827;
 	--color-bg-panel-alt: #151929;
@@ -16,17 +22,14 @@ body {
 	--color-bg-elevated-hover: #132f4c;
 	--color-bg-dim: #0f172a;
 
-	/* Borders */
 	--color-border-default: #1e293b;
 	--color-border-subtle: #334155;
 
-	/* Text */
 	--color-text-primary: #e2e8f0;
 	--color-text-secondary: #94a3b8;
 	--color-text-tertiary: #64748b;
 	--color-text-muted: #334155;
 
-	/* Accent (sky-blue default, overridable) */
 	--color-accent: #38bdf8;
 	--color-accent-mid: #0ea5e9;
 	--color-accent-dark: #0284c7;
@@ -34,19 +37,79 @@ body {
 	--color-accent-deepest: #0c4a6e;
 	--color-accent-border: #1e3a5f;
 
-	/* Status (fixed, not configurable) */
 	--color-success: #22c55e;
 	--color-warning: #eab308;
 	--color-error: #ef4444;
 	--color-error-light: #f87171;
 
-	/* Overlay-specific */
 	--color-overlay-bg: #1a1a1a;
 	--color-overlay-bg-dark: #0a0a0a;
 	--color-overlay-border: #2a2a2a;
+
+	/* === Kinetic palette === */
+	--ink: #0a0a0a;
+	--paper: #f5f3ee;
+	--pulse: #ff3d2e;
+	--pulse-soft: #ff6f5e;
+	--pulse-deep: #c41f10;
+	--cool: #1d4ed8;
+	--cool-soft: #4f7df0;
+	--cool-deep: #0f3aa8;
+
+	--grey-900: #111111;
+	--grey-700: #2a2a2a;
+	--grey-500: #6b6b6b;
+	--grey-300: #c8c5bd;
+	--grey-100: #ebe8e1;
+
+	/* Kinetic semantic surfaces (dark default) */
+	--k-surface: var(--ink);
+	--k-surface-alt: var(--grey-900);
+	--k-surface-raised: var(--grey-700);
+	--k-text: var(--paper);
+	--k-text-mute: var(--grey-300);
+	--k-text-dim: var(--grey-500);
+	--k-line: var(--grey-700);
+	--k-accent-warm: var(--pulse);
+	--k-accent-cool: var(--cool);
+
+	/* === Type === */
+	--font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--font-display: 'Inter Variable', 'Inter', system-ui, sans-serif;
+	--font-mono:
+		ui-monospace, 'JetBrains Mono', 'SF Mono', 'Cascadia Mono', 'Roboto Mono', Menlo, Consolas,
+		monospace;
+
+	/* Variable axes */
+	--type-wght-light: 300;
+	--type-wght-regular: 400;
+	--type-wght-medium: 520;
+	--type-wght-bold: 680;
+	--type-wght-display: 780;
+	--type-wght-breathe-min: 600;
+	--type-wght-breathe-max: 820;
+
+	/* === Motion === */
+	--ease-snap: cubic-bezier(0.2, 0.9, 0.1, 1);
+	--ease-mass: cubic-bezier(0.6, 0.05, 0.1, 1);
+	--ease-glide: cubic-bezier(0.25, 1, 0.3, 1);
+	--ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+
+	--motion-scale: 1;
+	--dur-fast: calc(180ms * var(--motion-scale));
+	--dur-mid: calc(420ms * var(--motion-scale));
+	--dur-slow: calc(900ms * var(--motion-scale));
+	--dur-breathe: calc(5000ms * var(--motion-scale));
+
+	/* === Grid / rhythm === */
+	--grid-cols: 12;
+	--grid-gutter: 24px;
+	--grid-margin: max(24px, 4vw);
+	--baseline: 8px;
+	--container-max: 1280px;
 }
 
-[data-theme="light"] {
+[data-theme='light'] {
 	--color-bg-base: #f8fafc;
 	--color-bg-panel: #ffffff;
 	--color-bg-panel-alt: #f1f5f9;
@@ -63,6 +126,71 @@ body {
 	--color-text-muted: #cbd5e1;
 	--color-error: #dc2626;
 	--color-error-light: #ef4444;
+
+	/* Kinetic surfaces flip in light */
+	--k-surface: var(--paper);
+	--k-surface-alt: #ebe8e1;
+	--k-surface-raised: #ffffff;
+	--k-text: var(--ink);
+	--k-text-mute: var(--grey-700);
+	--k-text-dim: var(--grey-500);
+	--k-line: var(--grey-300);
+}
+
+/* === Motion preferences === */
+@media (prefers-reduced-motion: reduce) {
+	:root {
+		--motion-scale: 0.3;
+	}
+}
+
+[data-motion='full'] {
+	--motion-scale: 1;
+}
+
+[data-motion='damped'] {
+	--motion-scale: 0.3;
+}
+
+[data-motion='static'] {
+	--motion-scale: 0;
+}
+
+/* Kinetic utility primitives */
+.k-mono {
+	font-family: var(--font-mono);
+	font-feature-settings: 'tnum', 'zero';
+}
+
+.k-tabular {
+	font-variant-numeric: tabular-nums;
+}
+
+.k-display {
+	font-family: var(--font-display);
+	font-weight: var(--type-wght-display);
+	letter-spacing: -0.02em;
+	line-height: 0.95;
+}
+
+.k-breathe {
+	animation: k-breathe var(--dur-breathe) var(--ease-glide) infinite;
+}
+
+@keyframes k-breathe {
+	0%,
+	100% {
+		font-weight: var(--type-wght-breathe-min);
+	}
+	50% {
+		font-weight: var(--type-wght-breathe-max);
+	}
+}
+
+[data-motion='static'] .k-breathe,
+[data-motion='damped'] .k-breathe {
+	animation: none;
+	font-weight: var(--type-wght-breathe-max);
 }
 
 @theme inline {
@@ -93,4 +221,25 @@ body {
 	--color-overlay-bg: var(--color-overlay-bg);
 	--color-overlay-bg-dark: var(--color-overlay-bg-dark);
 	--color-overlay-border: var(--color-overlay-border);
+
+	/* Kinetic */
+	--color-ink: var(--ink);
+	--color-paper: var(--paper);
+	--color-pulse: var(--pulse);
+	--color-pulse-soft: var(--pulse-soft);
+	--color-pulse-deep: var(--pulse-deep);
+	--color-cool: var(--cool);
+	--color-cool-soft: var(--cool-soft);
+	--color-cool-deep: var(--cool-deep);
+	--color-k-surface: var(--k-surface);
+	--color-k-surface-alt: var(--k-surface-alt);
+	--color-k-surface-raised: var(--k-surface-raised);
+	--color-k-text: var(--k-text);
+	--color-k-text-mute: var(--k-text-mute);
+	--color-k-text-dim: var(--k-text-dim);
+	--color-k-line: var(--k-line);
+
+	--font-sans: var(--font-sans);
+	--font-display: var(--font-display);
+	--font-mono: var(--font-mono);
 }

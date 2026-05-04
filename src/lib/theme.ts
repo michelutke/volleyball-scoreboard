@@ -72,14 +72,54 @@ export function generateAccentPalette(hex: string, mode: 'light' | 'dark' = 'dar
 	};
 }
 
+export type MotionMode = 'full' | 'damped' | 'static' | 'system';
+
+export const THEME_COOKIE = 'scoring-theme';
+export const MOTION_COOKIE = 'scoring-motion';
+
+function readCookie(name: string): string | null {
+	if (typeof document === 'undefined') return null;
+	const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+	return match ? decodeURIComponent(match[1]) : null;
+}
+
+function writeCookie(name: string, value: string): void {
+	if (typeof document === 'undefined') return;
+	const oneYear = 60 * 60 * 24 * 365;
+	const secure = location.protocol === 'https:' ? '; Secure' : '';
+	document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${oneYear}; SameSite=Lax${secure}`;
+}
+
 export function getStoredTheme(): ThemeMode {
+	const fromCookie = readCookie(THEME_COOKIE) as ThemeMode | null;
+	if (fromCookie === 'light' || fromCookie === 'dark' || fromCookie === 'system') return fromCookie;
 	if (typeof localStorage === 'undefined') return 'system';
 	return (localStorage.getItem('theme') as ThemeMode) ?? 'system';
 }
 
 export function setStoredTheme(mode: ThemeMode): void {
 	localStorage.setItem('theme', mode);
+	writeCookie(THEME_COOKIE, mode);
 	window.dispatchEvent(new CustomEvent('themechange', { detail: mode }));
+}
+
+export function getStoredMotion(): MotionMode {
+	const fromCookie = readCookie(MOTION_COOKIE) as MotionMode | null;
+	if (fromCookie === 'full' || fromCookie === 'damped' || fromCookie === 'static' || fromCookie === 'system') {
+		return fromCookie;
+	}
+	return 'system';
+}
+
+export function setStoredMotion(mode: MotionMode): void {
+	writeCookie(MOTION_COOKIE, mode);
+	window.dispatchEvent(new CustomEvent('motionchange', { detail: mode }));
+}
+
+export function getEffectiveMotion(mode: MotionMode): 'full' | 'damped' | 'static' {
+	if (mode === 'full' || mode === 'damped' || mode === 'static') return mode;
+	if (typeof window === 'undefined') return 'full';
+	return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'damped' : 'full';
 }
 
 export function getEffectiveTheme(mode: ThemeMode): 'light' | 'dark' {
