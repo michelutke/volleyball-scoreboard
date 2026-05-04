@@ -161,6 +161,8 @@
 				{homeTimeoutsUsed}
 				{guestTimeoutsUsed}
 				{timeoutTeam}
+				layoutId={data.scoreboardLayout}
+				options={(data.scoreboardOptions ?? {}) as Record<string, string | number | boolean>}
 			/>
 		{/if}
 	</div>

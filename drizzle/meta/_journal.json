@@ -50,6 +50,13 @@
       "when": 1773321514935,
       "tag": "0006_custom_overlay",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1777890306670,
+      "tag": "0007_kinetic_scoreboard",
+      "breakpoints": true
     }
   ]
 }

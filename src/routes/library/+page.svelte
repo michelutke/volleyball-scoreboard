@@ -46,40 +46,68 @@
 		designTemplateId: null
 	};
 
-	let selectedLayoutId = $state<string>('classic');
+	let selectedLayoutId = $state<string>(data.orgLayoutId ?? 'classic');
 	let layoutOptions = $state<Record<string, ScoreboardOptions>>({});
 
 	$effect(() => {
-		const stored = localStorage.getItem('scoring-default-layout');
-		if (stored) selectedLayoutId = stored;
-		const optsRaw = localStorage.getItem('scoring-default-layout-options');
-		if (optsRaw) {
-			try {
-				layoutOptions = JSON.parse(optsRaw);
-			} catch {
-				/* ignore */
-			}
-		}
-		// initialize per-layout option defaults
+		// initialize per-layout option defaults; merge org-saved options for the active layout
+		const initial: Record<string, ScoreboardOptions> = {};
 		for (const layout of SCOREBOARD_LAYOUTS) {
-			if (!layoutOptions[layout.id]) {
-				const defaults: ScoreboardOptions = {};
-				for (const opt of layout.customizableOptions) {
-					defaults[opt.key] = opt.default as string | boolean;
+			const defaults: ScoreboardOptions = {};
+			for (const opt of layout.customizableOptions) {
+				defaults[opt.key] = opt.default as string | boolean;
+			}
+			initial[layout.id] = defaults;
+		}
+		if (data.orgLayoutId && data.orgLayoutOptions) {
+			initial[data.orgLayoutId] = {
+				...initial[data.orgLayoutId],
+				...(data.orgLayoutOptions as ScoreboardOptions)
+			};
+		}
+		// fallback for unauthenticated browse
+		if (!data.isLoggedIn) {
+			const stored = localStorage.getItem('scoring-default-layout');
+			if (stored) selectedLayoutId = stored;
+			const optsRaw = localStorage.getItem('scoring-default-layout-options');
+			if (optsRaw) {
+				try {
+					const parsed = JSON.parse(optsRaw) as Record<string, ScoreboardOptions>;
+					for (const id of Object.keys(parsed)) {
+						initial[id] = { ...initial[id], ...parsed[id] };
+					}
+				} catch {
+					/* ignore */
 				}
-				layoutOptions[layout.id] = defaults;
 			}
 		}
+		layoutOptions = initial;
 	});
+
+	async function persist() {
+		if (data.isLoggedIn) {
+			await fetch('/api/library/default-layout', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					layoutId: selectedLayoutId,
+					options: layoutOptions[selectedLayoutId] ?? {}
+				})
+			});
+		} else {
+			localStorage.setItem('scoring-default-layout', selectedLayoutId);
+			localStorage.setItem('scoring-default-layout-options', JSON.stringify(layoutOptions));
+		}
+	}
 
 	function selectLayout(id: string) {
 		selectedLayoutId = id;
-		localStorage.setItem('scoring-default-layout', id);
+		void persist();
 	}
 
 	function updateOption(layoutId: string, key: string, value: string | boolean) {
 		layoutOptions[layoutId] = { ...layoutOptions[layoutId], [key]: value };
-		localStorage.setItem('scoring-default-layout-options', JSON.stringify(layoutOptions));
+		if (layoutId === selectedLayoutId) void persist();
 	}
 
 	const currentLayout = $derived(
@@ -216,7 +244,7 @@
 
 		{#if data.isLoggedIn}
 			<p class="layout-hint k-mono">
-				— Auswahl wird lokal gespeichert. Mit Backend-Persistierung ab P8 wird die Auswahl als Org-Default übernommen und kann pro Match überschrieben werden.
+				— Auswahl gespeichert als Org-Default. Pro Match überschreibbar im Match-Control-Panel.
 			</p>
 		{:else}
 			<p class="layout-hint k-mono">

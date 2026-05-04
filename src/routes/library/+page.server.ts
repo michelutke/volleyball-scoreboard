@@ -36,5 +36,23 @@ export const load: PageServerLoad = async ({ locals }) => {
 		overlayText: r.overlayText
 	}));
 
-	return { overlays, isLoggedIn };
+	let orgLayoutId: string | null = null;
+	let orgLayoutOptions: Record<string, unknown> | null = null;
+	if (locals.orgId) {
+		const orgSettings = await db.query.settings.findMany({
+			where: eq(settings.orgId, locals.orgId)
+		});
+		const layoutRow = orgSettings.find((r) => r.key === 'defaultScoreboardLayout');
+		const optsRow = orgSettings.find((r) => r.key === 'defaultScoreboardOptions');
+		orgLayoutId = layoutRow?.value ?? null;
+		if (optsRow?.value) {
+			try {
+				orgLayoutOptions = JSON.parse(optsRow.value);
+			} catch {
+				orgLayoutOptions = null;
+			}
+		}
+	}
+
+	return { overlays, isLoggedIn, orgLayoutId, orgLayoutOptions };
 };
