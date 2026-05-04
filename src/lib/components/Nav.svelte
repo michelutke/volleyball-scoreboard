@@ -11,15 +11,12 @@
 	const links: NavLink[] = [
 		{ href: '/dashboard', label: 'Dashboard' },
 		{ href: '/teams', label: 'Teams' },
-		{ href: '/library', label: 'Bibliothek' },
 		{ href: '/admin/users', label: 'Nutzer', adminOnly: true },
 		{ href: '/admin/designs', label: 'Designs', adminOnly: true },
-		{ href: '/settings', label: 'Einstellungen' },
-		{ href: '/profile', label: 'Profil' }
+		{ href: '/settings', label: 'Einstellungen' }
 	];
 
 	let menuOpen = $state(false);
-	let userOpen = $state(false);
 	let linksWrap = $state<HTMLDivElement | null>(null);
 	let indicatorStyle = $state('opacity:0');
 
@@ -61,22 +58,7 @@
 
 	function closeAll() {
 		menuOpen = false;
-		userOpen = false;
 	}
-
-	function onDocClick(e: MouseEvent) {
-		const target = e.target as HTMLElement;
-		if (!target.closest('.user-menu') && !target.closest('.user-trigger')) {
-			userOpen = false;
-		}
-	}
-
-	$effect(() => {
-		if (userOpen) {
-			document.addEventListener('click', onDocClick);
-			return () => document.removeEventListener('click', onDocClick);
-		}
-	});
 </script>
 
 <nav class="app-nav">
@@ -96,11 +78,11 @@
 	</div>
 
 	<div class="actions">
-		<button class="user-trigger" onclick={() => (userOpen = !userOpen)} aria-expanded={userOpen} aria-label="User menu">
+		<a href="/profile" class="user-trigger" aria-label="Profil" title="Profil">
 			<span class="avatar">
 				<span class="avatar-glyph k-mono">{(clubName?.[0] ?? 'S').toUpperCase()}</span>
 			</span>
-		</button>
+		</a>
 
 		<button class="burger" onclick={() => (menuOpen = !menuOpen)} aria-label="Menü" aria-expanded={menuOpen}>
 			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -113,29 +95,12 @@
 		</button>
 	</div>
 
-	{#if userOpen}
-		<div class="user-menu">
-			<div class="menu-section">
-				<p class="menu-label k-mono">Theme</p>
-				<KThemeToggle />
-			</div>
-			<div class="menu-section">
-				<p class="menu-label k-mono">Motion</p>
-				<KMotionToggle />
-			</div>
-			<div class="menu-divider"></div>
-			<a href="/profile" class="menu-link" onclick={closeAll}>Profil</a>
-			<form method="POST" action="/signout" class="signout-form">
-				<button type="submit" class="menu-link signout">Abmelden</button>
-			</form>
-		</div>
-	{/if}
-
 	{#if menuOpen}
 		<div class="drawer">
 			{#each visibleLinks as link}
 				<a href={link.href} class:active={isActive(link.href)} onclick={closeAll}>{link.label}</a>
 			{/each}
+			<a href="/profile" class:active={isActive('/profile')} onclick={closeAll}>Profil</a>
 			<div class="drawer-divider"></div>
 			<div class="drawer-section">
 				<p class="menu-label k-mono">Theme</p>
@@ -247,6 +212,7 @@
 		border: 1px solid var(--k-line);
 		padding: 4px;
 		cursor: pointer;
+		text-decoration: none;
 		transition: border-color var(--dur-fast) var(--ease-snap);
 	}
 	.user-trigger:hover {
@@ -282,39 +248,12 @@
 		cursor: pointer;
 	}
 
-	.user-menu {
-		position: absolute;
-		top: 100%;
-		right: var(--grid-margin);
-		margin-top: 6px;
-		min-width: 260px;
-		background: var(--k-surface);
-		border: 1px solid var(--k-line);
-		display: flex;
-		flex-direction: column;
-		padding: 14px;
-		gap: 12px;
-		box-shadow: 0 12px 32px color-mix(in srgb, var(--ink) 22%, transparent);
-		z-index: 60;
-	}
-
-	.menu-section {
-		display: flex;
-		flex-direction: column;
-		gap: 6px;
-	}
-
 	.menu-label {
 		font-size: 10px;
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
 		color: var(--k-text-dim);
 		margin: 0;
-	}
-
-	.menu-divider {
-		height: 1px;
-		background: var(--k-line);
 	}
 
 	.menu-link {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import KThemeToggle from '$lib/components/k/KThemeToggle.svelte';
+	import KMotionToggle from '$lib/components/k/KMotionToggle.svelte';
 	import { KButton } from '$lib/components/k';
 	import type { PageData } from './$types';
 
@@ -46,8 +47,13 @@
 		</section>
 
 		<section class="card">
-			<p class="card-label k-mono">Design</p>
+			<p class="card-label k-mono">Theme</p>
 			<KThemeToggle />
+		</section>
+
+		<section class="card">
+			<p class="card-label k-mono">Motion</p>
+			<KMotionToggle />
 		</section>
 
 		{#if isAdmin}
