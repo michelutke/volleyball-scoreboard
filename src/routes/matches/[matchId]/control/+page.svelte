@@ -833,10 +833,10 @@
 <style>
 	.control {
 		min-height: 100vh;
-		background: var(--color-bg-base);
-		color: var(--color-text-primary);
+		background: var(--k-surface);
+		color: var(--k-text);
 		padding: 20px;
-		font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+		font-family: var(--font-sans);
 	}
 
 	.nav-bar {
@@ -878,9 +878,9 @@
 	.col-span-full { grid-column: 1 / -1; }
 
 	.card {
-		background: var(--color-bg-panel);
-		border: 1px solid var(--color-border-default);
-		border-radius: 12px;
+		background: var(--k-surface-alt);
+		border: 1px solid var(--k-line);
+		border-radius: 0;
 		overflow: hidden;
 	}
 
@@ -889,13 +889,15 @@
 		align-items: center;
 		gap: 10px;
 		padding: 14px 20px;
-		border-bottom: 1px solid var(--color-border-default);
-		font-weight: 700;
-		font-size: 16px;
+		border-bottom: 1px solid var(--k-line);
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-bold);
+		font-size: 15px;
+		letter-spacing: -0.01em;
 	}
 
-	.card-header h2 { margin: 0; font-size: 16px; }
-	.card-icon { color: var(--color-accent); font-size: 18px; }
+	.card-header h2 { margin: 0; font-size: 15px; letter-spacing: -0.01em; }
+	.card-icon { color: var(--pulse); font-size: 16px; }
 
 	.card-body {
 		padding: 16px 20px;
@@ -1102,18 +1104,21 @@
 	.btn-point {
 		width: 100%;
 		height: 64px;
-		border: 2px solid var(--color-accent-mid);
-		background: linear-gradient(135deg, var(--color-accent-deepest), var(--color-accent-deep));
-		color: white;
-		font-size: 24px;
-		font-weight: 700;
-		border-radius: 12px;
+		border: none;
+		background: var(--pulse);
+		color: var(--paper);
+		font-family: var(--font-mono);
+		font-feature-settings: 'tnum';
+		font-size: 22px;
+		font-weight: 600;
+		border-radius: 0;
 		cursor: pointer;
-		transition: all 0.15s;
+		transition: background var(--dur-fast) var(--ease-snap), transform var(--dur-fast) var(--ease-snap);
 		margin-bottom: 12px;
+		letter-spacing: 0.02em;
 	}
 
-	.btn-point:hover { background: linear-gradient(135deg, var(--color-accent-deep), var(--color-accent-dark)); }
+	.btn-point:hover { background: var(--pulse-deep); }
 	.btn-point:active { transform: scale(0.97); }
 	.btn-point:disabled { opacity: 0.4; cursor: not-allowed; }
 
@@ -1158,18 +1163,18 @@
 
 	/* Buttons */
 	.btn-action {
-		padding: 10px 20px;
-		border: 1px solid var(--color-accent-border);
-		background: var(--color-bg-elevated);
-		color: var(--color-accent);
-		border-radius: 8px;
-		font-size: 14px;
-		font-weight: 600;
+		padding: 9px 18px;
+		border: 1px solid var(--k-line);
+		background: transparent;
+		color: var(--k-text);
+		border-radius: 0;
+		font-size: 13px;
+		font-weight: 500;
 		cursor: pointer;
-		transition: all 0.2s;
+		transition: border-color var(--dur-fast) var(--ease-snap), background var(--dur-fast) var(--ease-snap), color var(--dur-fast) var(--ease-snap);
 	}
 
-	.btn-action:hover { background: var(--color-bg-elevated-hover); border-color: var(--color-accent); }
+	.btn-action:hover { background: color-mix(in srgb, var(--k-text) 4%, transparent); border-color: var(--k-text-mute); color: var(--k-text); }
 	.btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
 
 	.btn-action-danger { border-color: color-mix(in srgb, var(--color-error) 30%, var(--color-bg-panel)); background: color-mix(in srgb, var(--color-error) 10%, var(--color-bg-panel)); color: var(--color-error-light); }
@@ -1197,19 +1202,19 @@
 	}
 
 	.btn-primary {
-		padding: 10px 20px;
-		background: linear-gradient(135deg, var(--color-accent-mid), var(--color-accent-dark));
-		color: white;
+		padding: 10px 22px;
+		background: var(--pulse);
+		color: var(--paper);
 		border: none;
-		border-radius: 8px;
+		border-radius: 999px;
 		font-weight: 600;
-		font-size: 14px;
+		font-size: 13px;
 		cursor: pointer;
-		transition: opacity 0.2s;
+		transition: background var(--dur-fast) var(--ease-snap);
 		text-align: center;
 	}
 
-	.btn-primary:hover { opacity: 0.9; }
+	.btn-primary:hover { background: var(--pulse-deep); }
 	.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
 	/* Dialogs */
