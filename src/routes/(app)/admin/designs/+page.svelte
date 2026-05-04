@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types.js';
 	import type { MatchState, LibraryOverlay } from '$lib/types.js';
 	import ScoreboardDisplay from '$lib/components/ScoreboardDisplay.svelte';
@@ -25,8 +26,8 @@
 		description?: string | null;
 	};
 
-	let templates = $state<Template[]>(data.templates ?? []);
-	let libraryTemplates = $state<LibraryOverlay[]>(data.library ?? []);
+	let templates = $state<Template[]>(untrack(() => data.templates ?? []));
+	let libraryTemplates = $state<LibraryOverlay[]>(untrack(() => data.library ?? []));
 	let showLibrary = $state(false);
 	let loading = $state(false);
 	let feedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { SCOREBOARD_LAYOUTS, type ScoreboardOptions } from './scoreboards/index.js';
 
 	interface Props {
@@ -11,7 +12,7 @@
 
 	let { matchId, current, currentOptions, orgDefault, onSaved }: Props = $props();
 
-	let selected = $state<string | null>(current);
+	let selected = $state<string | null>(untrack(() => current));
 	let optionsByLayout = $state<Record<string, ScoreboardOptions>>({});
 	let saving = $state(false);
 	let dirty = $state(false);

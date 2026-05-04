@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
+	import { untrack } from 'svelte';
 	import type { MatchState, DesignTemplate, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
 	import QRCode from 'qrcode';
 	import MatchLayoutOverride from '$lib/components/MatchLayoutOverride.svelte';
@@ -30,7 +31,7 @@
 	let editGuestLogo = $state('');
 
 	// Design template selection
-	let designTemplates = $state<DesignTemplate[]>(data.designTemplates ?? []);
+	let designTemplates = $state<DesignTemplate[]>(untrack(() => data.designTemplates ?? []));
 	let selectedTemplateId = $state<number | null>(null);
 
 	let settingsDirty = $derived(
@@ -1312,7 +1313,6 @@
 	.color-row-compact { display: flex; align-items: center; gap: 16px; }
 	.color-field-inline { display: flex; align-items: center; gap: 8px; }
 	.color-picker { width: 40px; height: 40px; border: none; border-radius: 6px; cursor: pointer; padding: 0; }
-	.color-hex { font-family: monospace; font-size: 14px; color: var(--color-text-secondary); }
 
 	/* Share link */
 	.share-link-row { display: flex; gap: 8px; align-items: center; }
@@ -1375,10 +1375,8 @@
 
 	/* Utilities */
 	.font-bold { font-weight: 700; }
-	.text-xl { font-size: 20px; }
 	.text-sm { font-size: 13px; }
 	.text-gray-400 { color: var(--color-text-secondary); }
-	.text-gray-300 { color: var(--color-text-secondary); }
 	.flex { display: flex; }
 	.items-center { align-items: center; }
 	.justify-center { justify-content: center; }

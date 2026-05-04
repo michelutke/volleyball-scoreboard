@@ -891,7 +891,6 @@
 	/* Utilities */
 	.font-bold { font-weight: 700; }
 	.text-xl { font-size: 20px; }
-	.text-sm { font-size: 13px; }
 	.text-gray-400 { color: var(--color-text-secondary); }
 	.text-gray-300 { color: var(--color-text-secondary); }
 	.flex { display: flex; }

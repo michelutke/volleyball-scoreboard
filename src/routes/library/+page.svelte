@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types.js';
 	import type { LibraryOverlay, MatchState } from '$lib/types.js';
 	import ScoreboardDisplay from '$lib/components/ScoreboardDisplay.svelte';
@@ -46,7 +47,7 @@
 		designTemplateId: null
 	};
 
-	let selectedLayoutId = $state<string>(data.orgLayoutId ?? 'classic');
+	let selectedLayoutId = $state<string>(untrack(() => data.orgLayoutId ?? 'classic'));
 	let layoutOptions = $state<Record<string, ScoreboardOptions>>({});
 
 	$effect(() => {

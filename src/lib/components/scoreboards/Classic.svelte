@@ -10,8 +10,8 @@
 		options?: ScoreboardOptions;
 	}
 
-	let { match, homeTimeoutsUsed, guestTimeoutsUsed, timeoutTeam, options: _options }: Props = $props();
-	void _options;
+	// options accepted for registry-contract parity; Classic ignores them
+	let { match, homeTimeoutsUsed, guestTimeoutsUsed, timeoutTeam }: Props = $props();
 
 	const setScoresExpanded = $derived(
 		match.showSetScores || match.status === 'finished' || !!timeoutTeam
@@ -221,14 +221,6 @@
 	.jersey {
 		flex-shrink: 0;
 		position: relative;
-	}
-	.jersey-logo {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		object-fit: contain;
-		padding: 6px;
 	}
 
 	.team-logo {

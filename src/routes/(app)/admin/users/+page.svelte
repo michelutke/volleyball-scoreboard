@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { untrack } from 'svelte';
 	import type { PageData } from './$types.js';
 	import { KSection, KButton, KEmpty, KInput, KField } from '$lib/components/k';
 
 	let { data }: { data: PageData } = $props();
 
-	let activeUsers = $state(data.activeUsers ?? []);
-	let pendingInvites = $state(data.pendingInvites ?? []);
-	const kcOrgIdMissing = data.kcOrgIdMissing ?? false;
+	let activeUsers = $state(untrack(() => data.activeUsers ?? []));
+	let pendingInvites = $state(untrack(() => data.pendingInvites ?? []));
+	const kcOrgIdMissing = untrack(() => data.kcOrgIdMissing ?? false);
 	let showInvite = $state(false);
 	let email = $state('');
 	let loading = $state(false);
