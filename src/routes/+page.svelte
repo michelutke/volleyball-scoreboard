@@ -12,10 +12,7 @@
 
 	let { data }: { data: PageData } = $props();
 
-	// Initialize from localStorage, fallback to 'de'
 	let lang = $state<Lang>('de');
-	// NOTE: cannot read localStorage during SSR — use onMount pattern or just 'de' default
-	// For SSR-safe init, just default to 'de'; client can toggle
 </script>
 
 <div class="landing">
@@ -34,7 +31,10 @@
 <style>
 	.landing {
 		min-height: 100vh;
-		background: radial-gradient(ellipse at 20% 0%, #3d0000 0%, #0a0a0a 55%);
-		color: var(--color-text-primary);
+		background: var(--k-surface);
+		color: var(--k-text);
+	}
+	:global(body:has(.landing)) {
+		background: var(--k-surface);
 	}
 </style>
