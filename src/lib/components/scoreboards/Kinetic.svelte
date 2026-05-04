@@ -44,21 +44,23 @@
 	const textDim = $derived(themeMode === 'light' ? '#6b6b6b' : '#8a8a8a');
 	const line = $derived(themeMode === 'light' ? '#c8c5bd' : '#2a2a2a');
 
-	type BannerInfo = { kind: 'timeout' | 'match' | 'set' | null; team: 'home' | 'guest' | null; label: string };
-	const banner: BannerInfo = $derived.by(() => {
-		if (timeoutTeam) return { kind: 'timeout', team: timeoutTeam, label: 'TIME OUT' };
-		if (homeMatchPoint) return { kind: 'match', team: 'home', label: 'MATCH POINT' };
-		if (guestMatchPoint) return { kind: 'match', team: 'guest', label: 'MATCH POINT' };
-		if (homeSetPoint) return { kind: 'set', team: 'home', label: 'SET POINT' };
-		if (guestSetPoint) return { kind: 'set', team: 'guest', label: 'SET POINT' };
-		return { kind: null, team: null, label: '' };
-	});
+	type BannerKind = 'timeout' | 'match' | 'set' | null;
+	function bannerFor(team: Team): { kind: BannerKind; label: string } {
+		if (timeoutTeam === team) return { kind: 'timeout', label: 'TIME OUT' };
+		if (team === 'home' && homeMatchPoint) return { kind: 'match', label: 'MATCH POINT' };
+		if (team === 'guest' && guestMatchPoint) return { kind: 'match', label: 'MATCH POINT' };
+		if (team === 'home' && homeSetPoint) return { kind: 'set', label: 'SET POINT' };
+		if (team === 'guest' && guestSetPoint) return { kind: 'set', label: 'SET POINT' };
+		return { kind: null, label: '' };
+	}
+
+	const homeBanner = $derived(bannerFor('home'));
+	const guestBanner = $derived(bannerFor('guest'));
 </script>
 
 <div
 	class="kinetic"
 	class:has-logos={showLogos}
-	class:has-banner={banner.kind !== null}
 	data-show-sets={match.showSetScores || match.status === 'finished' || !!timeoutTeam || match.setScores.length > 0}
 	style:--k-surface-board={surface}
 	style:--k-surface-board-alt={surfaceAlt}
@@ -70,104 +72,109 @@
 	style:--home-jersey={match.homeJerseyColor}
 	style:--guest-jersey={match.guestJerseyColor}
 >
-	<div class="rows">
-		<!-- HOME ROW -->
-		<div class="row home" class:serving={homeServing}>
-			{#if showLogos}
-				<div class="logo">
-					{#if match.homeTeamLogo}
-						<img src="/api/image-proxy?url={encodeURIComponent(match.homeTeamLogo)}" alt="" />
-					{:else}
-						<div class="jersey" style:background={match.homeJerseyColor}></div>
-					{/if}
-				</div>
-			{/if}
-
-			<div class="name-cell">
-				<span class="name">{match.homeTeamName.toUpperCase()}</span>
-				{#if homeServing}
-					<span class="service" aria-hidden="true">●</span>
+	<!-- HOME ROW -->
+	<div class="row home" class:serving={homeServing}>
+		{#if showLogos}
+			<div class="logo">
+				{#if match.homeTeamLogo}
+					<img src="/api/image-proxy?url={encodeURIComponent(match.homeTeamLogo)}" alt="" />
+				{:else}
+					<div class="jersey" style:background={match.homeJerseyColor}></div>
 				{/if}
 			</div>
+		{/if}
 
-			<div class="sets-cell">
-				<span class="sets-num">{match.homeSets}</span>
-			</div>
-
-			<div class="set-scores">
-				{#each match.setScores as s}
-					<span class="set-score" class:won={s.home > s.guest}>{s.home}</span>
-				{/each}
-			</div>
-
-			<div class="points-cell" class:point-home={homeServing}>
-				{#key match.homePoints}
-					<span class="points">{pad(match.homePoints)}</span>
-				{/key}
-			</div>
-
-			<div class="timeouts">
-				<span class="t-dot" class:used={homeTimeoutsUsed >= 1}></span>
-				<span class="t-dot" class:used={homeTimeoutsUsed >= 2}></span>
-			</div>
-		</div>
-
-		<!-- GUEST ROW -->
-		<div class="row guest" class:serving={guestServing}>
-			{#if showLogos}
-				<div class="logo">
-					{#if match.guestTeamLogo}
-						<img src="/api/image-proxy?url={encodeURIComponent(match.guestTeamLogo)}" alt="" />
-					{:else}
-						<div class="jersey" style:background={match.guestJerseyColor}></div>
-					{/if}
-				</div>
+		<div class="name-cell">
+			<span class="name">{match.homeTeamName.toUpperCase()}</span>
+			{#if homeServing}
+				<span class="service" aria-hidden="true">●</span>
 			{/if}
-
-			<div class="name-cell">
-				<span class="name">{match.guestTeamName.toUpperCase()}</span>
-				{#if guestServing}
-					<span class="service" aria-hidden="true">●</span>
-				{/if}
-			</div>
-
-			<div class="sets-cell">
-				<span class="sets-num">{match.guestSets}</span>
-			</div>
-
-			<div class="set-scores">
-				{#each match.setScores as s}
-					<span class="set-score" class:won={s.guest > s.home}>{s.guest}</span>
-				{/each}
-			</div>
-
-			<div class="points-cell" class:point-guest={guestServing}>
-				{#key match.guestPoints}
-					<span class="points">{pad(match.guestPoints)}</span>
-				{/key}
-			</div>
-
-			<div class="timeouts">
-				<span class="t-dot" class:used={guestTimeoutsUsed >= 1}></span>
-				<span class="t-dot" class:used={guestTimeoutsUsed >= 2}></span>
-			</div>
 		</div>
+
+		<div class="sets-cell">
+			<span class="sets-num">{match.homeSets}</span>
+		</div>
+
+		<div class="set-scores">
+			{#each match.setScores as s}
+				<span class="set-score" class:won={s.home > s.guest}>{s.home}</span>
+			{/each}
+		</div>
+
+		<div class="points-cell" class:point-home={homeServing}>
+			{#key match.homePoints}
+				<span class="points">{pad(match.homePoints)}</span>
+			{/key}
+		</div>
+
+		<div class="timeouts">
+			<span class="t-dot" class:used={homeTimeoutsUsed >= 1}></span>
+			<span class="t-dot" class:used={homeTimeoutsUsed >= 2}></span>
+		</div>
+
+		{#if homeBanner.kind}
+			<div
+				class="row-banner"
+				class:kind-set={homeBanner.kind === 'set'}
+				class:kind-match={homeBanner.kind === 'match'}
+				class:kind-timeout={homeBanner.kind === 'timeout'}
+			>
+				{homeBanner.label}
+			</div>
+		{/if}
 	</div>
 
-	{#if banner.kind}
-		<div
-			class="banner"
-			class:kind-set={banner.kind === 'set'}
-			class:kind-match={banner.kind === 'match'}
-			class:kind-timeout={banner.kind === 'timeout'}
-		>
-			<span class="banner-rule" aria-hidden="true"></span>
-			<span class="banner-label">{banner.label}</span>
-			<span class="banner-team">
-				{banner.team === 'home' ? match.homeTeamName.toUpperCase() : banner.team === 'guest' ? match.guestTeamName.toUpperCase() : ''}
-			</span>
+	<!-- GUEST ROW -->
+	<div class="row guest" class:serving={guestServing}>
+		{#if showLogos}
+			<div class="logo">
+				{#if match.guestTeamLogo}
+					<img src="/api/image-proxy?url={encodeURIComponent(match.guestTeamLogo)}" alt="" />
+				{:else}
+					<div class="jersey" style:background={match.guestJerseyColor}></div>
+				{/if}
+			</div>
+		{/if}
+
+		<div class="name-cell">
+			<span class="name">{match.guestTeamName.toUpperCase()}</span>
+			{#if guestServing}
+				<span class="service" aria-hidden="true">●</span>
+			{/if}
 		</div>
-	{/if}
+
+		<div class="sets-cell">
+			<span class="sets-num">{match.guestSets}</span>
+		</div>
+
+		<div class="set-scores">
+			{#each match.setScores as s}
+				<span class="set-score" class:won={s.guest > s.home}>{s.guest}</span>
+			{/each}
+		</div>
+
+		<div class="points-cell" class:point-guest={guestServing}>
+			{#key match.guestPoints}
+				<span class="points">{pad(match.guestPoints)}</span>
+			{/key}
+		</div>
+
+		<div class="timeouts">
+			<span class="t-dot" class:used={guestTimeoutsUsed >= 1}></span>
+			<span class="t-dot" class:used={guestTimeoutsUsed >= 2}></span>
+		</div>
+
+		{#if guestBanner.kind}
+			<div
+				class="row-banner"
+				class:kind-set={guestBanner.kind === 'set'}
+				class:kind-match={guestBanner.kind === 'match'}
+				class:kind-timeout={guestBanner.kind === 'timeout'}
+			>
+				{guestBanner.label}
+			</div>
+		{/if}
+	</div>
 </div>
 
 <style>
@@ -175,36 +182,26 @@
 		display: inline-flex;
 		flex-direction: column;
 		font-family: var(--font-sans);
-		background: var(--k-surface-board);
 		color: var(--k-text-board);
-		border: 1px solid var(--k-line-board);
-	}
-
-	.rows {
-		display: grid;
-		grid-template-rows: 64px 64px;
 	}
 
 	.row {
-		display: grid;
-		grid-template-columns: minmax(220px, 1fr) 56px auto 88px 32px;
+		display: flex;
 		align-items: stretch;
+		height: 64px;
 		background: var(--k-surface-board);
+		border: 1px solid var(--k-line-board);
 		transition: background 0.3s ease;
 	}
-	.kinetic.has-logos .row {
-		grid-template-columns: 64px minmax(180px, 1fr) 56px auto 88px 32px;
+	.row.guest {
+		border-top: none;
 	}
-
-	.row.home {
-		border-bottom: 1px solid var(--k-line-board);
-	}
-
 	.row.serving {
 		background: color-mix(in srgb, var(--k-warm) 6%, var(--k-surface-board));
 	}
 
 	.logo {
+		flex: 0 0 64px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -223,12 +220,13 @@
 	}
 
 	.name-cell {
+		flex: 1 1 220px;
+		min-width: 180px;
 		display: flex;
 		align-items: center;
 		gap: 12px;
 		padding: 0 18px;
 		border-right: 1px solid var(--k-line-board);
-		min-width: 0;
 		overflow: hidden;
 	}
 
@@ -265,6 +263,7 @@
 	}
 
 	.sets-cell {
+		flex: 0 0 56px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -293,7 +292,7 @@
 	}
 
 	.set-score {
-		min-width: 40px;
+		flex: 0 0 40px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -318,6 +317,7 @@
 	}
 
 	.points-cell {
+		flex: 0 0 88px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -372,6 +372,7 @@
 	}
 
 	.timeouts {
+		flex: 0 0 32px;
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
@@ -396,64 +397,40 @@
 		border-color: var(--guest-jersey, var(--k-cool));
 	}
 
-	.banner {
+	.row-banner {
+		flex: 0 0 auto;
+		margin-left: 4px;
+		padding: 0 22px;
 		display: flex;
 		align-items: center;
-		gap: 14px;
-		padding: 10px 16px;
 		font-family: var(--font-mono);
-		font-size: 12px;
+		font-size: 13px;
 		letter-spacing: 0.18em;
 		font-weight: 600;
-		border-top: 1px solid var(--k-line-board);
+		white-space: nowrap;
 		animation: banner-slide 0.45s var(--ease-mass, cubic-bezier(0.6, 0.05, 0.1, 1));
 	}
 
-	.banner-rule {
-		display: block;
-		width: 24px;
-		height: 2px;
-	}
-
-	.banner-team {
-		font-family: var(--font-display);
-		font-size: 13px;
-		letter-spacing: 0.06em;
-		color: var(--k-text-dim-board);
-		margin-left: auto;
-	}
-
-	.banner.kind-set {
-		background: color-mix(in srgb, var(--k-cool) 12%, var(--k-surface-board));
-		color: var(--k-cool);
-	}
-	.banner.kind-set .banner-rule {
+	.row-banner.kind-set {
 		background: var(--k-cool);
+		color: var(--paper, #f5f3ee);
 	}
-
-	.banner.kind-match {
-		background: color-mix(in srgb, var(--k-warm) 14%, var(--k-surface-board));
-		color: var(--k-warm);
-	}
-	.banner.kind-match .banner-rule {
+	.row-banner.kind-match {
 		background: var(--k-warm);
+		color: var(--paper, #f5f3ee);
 	}
-
-	.banner.kind-timeout {
-		background: color-mix(in srgb, #eab308 18%, var(--k-surface-board));
-		color: #eab308;
-	}
-	.banner.kind-timeout .banner-rule {
+	.row-banner.kind-timeout {
 		background: #eab308;
+		color: #0a0a0a;
 	}
 
 	@keyframes banner-slide {
 		from {
-			transform: translateY(-8px);
+			transform: translateX(12px);
 			opacity: 0;
 		}
 		to {
-			transform: translateY(0);
+			transform: translateX(0);
 			opacity: 1;
 		}
 	}
@@ -466,7 +443,7 @@
 	:global([data-motion='static']) .points {
 		animation: none;
 	}
-	:global([data-motion='static']) .banner {
+	:global([data-motion='static']) .row-banner {
 		animation: none;
 	}
 </style>

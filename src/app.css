@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/inter';
+@import '@fontsource/montserrat/400.css';
+@import '@fontsource/montserrat/700.css';
+@import '@fontsource/montserrat/800.css';
 
 html,
 body {
