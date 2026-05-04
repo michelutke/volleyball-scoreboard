@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import type { MatchState, DesignTemplate, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
 	import QRCode from 'qrcode';
+	import MatchLayoutOverride from '$lib/components/MatchLayoutOverride.svelte';
 
 	let { data } = $props();
 
@@ -808,6 +809,14 @@
 					</select>
 				</div>
 				{/if}
+				<div class="dialog-section">
+					<MatchLayoutOverride
+						matchId={parseInt(page.params.matchId ?? '0')}
+						current={data.scoreboardLayout ?? null}
+						currentOptions={data.scoreboardOptions ?? null}
+						orgDefault={data.orgDefaultLayout ?? null}
+					/>
+				</div>
 			</div>
 			<div class="dialog-footer">
 				<button onclick={() => settingsOpen = false} class="btn-action">
