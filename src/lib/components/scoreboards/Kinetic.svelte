@@ -181,6 +181,7 @@
 	.kinetic {
 		display: inline-flex;
 		flex-direction: column;
+		align-items: flex-start;
 		font-family: var(--font-sans);
 		color: var(--k-text-board);
 	}
@@ -189,6 +190,7 @@
 		display: flex;
 		align-items: stretch;
 		height: 64px;
+		width: max-content;
 		background: var(--k-surface-board);
 		border: 1px solid var(--k-line-board);
 		transition: background 0.3s ease;
