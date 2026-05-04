@@ -3,6 +3,7 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import type { PageData } from './$types.js';
 	import type { MatchListItem } from '$lib/types.js';
+	import { KSection, KButton, KEmpty, KCard } from '$lib/components/k';
 
 	let { data }: { data: PageData } = $props();
 
@@ -25,14 +26,24 @@
 	function formatDate(iso: string | null): string {
 		if (!iso) return '–';
 		const d = new Date(iso);
-		return d.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+		return d.toLocaleDateString('de-CH', {
+			weekday: 'short',
+			day: '2-digit',
+			month: '2-digit',
+			year: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		});
 	}
 
-	function statusBadge(status: string): { text: string; cls: string } {
+	function statusInfo(status: string): { text: string; cls: string } {
 		switch (status) {
-			case 'live': return { text: 'Live', cls: 'bg-red-600 text-white' };
-			case 'finished': return { text: 'Beendet', cls: 'bg-bg-panel-hover text-text-primary' };
-			default: return { text: 'Geplant', cls: 'bg-accent-deepest/40 text-accent' };
+			case 'live':
+				return { text: 'Live', cls: 'live' };
+			case 'finished':
+				return { text: 'Beendet', cls: 'done' };
+			default:
+				return { text: 'Geplant', cls: 'plan' };
 		}
 	}
 
@@ -117,86 +128,83 @@
 	});
 </script>
 
-<div class="min-h-screen bg-bg-base p-4">
-	<div class="max-w-2xl mx-auto">
-		<div class="mb-6">
-			<h1 class="text-2xl font-bold text-text-primary">Dashboard</h1>
-			<p class="text-text-secondary text-sm">Kommende Spiele deiner Favoriten</p>
-		</div>
-
+<div class="page">
+	<KSection kicker="— Übersicht / Overview" title="Dashboard" subtitle="Kommende Spiele deiner Favoriten">
 		{#if !loaded}
-			<div class="bg-bg-panel-alt rounded-xl p-8 text-center text-text-tertiary">Laden...</div>
+			<p class="muted k-mono">Laden...</p>
 		{:else if entries.length === 0}
-			<div class="bg-bg-panel-alt rounded-xl p-8 text-center">
-				<p class="text-text-secondary">Noch keine Favoriten</p>
-				<p class="text-text-tertiary text-sm mt-2">Teams unter <a href="/teams" class="text-accent underline">Teams</a> als Favorit markieren.</p>
-			</div>
+			<KEmpty
+				numeral="00"
+				title="Noch keine Favoriten"
+				body="Markiere Teams unter „Teams” als Favorit, um sie hier zu sehen."
+			>
+				{#snippet action()}
+					<KButton href="/teams" variant="primary">Zu den Teams</KButton>
+				{/snippet}
+			</KEmpty>
 		{:else}
 			{#snippet teamSection(sectionEntries: TeamEntry[])}
-				<div class="space-y-6">
+				<div class="team-stack">
 					{#each sectionEntries as entry}
-						<div>
-							<div class="flex items-center gap-2 mb-2">
-								<a href="/teams/{entry.teamId}" class="text-text-primary font-semibold hover:underline">{entry.teamName}</a>
-							</div>
+						<div class="team-block">
+							<a href="/teams/{entry.teamId}" class="team-name">{entry.teamName}</a>
 							{#if entry.loading}
-								<div class="text-text-tertiary text-sm">Laden...</div>
+								<p class="muted k-mono">Laden...</p>
 							{:else if entry.matches.length === 0}
-								<div class="text-text-tertiary text-sm">Keine kommenden Spiele</div>
+								<p class="muted k-mono">Keine kommenden Spiele</p>
 							{:else}
-								<div class="space-y-2">
+								<div class="match-list">
 									{#each entry.matches as match}
-										<div class="bg-bg-panel-alt rounded-xl p-4">
-											<div class="flex items-start justify-between mb-2">
-												<div class="flex-1">
-													<div class="text-text-primary font-medium">
-														{match.homeTeamName} <span class="text-text-tertiary">vs</span> {match.guestTeamName}
-													</div>
-													<div class="text-xs text-text-tertiary mt-1 space-x-3">
-														<span>{formatDate(match.scheduledAt)}</span>
-														{#if match.venue}<span>{match.venue}</span>{/if}
-														{#if match.league}<span>{match.league}</span>{/if}
-													</div>
+										<KCard padding="md">
+											<div class="match-head">
+												<div class="match-title">
+													<span class="vs">
+														{match.homeTeamName}
+														<em>vs</em>
+														{match.guestTeamName}
+													</span>
+													<span class="meta k-mono">
+														{formatDate(match.scheduledAt)}
+														{#if match.venue}<span class="dot">·</span>{match.venue}{/if}
+														{#if match.league}<span class="dot">·</span>{match.league}{/if}
+													</span>
 												</div>
-												<span class="text-xs px-2 py-0.5 rounded {statusBadge(match.status).cls}">
-													{statusBadge(match.status).text}
+												<span class="status status-{statusInfo(match.status).cls}">
+													{statusInfo(match.status).text}
 												</span>
 											</div>
-
-											<div class="flex justify-between items-center mt-2">
-												<div class="flex gap-2">
+											<div class="match-actions">
+												<div class="actions-left">
 													{#if match.status === 'upcoming'}
-														<button
+														<KButton
+															variant="primary"
+															size="sm"
 															onclick={() => activateMatch(match.id)}
 															disabled={activating === match.id}
-															class="text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg"
 														>
 															{activating === match.id ? '...' : 'Scoring starten'}
-														</button>
+														</KButton>
 													{:else if match.status === 'live'}
-														<a href="/matches/{match.id}/control" class="text-xs bg-accent-mid hover:bg-accent-dark text-white px-3 py-1.5 rounded-lg">
+														<KButton href="/matches/{match.id}/control" variant="primary" size="sm">
 															Control
-														</a>
+														</KButton>
 													{/if}
-													<button
-														onclick={() => copyOverlayLink(match.id)}
-														class="text-xs bg-bg-base hover:bg-bg-panel-hover text-text-secondary px-3 py-1.5 rounded-lg"
-														title="Overlay-Link kopieren"
-													>
+													<KButton variant="secondary" size="sm" onclick={() => copyOverlayLink(match.id)}>
 														Overlay-Link
-													</button>
+													</KButton>
 												</div>
 												{#if match.status === 'live'}
-													<button
+													<KButton
+														variant="danger"
+														size="sm"
 														onclick={() => cancelMatch(match.id)}
 														disabled={cancelling === match.id}
-														class="text-xs text-red-400 hover:text-red-300 disabled:opacity-50 px-2 py-1.5"
 													>
 														{cancelling === match.id ? '...' : 'Abbrechen'}
-													</button>
+													</KButton>
 												{/if}
 											</div>
-										</div>
+										</KCard>
 									{/each}
 								</div>
 							{/if}
@@ -206,18 +214,151 @@
 			{/snippet}
 
 			{#if pinnedEntries.length > 0}
-				<div class="mb-8">
-					<h2 class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-3">Vom Admin angepinnt</h2>
+				<div class="group">
+					<h2 class="group-label k-mono">— Vom Admin angepinnt</h2>
 					{@render teamSection(pinnedEntries)}
 				</div>
 			{/if}
 
 			{#if favEntries.length > 0}
-				<div>
-					<h2 class="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-3">Deine Favoriten</h2>
+				<div class="group">
+					<h2 class="group-label k-mono">— Deine Favoriten</h2>
 					{@render teamSection(favEntries)}
 				</div>
 			{/if}
 		{/if}
-	</div>
+	</KSection>
 </div>
+
+<style>
+	.page {
+		min-height: 100vh;
+		background: var(--k-surface);
+		color: var(--k-text);
+	}
+
+	.muted {
+		font-size: 12px;
+		letter-spacing: 0.08em;
+		color: var(--k-text-dim);
+	}
+
+	.group {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		margin-bottom: 32px;
+	}
+
+	.group-label {
+		font-size: 11px;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
+		margin: 0;
+	}
+
+	.team-stack {
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+	}
+
+	.team-block {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.team-name {
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-bold);
+		font-size: 18px;
+		color: var(--k-text);
+		text-decoration: none;
+		letter-spacing: -0.01em;
+		transition: color var(--dur-fast) var(--ease-snap);
+	}
+	.team-name:hover {
+		color: var(--pulse);
+	}
+
+	.match-list {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.match-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 16px;
+		margin-bottom: 16px;
+	}
+
+	.match-title {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	.vs {
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-medium);
+		font-size: 16px;
+		color: var(--k-text);
+	}
+	.vs em {
+		font-style: normal;
+		color: var(--k-text-dim);
+		margin: 0 6px;
+		font-size: 13px;
+	}
+
+	.meta {
+		font-size: 11px;
+		letter-spacing: 0.06em;
+		color: var(--k-text-dim);
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		align-items: center;
+	}
+	.meta .dot {
+		color: var(--k-line);
+	}
+
+	.status {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		padding: 4px 8px;
+		border: 1px solid currentColor;
+		white-space: nowrap;
+		flex-shrink: 0;
+	}
+	.status-live {
+		color: var(--pulse);
+	}
+	.status-done {
+		color: var(--k-text-dim);
+	}
+	.status-plan {
+		color: var(--cool-soft);
+	}
+
+	.match-actions {
+		display: flex;
+		justify-content: space-between;
+		gap: 12px;
+		flex-wrap: wrap;
+	}
+
+	.actions-left {
+		display: flex;
+		gap: 8px;
+		flex-wrap: wrap;
+	}
+</style>
