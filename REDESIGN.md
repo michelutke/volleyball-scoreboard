@@ -1,7 +1,7 @@
 # Scorely — Kinetic Redesign
 
-Branch: `feature/redesign` (18 commits ahead of `main`)
-Status: complete, ready to merge
+Branch: `feature/redesign` (merged via PR #141 + PR #142)
+Status: shipped to `main`
 
 A full visual + interaction overhaul of the Scorely app under a single design language ("Kinetic"). Every user-facing surface is restyled, a new scoreboard variant is shipped alongside the existing Classic, and a per-match layout override system is wired end-to-end with backend persistence.
 
@@ -269,3 +269,50 @@ Same chain for `scoreboardOptions`.
 - **Inter has no width axis** — "breathing" uses the weight axis instead (decided P1, accepted tradeoff)
 - **Classic scoreboard kept as default** for new orgs — Kinetic is opt-in via `/library` so existing matches don't change unless explicitly switched
 - **`/admin/designs` form panels** — not deeply Kinetic-styled (Tailwind tokens already flip per theme; full rewrite was out of scope)
+
+---
+
+## Post-merge passes (PR #142)
+
+A second round closing remaining gaps and consolidating the app shell.
+
+### P13 — Gap closure (`8f21f2e`)
+
+- **Profile page** (`src/routes/(app)/profile/+page.svelte`): full Kinetic restyle — k-mono kickers, surface-alt cards, `KThemeToggle`, squared subscription badges (active = pulse, trial = cool, error tones).
+- **Team detail** (`src/routes/(app)/teams/[teamId]/+page.svelte`): kicker + k-display title, animated underline tabs (mirror Nav indicator with `--pulse` bar), `KListRow`-style match rows with k-mono badges (live = pulse, planned = cool), `KButton` actions, `KField`/`KInput` create form.
+- **Library logged-in shell** (`src/routes/library/+page.svelte` + `+page.server.ts`): keep app `Nav` instead of `LandingNav` when `data.isLoggedIn`; compact hero (smaller padding + title clamp). Server load returns `clubName` + `isAdmin` for the Nav.
+- **Match control** (`src/routes/matches/[matchId]/control/+page.svelte`):
+  - Token swap to Kinetic (`--k-line`, `--k-text*`, `--k-surface*`); set badges, timeout info, scoring grid borders, timeline cells all use k-tokens.
+  - Squared buttons: `.btn-primary` / `.btn-service` / `.btn-action-danger` no longer rounded; `btn-service-active` uses `--cool` tone instead of accent gradient.
+  - **Mobile bottom-sheet dialogs** at ≤600px — both Settings and Advanced `<dialog>` elements slide up from the bottom (`@keyframes sheet-up`, backdrop fade), full-width with no rounded corners. Centered modal preserved on desktop.
+  - Permalink confirm box restyled with k-tokens (no more Tailwind utility classes inline).
+  - Nav-bar links now k-mono uppercase 11px.
+
+### P14 — Nav consolidation + Library merge (`6691780`)
+
+- **Nav** (`src/lib/components/Nav.svelte`):
+  - Removed Bibliothek + Profil from the link list. Active links: Dashboard, Teams, Nutzer (admin), Designs (admin), Einstellungen.
+  - Avatar in top-right is now a direct `<a href="/profile">` (was a button opening a dropdown). The user-menu dropdown is gone entirely on desktop.
+  - Mobile drawer keeps Profil + Theme/Motion toggles + Signout.
+- **Profile page**: split Theme + Motion into separate cards (was Theme only) so desktop users access motion controls via Profile.
+- **`/admin/designs`** (admin-only): full Kinetic restyle, restructured into three sections:
+  1. **01 · Scorely Layouts** — Kinetic + Classic preview cards, "Aktiv" badge on the org-default, `KButton` select, customizable options panel for the selected layout (migrated from `/library`).
+  2. **02 · Eigene Designs** — private `designTemplates` rows with swatch + name + Standard/Public k-mono badges; ghost/secondary/danger `KButton` actions.
+  3. **03 · Community-Bibliothek** — published custom overlays grid, install/preview actions.
+  - Create/edit form moved into a `<dialog>`: centered modal on desktop, slide-up bottom-sheet on mobile (≤600px). Uses `KField`/`KInput`/`KButton` and k-mono color labels.
+  - Server load (`+page.server.ts`) now also returns `orgLayoutId` + `orgLayoutOptions` from `settings`.
+- **`/library`** still accessible by URL for logged-in users (with the app shell Nav), just removed from the nav bar. Public unauthenticated visitors still see `LandingNav` + full hero for marketing.
+
+### File map additions / changes (post-merge)
+
+**Substantially rewritten:**
+- `src/routes/(app)/admin/designs/+page.svelte` (3-section layout, dialog-based form)
+- `src/routes/(app)/profile/+page.svelte` (k-tokens, Theme + Motion split)
+- `src/routes/(app)/teams/[teamId]/+page.svelte` (Kinetic with underline tabs)
+- `src/lib/components/Nav.svelte` (drop user-menu dropdown, avatar = link)
+
+**Surgically updated:**
+- `src/routes/(app)/admin/designs/+page.server.ts` (load `orgLayoutId` + `orgLayoutOptions`)
+- `src/routes/library/+page.server.ts` (return `clubName` + `isAdmin`)
+- `src/routes/library/+page.svelte` (conditional Nav vs LandingNav, compact hero)
+- `src/routes/matches/[matchId]/control/+page.svelte` (k-token swap, squared buttons, bottom-sheet dialogs)
