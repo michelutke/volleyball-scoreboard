@@ -455,4 +455,54 @@
 			display: none !important;
 		}
 	}
+
+	/* Phones: compact every cell so the whole board fits ~250px */
+	@media (max-width: 480px) {
+		.row {
+			height: 50px;
+		}
+		.logo {
+			flex: 0 0 40px;
+			padding: 6px;
+		}
+		.jersey {
+			width: 24px;
+			height: 24px;
+		}
+		.name-cell {
+			flex: 1 1 96px;
+			min-width: 96px;
+			padding: 0 12px;
+			gap: 8px;
+		}
+		.name {
+			font-size: 14px;
+		}
+		.sets-cell {
+			flex: 0 0 40px;
+		}
+		.sets-num {
+			font-size: 18px;
+		}
+		.points-cell {
+			flex: 0 0 56px;
+		}
+		.points {
+			font-size: 24px;
+		}
+		.timeouts {
+			flex: 0 0 24px;
+			padding: 0 6px;
+			gap: 3px;
+		}
+		.t-dot {
+			width: 6px;
+			height: 6px;
+		}
+		.row-banner {
+			font-size: 10px;
+			padding: 0 10px;
+			letter-spacing: 0.12em;
+		}
+	}
 </style>

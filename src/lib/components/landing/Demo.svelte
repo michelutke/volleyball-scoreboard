@@ -480,4 +480,22 @@
 			grid-template-columns: 1fr 1fr;
 		}
 	}
+
+	@media (max-width: 480px) {
+		.demo {
+			padding: 64px var(--grid-margin);
+		}
+		.head {
+			margin-bottom: 32px;
+		}
+		.board-stage {
+			padding: 16px 10px 20px;
+			overflow: hidden;
+			min-height: 0;
+		}
+		.board-shrink {
+			width: 100%;
+			justify-content: center;
+		}
+	}
 </style>
