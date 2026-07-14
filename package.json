@@ -36,7 +36,7 @@
 		"@fontsource/montserrat": "^5.2.8",
 		"@stripe/stripe-js": "^8.11.0",
 		"@sveltejs/adapter-node": "^5.5.4",
-		"drizzle-orm": "^0.45.1",
+		"drizzle-orm": "^0.45.2",
 		"lru-cache": "^11.2.7",
 		"lucide-svelte": "^1.0.1",
 		"motion": "^12.38.0",
