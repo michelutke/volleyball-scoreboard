@@ -82,6 +82,24 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "scorely-mobile",
+      "name": "Scorely Live mobile app",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["ch.scorely.live://oauth"],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "basic", "email", "organization"],
+      "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
     }
   ],
   "browserFlow": "scorely-browser",
