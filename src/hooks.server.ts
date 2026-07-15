@@ -24,6 +24,8 @@ const OVERLAY_PATTERN = /^\/matches\/[^/]+\/overlay/;
 const LEGACY_OVERLAY = /^\/overlay($|\/)/;
 const SHARE_CONTROL = /^\/(c|api\/c)\//;
 const BILLING_EXEMPT = /^\/(billing|api\/billing)($|\/)(?!webhook)/;
+// Bearer-token-authenticated routes: skip session auth, but stay rate-limited and no-store like other private API routes.
+const MOBILE_API_PATTERN = /^\/api\/mobile(\/|$)/;
 
 const isOverlay = (path: string): boolean =>
 	OVERLAY_PATTERN.test(path) || LEGACY_OVERLAY.test(path);
@@ -42,7 +44,7 @@ export const handle = sequence(authHandle, async ({ event, resolve }) => {
 		isOverlay(path) ||
 		SHARE_CONTROL.test(path);
 
-	if (!isPublic) {
+	if (!isPublic && !MOBILE_API_PATTERN.test(path)) {
 		const session = await event.locals.auth();
 		if (!session) redirect(307, `/signin?callbackUrl=${encodeURIComponent(event.url.pathname)}`);
 
