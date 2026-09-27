@@ -460,10 +460,21 @@ export async function getKcOrgIdFromAlias(alias: string): Promise<string | undef
 		}
 		// KC may not support ?exact=true — fall back to unfiltered search
 		const res2 = await kcFetch(`/organizations?search=${encodeURIComponent(alias)}`);
-		if (!res2.ok) return undefined;
-		const orgs: { id: string; alias: string }[] = await res2.json();
+		if (res2.ok) {
+			const orgs: { id: string; alias: string }[] = await res2.json();
+			const match = orgs.find((o) => o.alias === alias);
+			if (match) return match.id;
+		}
+		// ?search= matches name/domain only; alias differs from name for most orgs. List and match alias.
+		const all = await kcFetch('/organizations?max=200');
+		if (!all.ok) {
+			console.warn('[keycloak] getKcOrgIdFromAlias: listing organizations failed:', all.status);
+			return undefined;
+		}
+		const orgs: { id: string; alias: string }[] = await all.json();
 		return orgs.find((o) => o.alias === alias)?.id;
-	} catch {
+	} catch (e) {
+		console.warn('[keycloak] getKcOrgIdFromAlias failed:', e);
 		return undefined;
 	}
 }
