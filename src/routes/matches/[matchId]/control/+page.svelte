@@ -895,14 +895,17 @@
 	.scoreboard-preview-wrap {
 		width: 100%;
 		height: 140px;
+		display: flex;
+		justify-content: center;
 		overflow: hidden;
 		border-radius: 8px;
 		pointer-events: none;
 	}
 
 	.scoreboard-preview-scale {
+		flex: none;
 		transform: scale(0.35);
-		transform-origin: top left;
+		transform-origin: top center;
 	}
 
 	.set-scores { display: flex; justify-content: center; gap: 8px; padding: 0 20px 16px; }
