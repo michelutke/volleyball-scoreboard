@@ -1,31 +1,26 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import type { MatchState, SSEEvent } from '$lib/types.js';
+	import { invalidateAll } from '$app/navigation';
+	import type { MatchState, SSEEvent, Team } from '$lib/types.js';
+	import OverlayRenderer from '$lib/components/OverlayRenderer.svelte';
 
 	let { data } = $props();
+
 	let match = $state<MatchState | null>(null);
 	let homeTimeoutsUsed = $state(0);
 	let guestTimeoutsUsed = $state(0);
 	let prevSet = $state(0);
 
 	$effect(() => {
-		if (data.match) match = data.match;
+		match = data.match ?? null;
 		homeTimeoutsUsed = data.timeouts?.home ?? 0;
 		guestTimeoutsUsed = data.timeouts?.guest ?? 0;
 		if (data.match) prevSet = data.match.currentSet;
 	});
 
-	let timeoutTeam = $state<string | null>(null);
+	let timeoutTeam = $state<Team | null>(null);
 	let timeoutTimer = $state<ReturnType<typeof setTimeout> | null>(null);
-	let setScoresExpanded = $derived(match?.showSetScores || match?.status === 'finished' || !!timeoutTeam);
 
-	function scoreBg(m: MatchState): string {
-		return m.scoreColorGradient
-			? `linear-gradient(to bottom, ${m.scoreColor}, ${m.scoreColor2})`
-			: m.scoreColor;
-	}
-
-	function startTimeout(team: string) {
+	function startTimeout(team: Team) {
 		if (timeoutTimer) clearTimeout(timeoutTimer);
 		timeoutTeam = team;
 		timeoutTimer = setTimeout(() => {
@@ -34,9 +29,11 @@
 		}, 30000);
 	}
 
-	onMount(() => {
-		if (!data.matchId) return;
-		const es = new EventSource(`/api/matches/${data.matchId}/stream`);
+	$effect(() => {
+		const matchId = data.matchId;
+		if (!matchId) return;
+
+		const es = new EventSource(`/api/matches/${matchId}/stream`);
 
 		es.onmessage = (event) => {
 			const parsed: SSEEvent = JSON.parse(event.data);
@@ -64,12 +61,22 @@
 					else guestTimeoutsUsed++;
 				}
 			}
+
+			if (parsed.type === 'permalink') {
+				invalidateAll();
+			}
 		};
 
 		return () => {
 			es.close();
 			if (timeoutTimer) clearTimeout(timeoutTimer);
 		};
+	});
+
+	$effect(() => {
+		if (data.matchId) return;
+		const interval = setInterval(() => invalidateAll(), 15000);
+		return () => clearInterval(interval);
 	});
 </script>
 
@@ -86,95 +93,16 @@
 
 {#if match}
 	<div class="overlay">
-		<div class="scoreboard" class:has-logo={!!(match.homeTeamLogo || match.guestTeamLogo)}>
-			<!-- Home Team Row -->
-			<div class="team-row home-row">
-				{#if match.showJerseyColors}
-					<div class="jersey" style:background-color={match.homeJerseyColor}>
-						{#if match.homeTeamLogo}
-							<img src="/api/image-proxy?url={encodeURIComponent(match.homeTeamLogo)}" alt="" class="jersey-logo" />
-						{/if}
-					</div>
-				{/if}
-				<div class="team-name">
-					<span>{match.homeTeamName.toUpperCase()}</span>
-					<img
-						src="/vbcthun-ball.svg"
-						alt="Service"
-						class="service-icon"
-						class:service-hidden={match.serviceTeam !== 'home'}
-					/>
-				</div>
-				<div class="sets">{match.homeSets}</div>
-				<div class="set-scores-container" class:expanded={setScoresExpanded}>
-					{#each match.setScores as s}
-						<div class="set-score-cell" class:set-score-winner={s.home > s.guest} style:--winner-color={match.homeJerseyColor}>{s.home}</div>
-					{/each}
-				</div>
-				<div class="points" style:background={scoreBg(match)}>
-					{match.homePoints}
-				</div>
-				<div class="timeout-boxes" style:--jersey-color={match.homeJerseyColor}>
-					<div
-						class="timeout-box"
-						class:taken={homeTimeoutsUsed >= 2}
-						style:background-color={homeTimeoutsUsed < 2 ? match.homeJerseyColor : undefined}
-					></div>
-					<div
-						class="timeout-box"
-						class:taken={homeTimeoutsUsed >= 1}
-						style:background-color={homeTimeoutsUsed < 1 ? match.homeJerseyColor : undefined}
-					></div>
-				</div>
-				{#if timeoutTeam === 'home'}
-					<div class="timeout">TIME OUT</div>
-				{/if}
-			</div>
-
-			<!-- Guest Team Row -->
-			<div class="team-row guest-row">
-				{#if match.showJerseyColors}
-					<div class="jersey" style:background-color={match.guestJerseyColor}>
-						{#if match.guestTeamLogo}
-							<img src="/api/image-proxy?url={encodeURIComponent(match.guestTeamLogo)}" alt="" class="jersey-logo" />
-						{/if}
-					</div>
-				{/if}
-				<div class="team-name">
-					<span>{match.guestTeamName.toUpperCase()}</span>
-					<img
-						src="/vbcthun-ball.svg"
-						alt="Service"
-						class="service-icon"
-						class:service-hidden={match.serviceTeam !== 'guest'}
-					/>
-				</div>
-				<div class="sets">{match.guestSets}</div>
-				<div class="set-scores-container" class:expanded={setScoresExpanded}>
-					{#each match.setScores as s}
-						<div class="set-score-cell" class:set-score-winner={s.guest > s.home} style:--winner-color={match.guestJerseyColor}>{s.guest}</div>
-					{/each}
-				</div>
-				<div class="points" style:background={scoreBg(match)}>
-					{match.guestPoints}
-				</div>
-				<div class="timeout-boxes" style:--jersey-color={match.guestJerseyColor}>
-					<div
-						class="timeout-box"
-						class:taken={guestTimeoutsUsed >= 2}
-						style:background-color={guestTimeoutsUsed < 2 ? match.guestJerseyColor : undefined}
-					></div>
-					<div
-						class="timeout-box"
-						class:taken={guestTimeoutsUsed >= 1}
-						style:background-color={guestTimeoutsUsed < 1 ? match.guestJerseyColor : undefined}
-					></div>
-				</div>
-				{#if timeoutTeam === 'guest'}
-					<div class="timeout">TIME OUT</div>
-				{/if}
-			</div>
-		</div>
+		<OverlayRenderer
+			{match}
+			{homeTimeoutsUsed}
+			{guestTimeoutsUsed}
+			{timeoutTeam}
+			customCode={data.customCode}
+			templateId={data.templateId}
+			layoutId={data.scoreboardLayout}
+			options={(data.scoreboardOptions ?? {}) as Record<string, string | number | boolean>}
+		/>
 	</div>
 {/if}
 
@@ -183,165 +111,6 @@
 		position: fixed;
 		top: 30px;
 		left: 30px;
-		font-family: 'Montserrat', 'Arial', sans-serif;
 		z-index: 9999;
-	}
-
-	.scoreboard {
-		display: flex;
-		flex-direction: column;
-		gap: 3px;
-	}
-
-	.team-row {
-		display: flex;
-		align-items: stretch;
-		height: 64px;
-	}
-
-	.home-row .team-name {
-		background: var(--color-overlay-bg-dark);
-	}
-
-	.guest-row .team-name {
-		background: var(--color-overlay-bg);
-	}
-
-	.jersey {
-		width: 10px;
-		flex-shrink: 0;
-		position: relative;
-	}
-
-	.has-logo .jersey {
-		width: 64px;
-	}
-	.jersey-logo {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		object-fit: contain;
-		padding: 6px;
-	}
-
-	.team-name {
-		color: white;
-		padding: 0 24px;
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		min-width: 260px;
-		font-size: 28px;
-		font-weight: 800;
-		letter-spacing: 0.5px;
-	}
-
-	.service-icon {
-		width: 28px;
-		height: 28px;
-		opacity: 0.85;
-		margin-left: auto;
-	}
-
-	.service-icon.service-hidden {
-		visibility: hidden;
-	}
-
-	.sets {
-		background: var(--color-overlay-bg);
-		color: white;
-		width: 64px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 32px;
-		font-weight: 800;
-		font-variant-numeric: tabular-nums;
-		border-left: 2px solid var(--color-overlay-border);
-	}
-
-	.points {
-		color: white;
-		width: 72px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 36px;
-		font-weight: 800;
-		font-variant-numeric: tabular-nums;
-		transition: all 0.2s ease;
-	}
-
-	.set-score-cell {
-		background: var(--color-overlay-bg);
-		color: var(--color-text-secondary);
-		width: 56px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 28px;
-		font-weight: 800;
-		font-variant-numeric: tabular-nums;
-		border-left: 1px solid var(--color-overlay-border);
-		border-bottom: 3px solid transparent;
-	}
-
-
-	.set-score-winner {
-		border-bottom-color: var(--winner-color);
-		color: var(--color-text-primary);
-	}
-
-	.set-scores-container {
-		display: flex;
-		align-items: stretch;
-		max-width: 0;
-		overflow: hidden;
-		opacity: 0;
-		transition: max-width 0.4s ease, opacity 0.3s ease;
-	}
-
-	.set-scores-container.expanded {
-		max-width: 500px;
-		opacity: 1;
-	}
-
-	.timeout-boxes {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		justify-content: center;
-		padding: 4px 0;
-	}
-
-	.timeout-box {
-		width: 10px;
-		height: 26px;
-	}
-
-	.timeout-box.taken {
-		background: transparent;
-		border: 1px solid var(--jersey-color);
-	}
-
-	.timeout {
-		margin-left: 3px;
-		background: rgba(234, 179, 8, 0.95);
-		color: black;
-		padding: 0 20px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-weight: 400;
-		font-size: 28px;
-		letter-spacing: 1px;
-		white-space: nowrap;
-		animation: fadeIn 0.3s ease;
-	}
-
-	@keyframes fadeIn {
-		from { opacity: 0; transform: translateX(-10px); }
-		to { opacity: 1; transform: translateX(0); }
 	}
 </style>

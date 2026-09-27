@@ -86,7 +86,8 @@ export interface SetTimeline {
 export type SSEEvent =
 	| { type: 'score'; data: MatchState }
 	| { type: 'timeout'; data: { team: Team; teamName: string; active: boolean } }
-	| { type: 'match'; data: MatchState };
+	| { type: 'match'; data: MatchState }
+	| { type: 'permalink'; data: { matchId: number | null } };
 
 export interface TeamSummary {
 	id: number;

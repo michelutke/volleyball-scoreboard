@@ -5,6 +5,7 @@
 	import type { MatchState, DesignTemplate, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
 	import QRCode from 'qrcode';
 	import MatchLayoutOverride from '$lib/components/MatchLayoutOverride.svelte';
+	import OverlayRenderer from '$lib/components/OverlayRenderer.svelte';
 	import Trophy from 'lucide-svelte/icons/trophy';
 	import Timer from 'lucide-svelte/icons/timer';
 
@@ -177,37 +178,11 @@
 		navigator.clipboard.writeText(`${window.location.origin}/matches/${matchId}/overlay`);
 	}
 
-	function darkenHex(hex: string, amount = 16): string {
-		const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - amount);
-		const g = Math.max(0, parseInt(hex.slice(3, 5), 16) - amount);
-		const b = Math.max(0, parseInt(hex.slice(5, 7), 16) - amount);
-		return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-	}
-
 	function lightenHex(hex: string, amount = 16): string {
 		const r = Math.min(255, parseInt(hex.slice(1, 3), 16) + amount);
 		const g = Math.min(255, parseInt(hex.slice(3, 5), 16) + amount);
 		const b = Math.min(255, parseInt(hex.slice(5, 7), 16) + amount);
 		return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-	}
-
-	function hexWithAlpha(hex: string, alpha: number): string {
-		const r = parseInt(hex.slice(1, 3), 16);
-		const g = parseInt(hex.slice(3, 5), 16);
-		const b = parseInt(hex.slice(5, 7), 16);
-		return `rgba(${r},${g},${b},${alpha})`;
-	}
-
-	function overlayBgStyle(bg: string, bg2: string, gradient: boolean, dark = false): string {
-		const c1 = dark ? darkenHex(bg) : bg;
-		const c2 = dark ? darkenHex(bg2) : bg2;
-		return gradient ? `linear-gradient(to right, ${c1}, ${c2})` : c1;
-	}
-
-	function previewScoreBg(m: MatchState): string {
-		return m.scoreColorGradient
-			? `linear-gradient(to bottom, ${m.scoreColor}, ${m.scoreColor2})`
-			: m.scoreColor;
 	}
 
 	function openSettings() {
@@ -344,6 +319,10 @@
 
 	let setScoresExpanded = $derived(match?.showSetScores || match?.status === 'finished' || !!activeTimeout);
 
+	let previewCustomCode = $derived(
+		designTemplates.find((t) => t.id === selectedTemplateId)?.customCode ?? null
+	);
+
 	let setTimelines = $derived.by((): SetTimeline[] => {
 		const history = data.scoreHistory;
 		const tHistory = data.timeoutHistory;
@@ -449,54 +428,18 @@
 					</label>
 				</div>
 				<div class="card-body flex items-center justify-center">
-					<div class="scoreboard-preview" class:with-jersey={match.showJerseyColors} class:has-logo={!!(match.homeTeamLogo || match.guestTeamLogo)} class:rounded={match.overlayRounded} style:--overlay-border={match.overlayDivider} style:color={match.overlayText}>
-						<div class="preview-row">
-							{#if match.showJerseyColors}
-								<div class="preview-jersey" style:background-color={match.homeJerseyColor}>
-									{#if match.homeTeamLogo}
-										<img src="/api/image-proxy?url={encodeURIComponent(match.homeTeamLogo)}" alt="" class="preview-jersey-logo" />
-									{/if}
-								</div>
-							{/if}
-							<div class="preview-name preview-name-dark" style:background={overlayBgStyle(match.overlayBg, match.overlayBg2, match.overlayBgGradient, true)} style:color={match.overlayText}>
-								{match.homeTeamName.toUpperCase()}
-								<img src="/vbcthun-ball.svg" alt="" class="preview-service" class:preview-service-hidden={match.serviceTeam !== 'home'} />
-							</div>
-							<div class="preview-sets" style:background-color={match.overlaySatsBg} style:color={match.overlayText} style:border-color={match.overlayDivider}>{match.homeSets}</div>
-							<div class="preview-set-scores" class:expanded={setScoresExpanded}>
-								{#each match.setScores as s}
-									<div class="preview-set-cell" class:preview-set-cell-winner={s.home > s.guest} style:--winner-color={match.homeJerseyColor} style:background-color={match.overlaySetScoreBg} style:border-left-color={match.overlayDivider} style:color={s.home > s.guest ? match.overlayText : hexWithAlpha(match.overlayText, 0.5)}>{s.home}</div>
-								{/each}
-							</div>
-							<div class="preview-points" style:background={previewScoreBg(match)}>{match.homePoints}</div>
-							<div class="preview-timeout-boxes" style:--jersey-color={match.homeJerseyColor}>
-								<div class="preview-timeout-box" class:taken={matchTimeouts.home >= 2} style:background-color={matchTimeouts.home < 2 ? match.homeJerseyColor : undefined}></div>
-								<div class="preview-timeout-box" class:taken={matchTimeouts.home >= 1} style:background-color={matchTimeouts.home < 1 ? match.homeJerseyColor : undefined}></div>
-							</div>
-						</div>
-						<div class="preview-row">
-							{#if match.showJerseyColors}
-								<div class="preview-jersey" style:background-color={match.guestJerseyColor}>
-									{#if match.guestTeamLogo}
-										<img src="/api/image-proxy?url={encodeURIComponent(match.guestTeamLogo)}" alt="" class="preview-jersey-logo" />
-									{/if}
-								</div>
-							{/if}
-							<div class="preview-name" style:background={overlayBgStyle(match.overlayBg, match.overlayBg2, match.overlayBgGradient)} style:color={match.overlayText}>
-								{match.guestTeamName.toUpperCase()}
-								<img src="/vbcthun-ball.svg" alt="" class="preview-service" class:preview-service-hidden={match.serviceTeam !== 'guest'} />
-							</div>
-							<div class="preview-sets" style:background-color={match.overlaySatsBg} style:color={match.overlayText} style:border-color={match.overlayDivider}>{match.guestSets}</div>
-							<div class="preview-set-scores" class:expanded={setScoresExpanded}>
-								{#each match.setScores as s}
-									<div class="preview-set-cell" class:preview-set-cell-winner={s.guest > s.home} style:--winner-color={match.guestJerseyColor} style:background-color={match.overlaySetScoreBg} style:border-left-color={match.overlayDivider} style:color={s.guest > s.home ? match.overlayText : hexWithAlpha(match.overlayText, 0.5)}>{s.guest}</div>
-								{/each}
-							</div>
-							<div class="preview-points" style:background={previewScoreBg(match)}>{match.guestPoints}</div>
-							<div class="preview-timeout-boxes" style:--jersey-color={match.guestJerseyColor}>
-								<div class="preview-timeout-box" class:taken={matchTimeouts.guest >= 2} style:background-color={matchTimeouts.guest < 2 ? match.guestJerseyColor : undefined}></div>
-								<div class="preview-timeout-box" class:taken={matchTimeouts.guest >= 1} style:background-color={matchTimeouts.guest < 1 ? match.guestJerseyColor : undefined}></div>
-							</div>
+					<div class="scoreboard-preview-wrap">
+						<div class="scoreboard-preview-scale">
+							<OverlayRenderer
+								{match}
+								homeTimeoutsUsed={matchTimeouts.home}
+								guestTimeoutsUsed={matchTimeouts.guest}
+								timeoutTeam={activeTimeout?.team ?? null}
+								customCode={previewCustomCode}
+								templateId={selectedTemplateId}
+								layoutId={data.scoreboardLayout ?? null}
+								options={(data.scoreboardOptions ?? {}) as Record<string, string | number | boolean>}
+							/>
 						</div>
 					</div>
 				</div>
@@ -947,115 +890,20 @@
 	.toggle.active .toggle-knob { transform: translateX(20px); }
 
 	/* Scoreboard preview */
-	.scoreboard-preview {
-		display: grid;
-		grid-template-rows: 48px 48px;
-		row-gap: 3px;
-		padding: 20px;
-		border-radius: 8px;
-	}
-
-	.scoreboard-preview.with-jersey {
-		grid-template-columns: 8px minmax(160px, auto) 44px auto 52px auto;
-	}
-
-	.scoreboard-preview.with-jersey.has-logo {
-		grid-template-columns: 48px minmax(160px, auto) 44px auto 52px auto;
-	}
-
-	.scoreboard-preview:not(.with-jersey) {
-		grid-template-columns: minmax(160px, auto) 44px auto 52px auto;
-	}
-
-	.preview-row {
-		display: grid;
-		grid-template-columns: subgrid;
-		grid-column: 1 / -1;
-		align-items: stretch;
-	}
-
-	.preview-jersey { flex-shrink: 0; position: relative; }
-	.preview-jersey-logo {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		object-fit: contain;
-		padding: 4px;
-	}
 	.logo-preview { height: 40px; margin: 4px 0; object-fit: contain; border-radius: 4px; background: #111; }
 
-	.preview-name {
-		padding: 0 16px;
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		font-size: 18px;
-		font-weight: 800;
-	}
-
-	.scoreboard-preview.rounded:not(.with-jersey) .preview-row:first-child .preview-name { border-radius: 8px 0 0 0; }
-	.scoreboard-preview.rounded.with-jersey .preview-row:first-child .preview-jersey { border-radius: 8px 0 0 0; }
-	.scoreboard-preview.rounded .preview-row:first-child .preview-timeout-boxes { border-radius: 0 8px 0 0; }
-	.scoreboard-preview.rounded:not(.with-jersey) .preview-row:last-child .preview-name { border-radius: 0 0 0 8px; }
-	.scoreboard-preview.rounded.with-jersey .preview-row:last-child .preview-jersey { border-radius: 0 0 0 8px; }
-	.scoreboard-preview.rounded .preview-row:last-child .preview-timeout-boxes { border-radius: 0 0 8px 0; }
-	.preview-service { width: 20px; height: 20px; opacity: 0.85; margin-left: auto; }
-	.preview-service-hidden { visibility: hidden; }
-
-	.preview-sets {
-		width: 44px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 22px;
-		font-weight: 800;
-		border-left: 2px solid var(--overlay-border, #2a2a2a);
-		font-variant-numeric: tabular-nums;
-	}
-
-	.preview-points {
-		width: 52px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 26px;
-		font-weight: 800;
-		font-variant-numeric: tabular-nums;
-	}
-
-	.preview-set-scores {
-		display: flex;
-		align-items: stretch;
-		max-width: 0;
+	.scoreboard-preview-wrap {
+		width: 100%;
+		height: 140px;
 		overflow: hidden;
-		opacity: 0;
-		transition: max-width 0.4s ease, opacity 0.3s ease;
+		border-radius: 8px;
+		pointer-events: none;
 	}
 
-	.preview-set-scores.expanded { max-width: 300px; opacity: 1; }
-
-	.preview-set-cell {
-		color: var(--k-text-mute);
-		width: 38px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 18px;
-		font-weight: 800;
-		font-variant-numeric: tabular-nums;
-		border-left: 1px solid var(--overlay-border, #2a2a2a);
-		border-bottom: 2px solid transparent;
+	.scoreboard-preview-scale {
+		transform: scale(0.35);
+		transform-origin: top left;
 	}
-
-	.preview-set-cell-winner { border-bottom-color: var(--winner-color); color: var(--k-text); }
-
-	.preview-timeout-boxes { display: flex; flex-direction: column; gap: 0; justify-content: center; border-left: 1px solid var(--overlay-text, white); overflow: hidden; }
-	.preview-timeout-box { width: 8px; height: 50%; }
-	.preview-timeout-box:first-child { border-bottom: 1px solid var(--overlay-text, white); }
-	.scoreboard-preview.rounded .preview-row:first-child .preview-timeout-box:first-child { border-radius: 0 4px 0 0; }
-	.scoreboard-preview.rounded .preview-row:last-child .preview-timeout-box:last-child { border-radius: 0 0 4px 0; }
-	.preview-timeout-box.taken { background: transparent; border: 1px solid var(--jersey-color); border-left: none; }
 
 	.set-scores { display: flex; justify-content: center; gap: 8px; padding: 0 20px 16px; }
 
@@ -1459,21 +1307,7 @@
 		.card-header { padding: 10px 12px; }
 		.card-body { padding: 10px 12px; }
 
-		.scoreboard-preview { padding: 10px; }
-		.scoreboard-preview:not(.with-jersey) {
-			grid-template-columns: minmax(0, 1fr) 36px auto 40px auto;
-		}
-		.scoreboard-preview.with-jersey {
-			grid-template-columns: 8px minmax(0, 1fr) 36px auto 40px auto;
-		}
-		.scoreboard-preview.with-jersey.has-logo {
-			grid-template-columns: 36px minmax(0, 1fr) 36px auto 40px auto;
-		}
-		.preview-name { font-size: 13px; padding: 0 8px; }
-		.preview-sets { width: 36px; font-size: 18px; }
-		.preview-points { width: 40px; font-size: 20px; }
-		.preview-set-scores.expanded { max-width: 140px; }
-		.preview-set-cell { width: 28px; font-size: 14px; }
+		.scoreboard-preview-wrap { height: 100px; }
 
 		.scoring-team { padding: 10px 12px; }
 		.scoring-team-header { font-size: 13px; margin-bottom: 8px; overflow: hidden; }
@@ -1492,21 +1326,7 @@
 		.card-header { padding: 6px 12px; }
 		.card-body { padding: 6px 10px; }
 
-		.scoreboard-preview { padding: 8px; grid-template-rows: 38px 38px; }
-		.scoreboard-preview:not(.with-jersey) {
-			grid-template-columns: minmax(0, 1fr) 34px auto 38px auto;
-		}
-		.scoreboard-preview.with-jersey {
-			grid-template-columns: 8px minmax(0, 1fr) 34px auto 38px auto;
-		}
-		.scoreboard-preview.with-jersey.has-logo {
-			grid-template-columns: 34px minmax(0, 1fr) 34px auto 38px auto;
-		}
-		.preview-name { font-size: 12px; padding: 0 6px; }
-		.preview-sets { width: 34px; font-size: 16px; }
-		.preview-points { width: 38px; font-size: 18px; }
-		.preview-set-scores.expanded { max-width: 110px; }
-		.preview-set-cell { width: 26px; font-size: 13px; }
+		.scoreboard-preview-wrap { height: 80px; }
 
 		.timeout-info { display: none; }
 
