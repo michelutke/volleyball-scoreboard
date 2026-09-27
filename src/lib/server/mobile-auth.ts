@@ -1,6 +1,10 @@
 import { createRemoteJWKSet, errors, jwtVerify, type JWTPayload } from 'jose';
 import { env } from '$env/dynamic/private';
-import { getKcOrgIdFromAlias } from '$lib/server/keycloak-admin';
+import {
+	getKcOrgIdByScanningMembers,
+	getKcOrgIdForUser,
+	getKcOrgIdFromAlias
+} from '$lib/server/keycloak-admin';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MOBILE_CLIENT_ID = env.MOBILE_CLIENT_ID ?? 'scorely-mobile';
@@ -59,6 +63,24 @@ export function validateMobilePayload(payload: JWTPayload | Record<string, unkno
 	return extractOrgId(payload);
 }
 
+const orgIdByUser = new Map<string, string>();
+
+async function lookupOrgId(alias: string | null, sub: string | undefined): Promise<string | null> {
+	const attempts: (() => Promise<string | undefined>)[] = [];
+	// KC organizations?search= matches name/domain, not alias — only hits when they coincide.
+	if (alias) attempts.push(() => getKcOrgIdFromAlias(alias));
+	if (sub) attempts.push(() => getKcOrgIdForUser(sub), () => getKcOrgIdByScanningMembers(sub));
+	for (const attempt of attempts) {
+		try {
+			const id = await attempt();
+			if (id) return id;
+		} catch {
+			// non-fatal, try next strategy
+		}
+	}
+	return null;
+}
+
 export async function resolveMobileOrgId(
 	payload: JWTPayload | Record<string, unknown>
 ): Promise<string | null> {
@@ -69,14 +91,21 @@ export async function resolveMobileOrgId(
 	}
 	const fromClaim = extractOrgId(payload);
 	if (fromClaim) return fromClaim;
+	const sub = typeof p.sub === 'string' ? p.sub : undefined;
+	const cached = sub ? orgIdByUser.get(sub) : undefined;
+	if (cached) return cached;
 	const alias = extractOrgAlias(payload);
-	if (!alias) {
-		console.warn('[mobile-auth] token valid but no org claim found — org mapper missing or user has no org membership');
+	if (!alias && !sub) {
+		console.warn('[mobile-auth] token valid but no org claim or sub — org mapper missing or user has no org membership');
 		return null;
 	}
-	const orgId = await getKcOrgIdFromAlias(alias);
-	if (!orgId) console.warn(`[mobile-auth] could not resolve org alias "${alias}" via Keycloak admin API`);
-	return orgId ?? null;
+	const orgId = await lookupOrgId(alias, sub);
+	if (!orgId) {
+		console.warn(`[mobile-auth] could not resolve org for alias "${alias}" / sub "${sub}" via Keycloak admin API`);
+		return null;
+	}
+	if (sub) orgIdByUser.set(sub, orgId);
+	return orgId;
 }
 
 function isRoutineTokenError(e: unknown): boolean {
