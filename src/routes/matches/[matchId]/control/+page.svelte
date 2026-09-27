@@ -1319,7 +1319,6 @@
 		.card-header { padding: 10px 12px; }
 		.card-body { padding: 10px 12px; }
 
-		.scoreboard-preview-wrap { height: 100px; }
 
 		.scoring-team { padding: 10px 12px; }
 		.scoring-team-header { font-size: 13px; margin-bottom: 8px; overflow: hidden; }
@@ -1338,7 +1337,6 @@
 		.card-header { padding: 6px 12px; }
 		.card-body { padding: 6px 10px; }
 
-		.scoreboard-preview-wrap { height: 80px; }
 
 		.timeout-info { display: none; }
 
