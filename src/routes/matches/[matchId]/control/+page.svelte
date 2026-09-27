@@ -319,6 +319,13 @@
 
 	let setScoresExpanded = $derived(match?.showSetScores || match?.status === 'finished' || !!activeTimeout);
 
+	// Natural size of the rendered scoreboard (CSS px); scale it to the card width.
+	const PREVIEW_NATURAL_WIDTH = 820;
+	const PREVIEW_NATURAL_HEIGHT = 150;
+	let previewWrapWidth = $state(0);
+	let previewScale = $derived(
+		previewWrapWidth > 0 ? Math.min(1, previewWrapWidth / PREVIEW_NATURAL_WIDTH) : 0.35
+	);
 	let previewCustomCode = $derived(
 		designTemplates.find((t) => t.id === selectedTemplateId)?.customCode ?? null
 	);
@@ -428,8 +435,12 @@
 					</label>
 				</div>
 				<div class="card-body flex items-center justify-center">
-					<div class="scoreboard-preview-wrap">
-						<div class="scoreboard-preview-scale">
+					<div
+						class="scoreboard-preview-wrap"
+						bind:clientWidth={previewWrapWidth}
+						style:height="{Math.ceil(PREVIEW_NATURAL_HEIGHT * previewScale)}px"
+					>
+						<div class="scoreboard-preview-scale" style:transform="scale({previewScale})">
 							<OverlayRenderer
 								{match}
 								homeTimeoutsUsed={matchTimeouts.home}
@@ -894,7 +905,6 @@
 
 	.scoreboard-preview-wrap {
 		width: 100%;
-		height: 140px;
 		display: flex;
 		justify-content: center;
 		overflow: hidden;
@@ -904,7 +914,6 @@
 
 	.scoreboard-preview-scale {
 		flex: none;
-		transform: scale(0.35);
 		transform-origin: top center;
 	}
 
