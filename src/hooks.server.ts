@@ -26,6 +26,8 @@ const SHARE_CONTROL = /^\/(c|api\/c)\//;
 const BILLING_EXEMPT = /^\/(billing|api\/billing)($|\/)(?!webhook)/;
 // Bearer-token-authenticated routes: skip session auth, but stay rate-limited and no-store like other private API routes.
 const MOBILE_API_PATTERN = /^\/api\/mobile(\/|$)/;
+// Read-only score stream consumed by the public overlay pages (OBS, mobile WebView).
+const MATCH_STREAM_PATTERN = /^\/api\/matches\/[^/]+\/stream$/;
 
 const isOverlay = (path: string): boolean =>
 	OVERLAY_PATTERN.test(path) || LEGACY_OVERLAY.test(path);
@@ -42,6 +44,7 @@ export const handle = sequence(authHandle, async ({ event, resolve }) => {
 	const isPublic =
 		PUBLIC_PATHS.some((p) => (p === '/' ? path === '/' : path.startsWith(p))) ||
 		isOverlay(path) ||
+		MATCH_STREAM_PATTERN.test(path) ||
 		SHARE_CONTROL.test(path);
 
 	if (!isPublic && !MOBILE_API_PATTERN.test(path)) {

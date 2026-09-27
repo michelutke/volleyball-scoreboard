@@ -153,5 +153,8 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 
 	const state = toMatchState(match, score);
 	matchSSEEmitter.emit(matchId, { type: 'match', data: state });
+	if (body.designTemplateId != null || body.scoreboardLayout !== undefined || body.scoreboardOptions !== undefined) {
+		matchSSEEmitter.emit(matchId, { type: 'design' });
+	}
 	return json(state);
 };

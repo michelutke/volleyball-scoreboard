@@ -87,7 +87,8 @@ export type SSEEvent =
 	| { type: 'score'; data: MatchState }
 	| { type: 'timeout'; data: { team: Team; teamName: string; active: boolean } }
 	| { type: 'match'; data: MatchState }
-	| { type: 'permalink'; data: { matchId: number | null } };
+	| { type: 'permalink'; data: { matchId: number | null } }
+	| { type: 'design' };
 
 export interface TeamSummary {
 	id: number;
