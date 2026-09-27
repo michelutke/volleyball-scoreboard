@@ -4,6 +4,7 @@ import { settings, matches, scores, timeouts, designTemplates } from '$lib/serve
 import { toMatchState } from '$lib/server/match-state.js';
 import { getUpcomingGames } from '$lib/server/swiss-volley.js';
 import { eq, desc, asc, and } from 'drizzle-orm';
+import { ensureOverlaySlug } from '$lib/server/overlay-slug';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -40,7 +41,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	});
 	if (!score) error(404, 'Score not found');
 
-	const [homeTimeouts, guestTimeouts, permalinkRow, scoreHistory, timeoutHistory, orgDesignTemplates] = await Promise.all([
+	const [homeTimeouts, guestTimeouts, permalinkRow, scoreHistory, timeoutHistory, orgDesignTemplates, overlaySlug] = await Promise.all([
 		db.query.timeouts.findMany({
 			where: and(eq(timeouts.matchId, matchId), eq(timeouts.team, 'home'), eq(timeouts.set, score.currentSet))
 		}),
@@ -61,7 +62,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		db.query.designTemplates.findMany({
 			where: eq(designTemplates.orgId, orgId),
 			orderBy: designTemplates.createdAt
-		})
+		}),
+		ensureOverlaySlug(orgId)
 	]);
 
 	const permalinkOverlayMatchId = permalinkRow?.value ? parseInt(permalinkRow.value) : null;
@@ -78,6 +80,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		timeoutHistory,
 		teamId: match.teamId,
 		permalinkOverlayMatchId,
+		overlaySlug,
 		controlToken: match.controlToken ?? null,
 		designTemplates: orgDesignTemplates,
 		scoreboardLayout: match.scoreboardLayout ?? null,

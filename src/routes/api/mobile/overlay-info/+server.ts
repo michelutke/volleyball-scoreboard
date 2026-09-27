@@ -4,6 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/index.js';
 import { settings } from '$lib/server/db/schema.js';
 import { verifyMobileToken } from '$lib/server/mobile-auth';
+import { ensureOverlaySlug } from '$lib/server/overlay-slug';
 
 export const GET: RequestHandler = async ({ request }) => {
 	const auth = request.headers.get('authorization');
@@ -14,14 +15,9 @@ export const GET: RequestHandler = async ({ request }) => {
 	if (!orgId) {
 		return json({ error: 'Unauthorized' }, { status: 401 });
 	}
-	const slugRow = await db.query.settings.findFirst({
-		where: and(eq(settings.orgId, orgId), eq(settings.key, 'overlaySlug'))
-	});
-	if (!slugRow?.value) {
-		return json({ error: 'No overlay slug configured' }, { status: 404 });
-	}
+	const slug = await ensureOverlaySlug(orgId);
 	const nameRow = await db.query.settings.findFirst({
 		where: and(eq(settings.orgId, orgId), eq(settings.key, 'clubName'))
 	});
-	return json({ slug: slugRow.value, orgName: nameRow?.value ?? '' });
+	return json({ slug, orgName: nameRow?.value ?? '' });
 };

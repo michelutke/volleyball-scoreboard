@@ -1,6 +1,7 @@
 import { db } from '$lib/server/db/index.js';
 import { settings } from '$lib/server/db/schema.js';
 import { and, eq } from 'drizzle-orm';
+import { ensureOverlaySlug } from '$lib/server/overlay-slug';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -13,23 +14,21 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const isSetup = url.searchParams.get('setup') === 'true' || !clubNameSetting;
 
 	if (clubNameSetting) {
-		const [accentSetting, apiKeySetting, slugSetting] = await Promise.all([
+		const [accentSetting, apiKeySetting, overlaySlug] = await Promise.all([
 			db.query.settings.findFirst({
 				where: and(eq(settings.orgId, orgId), eq(settings.key, 'accentColor'))
 			}),
 			db.query.settings.findFirst({
 				where: and(eq(settings.orgId, orgId), eq(settings.key, 'swissVolleyApiKey'))
 			}),
-			db.query.settings.findFirst({
-				where: and(eq(settings.orgId, orgId), eq(settings.key, 'overlaySlug'))
-			})
+			ensureOverlaySlug(orgId)
 		]);
 		return {
 			clubName: clubNameSetting.value,
 			accentColor: accentSetting?.value ?? null,
 			isAdmin: locals.isAdmin ?? false,
 			swissVolleyApiKeySet: !!apiKeySetting,
-			overlaySlug: slugSetting?.value ?? null,
+			overlaySlug,
 			isSetup
 		};
 	}

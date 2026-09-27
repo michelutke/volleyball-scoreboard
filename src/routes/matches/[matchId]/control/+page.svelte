@@ -300,6 +300,7 @@
 	});
 
 	const isPermalinked = $derived(permalinkMatchId === matchId);
+	const permalinkUrl = $derived(`${page.url.origin}/overlay/${data.overlaySlug}`);
 
 	async function setPermalink(enable: boolean) {
 		permalinkLoading = true;
@@ -670,18 +671,18 @@
 				<div class="card-body">
 					<div class="permalink-row">
 						<div>
-							<p class="text-sm text-gray-400">Auf <code class="permalink-code">/overlay</code> anzeigen</p>
+							<p class="text-sm text-gray-400">Auf <code class="permalink-code">{permalinkUrl}</code> anzeigen</p>
 							{#if isPermalinked}
-								<p class="permalink-status permalink-active">Dieses Spiel wird aktuell auf /overlay angezeigt</p>
+								<p class="permalink-status permalink-active">Dieses Spiel wird aktuell auf dem Permalink angezeigt</p>
 							{:else if permalinkMatchId !== null}
-								<p class="permalink-status">Anderes Spiel aktiv auf /overlay</p>
+								<p class="permalink-status">Anderes Spiel aktiv auf dem Permalink</p>
 							{/if}
 						</div>
 						<button
 							onclick={handlePermalinkToggle}
 							disabled={permalinkLoading}
 							class="toggle {isPermalinked ? 'active' : ''}"
-							aria-label="Auf /overlay anzeigen"
+							aria-label="Auf Permalink anzeigen"
 						>
 							<span class="toggle-knob"></span>
 						</button>
@@ -690,7 +691,7 @@
 					{#if showPermalinkConfirm}
 						<div class="permalink-confirm">
 							<p>
-								{permalinkHome ?? '?'} vs {permalinkGuest ?? '?'} wird gerade auf /overlay angezeigt. Ersetzen?
+								{permalinkHome ?? '?'} vs {permalinkGuest ?? '?'} wird gerade auf dem Permalink angezeigt. Ersetzen?
 							</p>
 							<div class="permalink-confirm-actions">
 								<button onclick={() => setPermalink(true)} disabled={permalinkLoading} class="btn-primary">

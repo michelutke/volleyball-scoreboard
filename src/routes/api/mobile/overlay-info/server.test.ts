@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const findFirstMock = vi.hoisted(() => vi.fn());
 const verifyMobileTokenMock = vi.hoisted(() => vi.fn());
+const ensureOverlaySlugMock = vi.hoisted(() => vi.fn());
+
+vi.mock('$lib/server/overlay-slug', () => ({
+	ensureOverlaySlug: ensureOverlaySlugMock
+}));
 
 vi.mock('$lib/server/db/index.js', () => ({
 	db: { query: { settings: { findFirst: findFirstMock } } }
@@ -21,6 +26,8 @@ describe('GET /api/mobile/overlay-info', () => {
 	beforeEach(() => {
 		findFirstMock.mockReset();
 		verifyMobileTokenMock.mockReset();
+		ensureOverlaySlugMock.mockReset();
+		ensureOverlaySlugMock.mockResolvedValue('my-slug');
 	});
 
 	it('returns 401 when no Authorization header', async () => {
@@ -50,21 +57,20 @@ describe('GET /api/mobile/overlay-info', () => {
 		expect(findFirstMock).not.toHaveBeenCalled();
 	});
 
-	it('returns 404 when no overlay slug is configured', async () => {
+	it('provisions the org slug so old orgs never get a 404', async () => {
 		verifyMobileTokenMock.mockResolvedValue('org-1');
 		findFirstMock.mockResolvedValueOnce(undefined);
 		const response = await GET({
 			request: makeRequest({ authorization: 'Bearer good-token' })
 		} as Parameters<typeof GET>[0]);
-		expect(response.status).toBe(404);
-		expect(await response.json()).toEqual({ error: 'No overlay slug configured' });
+		expect(ensureOverlaySlugMock).toHaveBeenCalledWith('org-1');
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({ slug: 'my-slug', orgName: '' });
 	});
 
 	it('returns 200 with slug and orgName', async () => {
 		verifyMobileTokenMock.mockResolvedValue('org-1');
-		findFirstMock
-			.mockResolvedValueOnce({ value: 'my-slug' })
-			.mockResolvedValueOnce({ value: 'My Club' });
+		findFirstMock.mockResolvedValueOnce({ value: 'My Club' });
 		const response = await GET({
 			request: makeRequest({ authorization: 'Bearer good-token' })
 		} as Parameters<typeof GET>[0]);
@@ -74,7 +80,7 @@ describe('GET /api/mobile/overlay-info', () => {
 
 	it('returns 200 with empty orgName when clubName is not set', async () => {
 		verifyMobileTokenMock.mockResolvedValue('org-1');
-		findFirstMock.mockResolvedValueOnce({ value: 'my-slug' }).mockResolvedValueOnce(undefined);
+		findFirstMock.mockResolvedValueOnce(undefined);
 		const response = await GET({
 			request: makeRequest({ authorization: 'Bearer good-token' })
 		} as Parameters<typeof GET>[0]);
