@@ -319,15 +319,6 @@
 
 	let setScoresExpanded = $derived(match?.showSetScores || match?.status === 'finished' || !!activeTimeout);
 
-	// Fit the live overlay into the card: scale down to the available width, centred.
-	let previewWrapWidth = $state(0);
-	let previewNaturalWidth = $state(0);
-	let previewNaturalHeight = $state(0);
-	let previewScale = $derived(
-		previewNaturalWidth > 0 && previewWrapWidth > 0
-			? Math.min(1, previewWrapWidth / previewNaturalWidth)
-			: 1
-	);
 	let previewCustomCode = $derived(
 		designTemplates.find((t) => t.id === selectedTemplateId)?.customCode ?? null
 	);
@@ -437,17 +428,8 @@
 					</label>
 				</div>
 				<div class="card-body flex items-center justify-center">
-					<div
-						class="scoreboard-preview-wrap"
-						bind:clientWidth={previewWrapWidth}
-						style:height="{previewNaturalHeight * previewScale}px"
-					>
-						<div
-							class="scoreboard-preview-scale"
-							bind:clientWidth={previewNaturalWidth}
-							bind:clientHeight={previewNaturalHeight}
-							style:transform="scale({previewScale})"
-						>
+					<div class="scoreboard-preview-wrap">
+						<div class="scoreboard-preview-scale">
 							<OverlayRenderer
 								{match}
 								homeTimeoutsUsed={matchTimeouts.home}
@@ -912,17 +894,15 @@
 
 	.scoreboard-preview-wrap {
 		width: 100%;
-		display: flex;
-		justify-content: center;
+		height: 140px;
 		overflow: hidden;
 		border-radius: 8px;
 		pointer-events: none;
 	}
 
 	.scoreboard-preview-scale {
-		display: inline-block;
-		flex: none;
-		transform-origin: top center;
+		transform: scale(0.35);
+		transform-origin: top left;
 	}
 
 	.set-scores { display: flex; justify-content: center; gap: 8px; padding: 0 20px 16px; }
@@ -1327,6 +1307,8 @@
 		.card-header { padding: 10px 12px; }
 		.card-body { padding: 10px 12px; }
 
+		.scoreboard-preview-wrap { height: 100px; }
+
 		.scoring-team { padding: 10px 12px; }
 		.scoring-team-header { font-size: 13px; margin-bottom: 8px; overflow: hidden; }
 		.scoring-team-header .font-bold { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1343,6 +1325,8 @@
 		.nav-bar { margin-bottom: 4px; }
 		.card-header { padding: 6px 12px; }
 		.card-body { padding: 6px 10px; }
+
+		.scoreboard-preview-wrap { height: 80px; }
 
 		.timeout-info { display: none; }
 
