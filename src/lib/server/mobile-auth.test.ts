@@ -9,8 +9,14 @@ vi.mock('$lib/server/keycloak-admin', () => ({
 	getKcOrgIdByScanningMembers: getKcOrgIdByScanningMembersMock
 }));
 
-const { extractOrgId, extractOrgAlias, validateMobilePayload, resolveMobileOrgId } =
-	await import('./mobile-auth');
+const {
+	extractOrgId,
+	extractOrgAlias,
+	validateMobilePayload,
+	resolveMobileOrgId,
+	extractRoles,
+	resolveMobileIdentity
+} = await import('./mobile-auth');
 
 const UUID = '5f1c1a2b-3c4d-4e5f-8a9b-0c1d2e3f4a5b';
 const MOBILE_CLIENT_ID = 'scorely-mobile';
@@ -120,5 +126,49 @@ describe('resolveMobileOrgId', () => {
 	it('does not look up alias when azp mismatches', async () => {
 		expect(await resolveMobileOrgId({ azp: 'other', organization: ['miggi-s-club'] })).toBeNull();
 		expect(getKcOrgIdFromAliasMock).not.toHaveBeenCalled();
+	});
+});
+
+describe('extractRoles', () => {
+	it('reads realm roles', () => {
+		expect(extractRoles({ realm_access: { roles: ['admin', 'scorer'] } })).toEqual(['admin', 'scorer']);
+	});
+
+	it('drops non-string entries', () => {
+		expect(extractRoles({ realm_access: { roles: ['admin', 42, null] } })).toEqual(['admin']);
+	});
+
+	it('returns an empty list without realm_access', () => {
+		expect(extractRoles({ sub: 'user-1' })).toEqual([]);
+	});
+});
+
+describe('resolveMobileIdentity', () => {
+	beforeEach(() => {
+		getKcOrgIdFromAliasMock.mockReset();
+		getKcOrgIdForUserMock.mockReset();
+		getKcOrgIdByScanningMembersMock.mockReset();
+	});
+
+	it('returns orgId, sub and roles for a valid mobile payload', async () => {
+		expect(
+			await resolveMobileIdentity({
+				azp: MOBILE_CLIENT_ID,
+				org_id: UUID,
+				sub: 'user-1',
+				realm_access: { roles: ['admin'] }
+			})
+		).toEqual({ orgId: UUID, sub: 'user-1', roles: ['admin'] });
+	});
+
+	it('returns null when azp is a different client', async () => {
+		expect(await resolveMobileIdentity({ azp: 'scoring-app', org_id: UUID, sub: 'user-1' })).toBeNull();
+	});
+
+	it('returns null when no org can be resolved', async () => {
+		getKcOrgIdFromAliasMock.mockResolvedValue(undefined);
+		getKcOrgIdForUserMock.mockResolvedValue(undefined);
+		getKcOrgIdByScanningMembersMock.mockResolvedValue(undefined);
+		expect(await resolveMobileIdentity({ azp: MOBILE_CLIENT_ID, sub: 'user-z' })).toBeNull();
 	});
 });
