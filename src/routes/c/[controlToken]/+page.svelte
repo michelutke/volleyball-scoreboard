@@ -27,9 +27,9 @@
 		}
 	});
 
-	// Link expired (grace period over) or replaced: reload so the load error shows the friendly page.
-	async function reloadIfLinkGone(res: Response) {
-		if (res.status === 404 || res.status === 410) await invalidateAll();
+	// Link expired, replaced, or match not started: reload so the load error shows the matching page.
+	async function reloadIfUnavailable(res: Response) {
+		if (res.status === 404 || res.status === 409 || res.status === 410) await invalidateAll();
 	}
 
 	async function api(body: Record<string, unknown>) {
@@ -45,7 +45,7 @@
 				match = updated;
 				invalidateAll();
 			} else {
-				await reloadIfLinkGone(res);
+				await reloadIfUnavailable(res);
 			}
 		} finally {
 			loading = false;
@@ -114,7 +114,7 @@
 				}
 			}, 1000);
 		} else {
-			await reloadIfLinkGone(res);
+			await reloadIfUnavailable(res);
 		}
 	}
 
@@ -136,7 +136,7 @@
 			activeTimeout = null;
 			invalidateAll();
 		} else {
-			await reloadIfLinkGone(res);
+			await reloadIfUnavailable(res);
 		}
 	}
 

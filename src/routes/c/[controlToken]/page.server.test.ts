@@ -43,6 +43,15 @@ describe('/c/[controlToken] load', () => {
 		expect(updateSetMock).toHaveBeenCalledWith({ controlToken: null });
 	});
 
+	it('returns 409 with a not-started message when the match has no score row yet', async () => {
+		matchesFindFirstMock.mockResolvedValue({ id: 7, status: 'upcoming', finishedAt: null, controlToken: 'tok-1' });
+		scoresFindFirstMock.mockResolvedValue(undefined);
+		await expect(load(event())).rejects.toMatchObject({
+			status: 409,
+			body: { message: 'Spiel hat noch nicht begonnen' }
+		});
+	});
+
 	it('still loads a finished match within the grace period so the guest can undo', async () => {
 		matchesFindFirstMock.mockResolvedValue({ id: 7, status: 'finished', finishedAt: minutesAgo(1), controlToken: 'tok-1' });
 		scoresFindFirstMock.mockResolvedValue({ id: 2, matchId: 7, homePoints: 0, guestPoints: 0, homeSets: 3, guestSets: 0, currentSet: 3, setScores: [], serviceTeam: 'home' });

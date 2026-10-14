@@ -27,7 +27,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		where: eq(scores.matchId, matchId),
 		orderBy: desc(scores.createdAt)
 	});
-	if (!currentScore) return json({ error: 'Score not found' }, { status: 404 });
+	if (!currentScore) return json({ error: 'Match not started' }, { status: 409 });
 
 	const state = toMatchState(match, currentScore);
 

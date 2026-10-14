@@ -93,6 +93,15 @@ describe('PUT /api/c/[controlToken]', () => {
 		expect(response.status).toBe(404);
 	});
 
+	it('returns 409 when the match has not started and has no score row', async () => {
+		matchesFindFirstMock.mockResolvedValue(matchRow({ status: 'upcoming' }));
+		scoresFindFirstMock.mockResolvedValue(undefined);
+		const response = await PUT(event({ action: 'addPoint', team: 'home' }));
+		expect(response.status).toBe(409);
+		expect(await response.json()).toEqual({ error: 'Match not started' });
+		expect(insertValuesMock).not.toHaveBeenCalled();
+	});
+
 	it('stamps finishedAt and keeps the token when the match point finishes the match', async () => {
 		matchesFindFirstMock.mockResolvedValue(matchRow());
 		scoresFindFirstMock.mockResolvedValue(

@@ -17,7 +17,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		where: eq(scores.matchId, match.id),
 		orderBy: desc(scores.createdAt)
 	});
-	if (!score) error(404, 'Score nicht gefunden');
+	if (!score) error(409, 'Spiel hat noch nicht begonnen');
 
 	const [homeTimeouts, guestTimeouts, scoreHistory, timeoutHistory] = await Promise.all([
 		db.query.timeouts.findMany({

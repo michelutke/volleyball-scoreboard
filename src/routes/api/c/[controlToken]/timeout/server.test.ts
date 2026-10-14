@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const matchesFindFirstMock = vi.hoisted(() => vi.fn());
+const scoresFindFirstMock = vi.hoisted(() => vi.fn());
 const insertValuesMock = vi.hoisted(() => vi.fn());
 const updateSetMock = vi.hoisted(() => vi.fn());
 
@@ -8,7 +9,7 @@ vi.mock('$lib/server/db/index.js', () => ({
 	db: {
 		query: {
 			matches: { findFirst: matchesFindFirstMock },
-			scores: { findFirst: vi.fn() },
+			scores: { findFirst: scoresFindFirstMock },
 			timeouts: { findFirst: vi.fn(), findMany: vi.fn() }
 		},
 		update: () => ({ set: updateSetMock }),
@@ -53,5 +54,25 @@ describe('/api/c/[controlToken]/timeout', () => {
 	it('DELETE returns 410 after the grace period', async () => {
 		const response = await DELETE(event('DELETE'));
 		expect(response.status).toBe(410);
+	});
+
+	describe('match without a score row', () => {
+		beforeEach(() => {
+			matchesFindFirstMock.mockResolvedValue({ id: 7, status: 'upcoming', finishedAt: null, controlToken: 'tok-1' });
+			scoresFindFirstMock.mockResolvedValue(undefined);
+		});
+
+		it('POST returns 409', async () => {
+			const response = await POST(event('POST'));
+			expect(response.status).toBe(409);
+			expect(await response.json()).toEqual({ error: 'Match not started' });
+			expect(insertValuesMock).not.toHaveBeenCalled();
+		});
+
+		it('DELETE returns 409', async () => {
+			const response = await DELETE(event('DELETE'));
+			expect(response.status).toBe(409);
+			expect(await response.json()).toEqual({ error: 'Match not started' });
+		});
 	});
 });

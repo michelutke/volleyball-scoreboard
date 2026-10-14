@@ -24,7 +24,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
 		where: eq(scores.matchId, matchId),
 		orderBy: desc(scores.createdAt)
 	});
-	if (!currentScore) return json({ error: 'Score not found' }, { status: 404 });
+	if (!currentScore) return json({ error: 'Match not started' }, { status: 409 });
 
 	const usedTimeouts = await db.query.timeouts.findMany({
 		where: and(
@@ -67,7 +67,7 @@ export const DELETE: RequestHandler = async ({ params, request }) => {
 		where: eq(scores.matchId, matchId),
 		orderBy: desc(scores.createdAt)
 	});
-	if (!currentScore) return json({ error: 'Score not found' }, { status: 404 });
+	if (!currentScore) return json({ error: 'Match not started' }, { status: 409 });
 
 	const lastTimeout = await db.query.timeouts.findFirst({
 		where: and(
