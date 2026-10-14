@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { verifyMobileToken, type MobileIdentity } from '$lib/server/mobile-auth';
+import type { TokenResult } from '$lib/server/match-service';
 
 export function mobileJson(body: unknown, status = 200): Response {
 	return json(body, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -30,4 +31,21 @@ export function parseMatchId(raw: string): number | null {
 	if (!/^\d{1,10}$/.test(raw)) return null;
 	const id = Number(raw);
 	return id >= 1 && id <= MAX_INT4 ? id : null;
+}
+
+export interface ShareUrls {
+	controlUrl: string;
+	overlayUrl: string;
+}
+
+export function shareUrls(origin: string, matchId: number, token: string): ShareUrls {
+	return {
+		controlUrl: `${origin}/c/${token}`,
+		overlayUrl: `${origin}/matches/${matchId}/overlay`
+	};
+}
+
+export function shareResponse(result: TokenResult, origin: string, matchId: number): Response {
+	if (result.ok) return mobileJson(shareUrls(origin, matchId, result.token));
+	return result.reason === 'finished' ? finishedConflict() : notFound();
 }

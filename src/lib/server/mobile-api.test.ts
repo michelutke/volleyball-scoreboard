@@ -3,8 +3,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const verifyMobileTokenMock = vi.hoisted(() => vi.fn());
 vi.mock('$lib/server/mobile-auth', () => ({ verifyMobileToken: verifyMobileTokenMock }));
 
-const { mobileJson, unauthorized, authenticateMobile, parseMatchId, notFound, finishedConflict } =
-	await import('./mobile-api');
+const {
+	mobileJson,
+	unauthorized,
+	authenticateMobile,
+	parseMatchId,
+	notFound,
+	finishedConflict,
+	shareUrls,
+	shareResponse
+} = await import('./mobile-api');
 
 function request(headers: Record<string, string>): Request {
 	return new Request('http://localhost/api/mobile/matches', { headers });
@@ -70,5 +78,26 @@ describe('status responses', () => {
 		const response = finishedConflict();
 		expect(response.status).toBe(409);
 		expect(await response.json()).toEqual({ error: 'Match is finished' });
+	});
+});
+
+describe('share helpers', () => {
+	it('builds the guest control and match overlay urls', () => {
+		expect(shareUrls('https://scorely.ch', 7, 'tok-1')).toEqual({
+			controlUrl: 'https://scorely.ch/c/tok-1',
+			overlayUrl: 'https://scorely.ch/matches/7/overlay'
+		});
+	});
+
+	it('maps token results to responses', async () => {
+		const ok = shareResponse({ ok: true, token: 'tok-1' }, 'https://scorely.ch', 7);
+		expect(ok.status).toBe(200);
+		expect(ok.headers.get('cache-control')).toBe('no-store');
+		expect(await ok.json()).toEqual({
+			controlUrl: 'https://scorely.ch/c/tok-1',
+			overlayUrl: 'https://scorely.ch/matches/7/overlay'
+		});
+		expect(shareResponse({ ok: false, reason: 'not_found' }, 'https://scorely.ch', 7).status).toBe(404);
+		expect(shareResponse({ ok: false, reason: 'finished' }, 'https://scorely.ch', 7).status).toBe(409);
 	});
 });
