@@ -14,3 +14,20 @@ export async function authenticateMobile(request: Request): Promise<MobileIdenti
 	if (!auth?.startsWith('Bearer ')) return null;
 	return verifyMobileToken(auth.slice('Bearer '.length));
 }
+
+const MAX_INT4 = 2_147_483_647;
+
+export function notFound(): Response {
+	return mobileJson({ error: 'Match not found' }, 404);
+}
+
+export function finishedConflict(): Response {
+	return mobileJson({ error: 'Match is finished' }, 409);
+}
+
+/** Accepts only positive integers that fit the serial column, so bad input never reaches Postgres. */
+export function parseMatchId(raw: string): number | null {
+	if (!/^\d{1,10}$/.test(raw)) return null;
+	const id = Number(raw);
+	return id >= 1 && id <= MAX_INT4 ? id : null;
+}
