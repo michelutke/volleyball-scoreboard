@@ -44,6 +44,7 @@ export const matches = pgTable('matches', {
 	venue: text('venue'),
 	league: text('league'),
 	controlToken: text('control_token'),
+	finishedAt: timestamp('finished_at'),
 	scoreboardLayout: text('scoreboard_layout'),
 	scoreboardOptions: jsonb('scoreboard_options'),
 	createdAt: timestamp('created_at').notNull().defaultNow(),

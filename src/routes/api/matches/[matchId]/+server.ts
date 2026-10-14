@@ -6,7 +6,7 @@ import { toMatchState } from '$lib/server/match-state.js';
 import { applyTemplateToMatch } from '$lib/server/design-template.js';
 import { addPoint, removePoint, resetMatch, isMatchOver } from '$lib/volleyball.js';
 import { matchIdActionSchema, matchIdSettingsSchema } from '$lib/server/validation.js';
-import { renewControlToken } from '$lib/server/match-service';
+import { renewControlToken, statusChange } from '$lib/server/match-service';
 import { and, eq, desc } from 'drizzle-orm';
 import type { MatchState } from '$lib/types.js';
 import type { RequestHandler } from './$types.js';
@@ -98,7 +98,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 				const undoState = toMatchState(match, previousScore);
 				const correctStatus = isMatchOver(undoState.homeSets, undoState.guestSets) ? 'finished' : 'live';
 				if (correctStatus !== match.status) {
-					await db.update(matches).set({ status: correctStatus, updatedAt: new Date() }).where(eq(matches.id, matchId));
+					await db.update(matches).set(statusChange(correctStatus)).where(eq(matches.id, matchId));
 					undoState.status = correctStatus;
 				}
 				matchSSEEmitter.emit(matchId, { type: 'score', data: undoState });
@@ -109,7 +109,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		}
 
 		if (newState.status !== match.status) {
-			await db.update(matches).set({ status: newState.status, updatedAt: new Date() }).where(eq(matches.id, matchId));
+			await db.update(matches).set(statusChange(newState.status)).where(eq(matches.id, matchId));
 		}
 
 		await db.insert(scores).values({

@@ -3,7 +3,7 @@ import { db } from '$lib/server/db/index.js';
 import { matches, scores, settings } from '$lib/server/db/schema.js';
 import { matchSSEEmitter } from '$lib/server/sse.js';
 import { toMatchState } from '$lib/server/match-state.js';
-import { autoFinishStale } from '$lib/server/auto-finish.js';
+import { autoFinishStale, GUEST_LINK_GRACE_MS } from '$lib/server/auto-finish.js';
 import { getDefaultTemplate, templateToMatchColors } from '$lib/server/design-template.js';
 import type { MatchState, MatchStatus } from '$lib/types.js';
 
@@ -88,7 +88,7 @@ export async function startMatch(orgId: string, matchId: number): Promise<Starte
 	const match = await getOrgMatch(orgId, matchId);
 	if (!match) return null;
 
-	const updateData: Record<string, unknown> = { status: 'live', updatedAt: new Date() };
+	const updateData: Record<string, unknown> = { ...statusChange('live') };
 	if (!match.designTemplateId) {
 		const defaultTemplate = await getDefaultTemplate(orgId);
 		if (defaultTemplate) Object.assign(updateData, templateToMatchColors(defaultTemplate));
@@ -151,4 +151,47 @@ export async function renewControlToken(orgId: string, matchId: number): Promise
 
 	const match = await getOrgMatch(orgId, matchId);
 	return { ok: false, reason: match?.status === 'finished' ? 'finished' : 'not_found' };
+}
+
+/**
+ * Column values for a status change. Finishing stamps finishedAt (start of the guest link grace
+ * period); any other status, e.g. undo back to live, clears it. The control token is never touched.
+ */
+export function statusChange(
+	status: MatchStatus,
+	now: Date = new Date()
+): { status: MatchStatus; updatedAt: Date; finishedAt: Date | null } {
+	return { status, updatedAt: now, finishedAt: status === 'finished' ? now : null };
+}
+
+/** True once a finished match is past the grace period; finished rows without finishedAt predate the column. */
+export function isGuestLinkExpired(
+	match: Pick<MatchRow, 'status' | 'finishedAt'>,
+	now: Date = new Date()
+): boolean {
+	if (match.status !== 'finished') return false;
+	if (!match.finishedAt) return true;
+	return now.getTime() - match.finishedAt.getTime() >= GUEST_LINK_GRACE_MS;
+}
+
+/** Clears the guest token of an expired match; the status guard skips a match that was undone meanwhile. */
+export async function expireGuestLink(matchId: number): Promise<void> {
+	await db
+		.update(matches)
+		.set({ controlToken: null })
+		.where(and(eq(matches.id, matchId), eq(matches.status, 'finished')));
+}
+
+/**
+ * Resolves a guest control token. Returns null for an unknown token and 'expired' (after clearing
+ * the token) once the match is past the guest link grace period.
+ */
+export async function getGuestMatch(controlToken: string, now: Date = new Date()): Promise<MatchRow | 'expired' | null> {
+	const match = await db.query.matches.findFirst({ where: eq(matches.controlToken, controlToken) });
+	if (!match) return null;
+	if (isGuestLinkExpired(match, now)) {
+		await expireGuestLink(match.id);
+		return 'expired';
+	}
+	return match;
 }

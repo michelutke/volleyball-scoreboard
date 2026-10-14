@@ -37,7 +37,10 @@ vi.mock('$lib/server/design-template.js', () => ({
 	getDefaultTemplate: getDefaultTemplateMock,
 	templateToMatchColors: (t: { id: number }) => ({ designTemplateId: t.id, overlayBg: '#000000' })
 }));
-vi.mock('$lib/server/auto-finish.js', () => ({ autoFinishStale: autoFinishStaleMock }));
+vi.mock('$lib/server/auto-finish.js', () => ({
+	autoFinishStale: autoFinishStaleMock,
+	GUEST_LINK_GRACE_MS: 10 * 60 * 1000
+}));
 
 const {
 	getOrgMatch,
@@ -47,6 +50,10 @@ const {
 	startMatch,
 	ensureControlToken,
 	renewControlToken,
+	statusChange,
+	isGuestLinkExpired,
+	expireGuestLink,
+	getGuestMatch,
 	MOBILE_MATCH_LIMIT
 } = await import('./match-service');
 
@@ -214,7 +221,7 @@ describe('startMatch', () => {
 		const result = await startMatch('org-1', 7);
 
 		expect(updateSetMock).toHaveBeenCalledWith(
-			expect.objectContaining({ status: 'live', designTemplateId: 3, overlayBg: '#000000' })
+			expect.objectContaining({ status: 'live', finishedAt: null, designTemplateId: 3, overlayBg: '#000000' })
 		);
 		expect(render(updateWhereMock.mock.calls[0][0]).params).toEqual(['org-1', 7]);
 		expect(insertValuesMock).toHaveBeenCalledWith({ matchId: 7 });
@@ -320,5 +327,82 @@ describe('renewControlToken', () => {
 		updateReturningMock.mockResolvedValue([]);
 		matchesFindFirstMock.mockResolvedValue(undefined);
 		expect(await renewControlToken('org-1', 7)).toEqual({ ok: false, reason: 'not_found' });
+	});
+});
+
+
+describe('statusChange', () => {
+	const now = new Date('2026-10-14T20:00:00.000Z');
+
+	it('statusChange stamps finishedAt for finished and clears it for any other status', () => {
+		expect(statusChange('finished', now)).toEqual({ status: 'finished', updatedAt: now, finishedAt: now });
+		expect(statusChange('live', now)).toEqual({ status: 'live', updatedAt: now, finishedAt: null });
+		expect(statusChange('upcoming', now)).toEqual({ status: 'upcoming', updatedAt: now, finishedAt: null });
+	});
+
+	it('never touches the control token', () => {
+		expect('controlToken' in statusChange('finished')).toBe(false);
+		expect('controlToken' in statusChange('live')).toBe(false);
+	});
+});
+
+describe('isGuestLinkExpired', () => {
+	const now = new Date('2026-10-14T20:00:00.000Z');
+	const minutesAgo = (minutes: number) => new Date(now.getTime() - minutes * 60 * 1000);
+
+	it('isGuestLinkExpired keeps the link of live and upcoming matches', () => {
+		expect(isGuestLinkExpired({ status: 'live', finishedAt: null }, now)).toBe(false);
+		expect(isGuestLinkExpired({ status: 'upcoming', finishedAt: null }, now)).toBe(false);
+	});
+
+	it('isGuestLinkExpired keeps the link within 10 minutes after the finish', () => {
+		expect(isGuestLinkExpired({ status: 'finished', finishedAt: minutesAgo(9) }, now)).toBe(false);
+	});
+
+	it('isGuestLinkExpired expires the link at exactly 10 minutes', () => {
+		expect(isGuestLinkExpired({ status: 'finished', finishedAt: minutesAgo(10) }, now)).toBe(true);
+	});
+
+	it('isGuestLinkExpired expires finished matches without finishedAt (finished before the column existed)', () => {
+		expect(isGuestLinkExpired({ status: 'finished', finishedAt: null }, now)).toBe(true);
+	});
+});
+
+describe('expireGuestLink', () => {
+	it('clears the token only while the match is still finished', async () => {
+		await expireGuestLink(7);
+		expect(updateSetMock).toHaveBeenCalledWith({ controlToken: null });
+		const { sql, params } = render(updateWhereMock.mock.calls[0][0]);
+		expect(sql).toBe('("matches"."id" = $1 and "matches"."status" = $2)');
+		expect(params).toEqual([7, 'finished']);
+	});
+});
+
+describe('getGuestMatch', () => {
+	const now = new Date('2026-10-14T20:00:00.000Z');
+
+	it('looks the match up by control token and returns the row', async () => {
+		const row = matchRow({ status: 'live', controlToken: 'tok-1' });
+		matchesFindFirstMock.mockResolvedValue(row);
+		expect(await getGuestMatch('tok-1', now)).toBe(row);
+		const { sql, params } = render(matchesFindFirstMock.mock.calls[0][0].where);
+		expect(sql).toBe('"matches"."control_token" = $1');
+		expect(params).toEqual(['tok-1']);
+		expect(updateSetMock).not.toHaveBeenCalled();
+	});
+
+	it('returns null for an unknown token', async () => {
+		matchesFindFirstMock.mockResolvedValue(undefined);
+		expect(await getGuestMatch('tok-1', now)).toBeNull();
+		expect(updateSetMock).not.toHaveBeenCalled();
+	});
+
+	it('returns expired and clears the token after the grace period', async () => {
+		matchesFindFirstMock.mockResolvedValue(
+			matchRow({ status: 'finished', controlToken: 'tok-1', finishedAt: new Date(now.getTime() - 11 * 60 * 1000) })
+		);
+		expect(await getGuestMatch('tok-1', now)).toBe('expired');
+		expect(updateSetMock).toHaveBeenCalledWith({ controlToken: null });
+		expect(render(updateWhereMock.mock.calls[0][0]).params).toEqual([7, 'finished']);
 	});
 });
