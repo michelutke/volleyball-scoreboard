@@ -108,6 +108,28 @@ export async function resolveMobileOrgId(
 	return orgId;
 }
 
+export interface MobileIdentity {
+	orgId: string;
+	sub: string;
+	roles: string[];
+}
+
+export function extractRoles(payload: JWTPayload | Record<string, unknown>): string[] {
+	const realmAccess = (payload as Record<string, unknown>).realm_access as { roles?: unknown } | undefined;
+	const roles = realmAccess?.roles;
+	return Array.isArray(roles) ? roles.filter((role): role is string => typeof role === 'string') : [];
+}
+
+/** Org, subject and realm roles of a verified mobile token, so endpoints can check roles without re-parsing. */
+export async function resolveMobileIdentity(
+	payload: JWTPayload | Record<string, unknown>
+): Promise<MobileIdentity | null> {
+	const orgId = await resolveMobileOrgId(payload);
+	if (!orgId) return null;
+	const sub = (payload as Record<string, unknown>).sub;
+	return { orgId, sub: typeof sub === 'string' ? sub : '', roles: extractRoles(payload) };
+}
+
 function isRoutineTokenError(e: unknown): boolean {
 	return (
 		e instanceof errors.JWTExpired ||
@@ -118,13 +140,13 @@ function isRoutineTokenError(e: unknown): boolean {
 	);
 }
 
-export async function verifyMobileToken(token: string): Promise<string | null> {
+export async function verifyMobileToken(token: string): Promise<MobileIdentity | null> {
 	try {
 		jwks ??= createRemoteJWKSet(
 			new URL(`${env.KEYCLOAK_ISSUER}/protocol/openid-connect/certs`)
 		);
 		const { payload } = await jwtVerify(token, jwks, { issuer: env.KEYCLOAK_ISSUER });
-		return resolveMobileOrgId(payload);
+		return resolveMobileIdentity(payload);
 	} catch (e) {
 		if (!isRoutineTokenError(e)) {
 			console.error('[mobile-auth] verifyMobileToken failed:', e);

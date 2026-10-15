@@ -1,8 +1,9 @@
 import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
-import { matches, timeouts, scores } from '$lib/server/db/schema.js';
+import { timeouts, scores } from '$lib/server/db/schema.js';
 import { matchSSEEmitter } from '$lib/server/sse.js';
 import { controlTimeoutSchema } from '$lib/server/validation.js';
+import { getGuestMatch } from '$lib/server/match-service';
 import { eq, and, desc } from 'drizzle-orm';
 import type { RequestHandler } from './$types.js';
 
@@ -13,10 +14,9 @@ export const POST: RequestHandler = async ({ params, request }) => {
 	if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
 	const { team } = parsed.data;
 
-	const match = await db.query.matches.findFirst({
-		where: eq(matches.controlToken, controlToken)
-	});
+	const match = await getGuestMatch(controlToken);
 	if (!match) return json({ error: 'Match not found' }, { status: 404 });
+	if (match === 'expired') return json({ error: 'Link expired' }, { status: 410 });
 
 	const matchId = match.id;
 
@@ -24,7 +24,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
 		where: eq(scores.matchId, matchId),
 		orderBy: desc(scores.createdAt)
 	});
-	if (!currentScore) return json({ error: 'Score not found' }, { status: 404 });
+	if (!currentScore) return json({ error: 'Match not started' }, { status: 409 });
 
 	const usedTimeouts = await db.query.timeouts.findMany({
 		where: and(
@@ -57,10 +57,9 @@ export const DELETE: RequestHandler = async ({ params, request }) => {
 	if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
 	const { team } = parsed.data;
 
-	const match = await db.query.matches.findFirst({
-		where: eq(matches.controlToken, controlToken)
-	});
+	const match = await getGuestMatch(controlToken);
 	if (!match) return json({ error: 'Match not found' }, { status: 404 });
+	if (match === 'expired') return json({ error: 'Link expired' }, { status: 410 });
 
 	const matchId = match.id;
 
@@ -68,7 +67,7 @@ export const DELETE: RequestHandler = async ({ params, request }) => {
 		where: eq(scores.matchId, matchId),
 		orderBy: desc(scores.createdAt)
 	});
-	if (!currentScore) return json({ error: 'Score not found' }, { status: 404 });
+	if (!currentScore) return json({ error: 'Match not started' }, { status: 409 });
 
 	const lastTimeout = await db.query.timeouts.findFirst({
 		where: and(

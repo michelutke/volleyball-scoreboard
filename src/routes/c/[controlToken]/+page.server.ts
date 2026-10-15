@@ -1,23 +1,23 @@
 import { error } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
-import { matches, scores, timeouts } from '$lib/server/db/schema.js';
+import { scores, timeouts } from '$lib/server/db/schema.js';
 import { toMatchState } from '$lib/server/match-state.js';
 import { eq, desc, asc, and } from 'drizzle-orm';
+import { getGuestMatch } from '$lib/server/match-service';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const { controlToken } = params;
 
-	const match = await db.query.matches.findFirst({
-		where: eq(matches.controlToken, controlToken)
-	});
+	const match = await getGuestMatch(controlToken);
 	if (!match) error(404, 'Link nicht gefunden');
+	if (match === 'expired') error(410, 'Spiel beendet');
 
 	const score = await db.query.scores.findFirst({
 		where: eq(scores.matchId, match.id),
 		orderBy: desc(scores.createdAt)
 	});
-	if (!score) error(404, 'Score nicht gefunden');
+	if (!score) error(409, 'Spiel hat noch nicht begonnen');
 
 	const [homeTimeouts, guestTimeouts, scoreHistory, timeoutHistory] = await Promise.all([
 		db.query.timeouts.findMany({

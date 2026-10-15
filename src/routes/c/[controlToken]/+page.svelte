@@ -27,6 +27,11 @@
 		}
 	});
 
+	// Link expired, replaced, or match not started: reload so the load error shows the matching page.
+	async function reloadIfUnavailable(res: Response) {
+		if (res.status === 404 || res.status === 409 || res.status === 410) await invalidateAll();
+	}
+
 	async function api(body: Record<string, unknown>) {
 		loading = true;
 		try {
@@ -39,6 +44,8 @@
 			if (res.ok) {
 				match = updated;
 				invalidateAll();
+			} else {
+				await reloadIfUnavailable(res);
 			}
 		} finally {
 			loading = false;
@@ -106,6 +113,8 @@
 					activeTimeout = null;
 				}
 			}, 1000);
+		} else {
+			await reloadIfUnavailable(res);
 		}
 	}
 
@@ -126,6 +135,8 @@
 			timeoutInterval = null;
 			activeTimeout = null;
 			invalidateAll();
+		} else {
+			await reloadIfUnavailable(res);
 		}
 	}
 

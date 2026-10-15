@@ -5,15 +5,14 @@ import { toMatchState } from '$lib/server/match-state.js';
 import { getUpcomingGames } from '$lib/server/swiss-volley.js';
 import { eq, desc, asc, and } from 'drizzle-orm';
 import { ensureOverlaySlug } from '$lib/server/overlay-slug';
+import { getOrgMatch } from '$lib/server/match-service';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const matchId = parseInt(params.matchId);
 	const { orgId } = locals;
 
-	let match = await db.query.matches.findFirst({
-		where: eq(matches.id, matchId)
-	});
+	let match = await getOrgMatch(orgId, matchId);
 	if (!match) error(404, 'Match not found');
 
 	// One-time logo fetch: only if both logos are missing and match has a SV ID
