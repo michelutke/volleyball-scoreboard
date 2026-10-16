@@ -13,6 +13,7 @@ Real-time volleyball scoring app with OBS overlay, built for VBC Thun.
 - Keycloak OIDC authentication + multi-tenancy
 - User management (invite scorers by email)
 - Mobile-friendly control panel
+- Mobile match API for the Scorely Live app (list, start, share guest scorer link), see [docs/mobile-api.md](docs/mobile-api.md)
 
 ## Tech Stack
 
@@ -68,6 +69,7 @@ npm run dev
 | `KEYCLOAK_ADMIN_CLIENT_ID` | User mgmt only | Service account client ID. Default: `scoring-app` |
 | `KEYCLOAK_ADMIN_CLIENT_SECRET` | User mgmt only | Service account client secret |
 | `KEYCLOAK_REALM` | No | KC realm name. Default: `scoring` |
+| `MOBILE_CLIENT_ID` | No | Keycloak client id of the Scorely Live app; `/api/mobile/*` tokens must have this `azp`. Default: `scorely-mobile` |
 
 See `.env.example` for all defaults.
 
@@ -85,6 +87,8 @@ See `.env.example` for all defaults.
 ## Deployment
 
 See [docs/self-hosting.md](docs/self-hosting.md) for full production setup.
+
+DB migrations do not auto-apply on Coolify redeploys. Apply them manually before deploying, see `drizzle/0007_README.md` and `drizzle/0008_README.md`.
 
 DB migrations run automatically on app startup — no manual migration step needed.
 
