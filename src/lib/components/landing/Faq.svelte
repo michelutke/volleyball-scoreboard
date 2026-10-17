@@ -86,18 +86,18 @@
 	<div class="inner">
 		<header class="head">
 			<p class="overline k-mono">{tr.overline}</p>
-			<h2 class="title k-display" use:reveal={{ y: 32 }}>{tr.title}</h2>
+			<h2 class="title k-display" use:reveal>{tr.title}</h2>
 		</header>
 
 		<div class="list">
 			{#each tr.items as item, i}
-				<div class="row" class:open={openIndex === i} use:reveal={{ y: 18, delay: i * 0.04 }}>
+				<div class="row" class:open={openIndex === i} use:reveal={{ delay: i * 0.04 }}>
 					<button class="trigger" onclick={() => toggle(i)} aria-expanded={openIndex === i}>
 						<span class="num k-mono">0{i + 1}</span>
 						<span class="q">{item.q}</span>
 						<span class="chev" aria-hidden="true">
-							<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-								<path d="M6 9l6 6 6-6" stroke-linecap="round" />
+							<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M6 9l6 6 6-6" stroke-linecap="butt" />
 							</svg>
 						</span>
 					</button>
@@ -147,7 +147,7 @@
 	}
 
 	.title {
-		font-size: clamp(36px, 6vw, 80px);
+		font-size: clamp(31px, 4.2vw, 61px);
 		margin: 0;
 		letter-spacing: -0.03em;
 		line-height: 0.95;
@@ -178,7 +178,7 @@
 		transition: color var(--dur-fast) var(--ease-snap);
 	}
 	.trigger:hover {
-		color: var(--pulse);
+		color: var(--k-text-mute);
 	}
 
 	.num {
@@ -203,7 +203,7 @@
 	}
 	.row.open .chev {
 		transform: rotate(180deg);
-		color: var(--pulse);
+		color: var(--k-text);
 	}
 
 	.answer-wrap {
