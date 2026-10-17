@@ -114,10 +114,17 @@
 {/if}
 
 <style>
+	/* Brand safe areas (manual p26): 16:9 title safe 5 % (96, 54 at 1080p); 9:16 bug at 64, 240 */
 	.overlay {
 		position: fixed;
-		top: 30px;
-		left: 30px;
+		top: 5vh;
+		left: 5vw;
 		z-index: 9999;
+	}
+	@media (orientation: portrait) {
+		.overlay {
+			top: 12.5vh;
+			left: 5.926vw;
+		}
 	}
 </style>
