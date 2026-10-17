@@ -167,7 +167,7 @@
 		color: var(--color-success);
 	}
 	.badge-trial {
-		color: #eab308;
+		color: var(--color-warning);
 	}
 
 	.title-text {

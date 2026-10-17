@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Lang } from '$lib/i18n/landing.js';
-	import { countUp, magnetic, reveal } from '$lib/motion.js';
+	import { countUp, press, reveal } from '$lib/motion.js';
 
 	interface Props {
 		lang: Lang;
@@ -87,11 +87,11 @@
 	<div class="inner">
 		<header class="head">
 			<p class="overline k-mono">{tr.overline}</p>
-			<h2 class="title k-display" use:reveal={{ y: 32 }}>{tr.title}</h2>
+			<h2 class="title k-display" use:reveal>{tr.title}</h2>
 		</header>
 
 		<div class="cards">
-			<article class="card saas" use:reveal={{ y: 40 }}>
+			<article class="card saas" use:reveal>
 				<span class="badge k-mono">{tr.saas.badge}</span>
 
 				<header class="card-head">
@@ -121,7 +121,7 @@
 					{/each}
 				</ul>
 
-				<a href="/signup" class="cta-primary" use:magnetic={{ strength: 0.2, radius: 60 }}>
+				<a href="/signup" class="cta-primary" use:press>
 					<span>{tr.saas.cta}</span>
 					<span class="arrow" aria-hidden="true">→</span>
 				</a>
@@ -129,7 +129,7 @@
 				<p class="note k-mono">{tr.saas.note}</p>
 			</article>
 
-			<article class="card self" use:reveal={{ y: 40, delay: 0.08 }}>
+			<article class="card self" use:reveal={{ delay: 0.08 }}>
 				<header class="card-head">
 					<p class="kicker k-mono">02 / Open Source</p>
 					<h3 class="card-title">{tr.selfHosted.name}</h3>
@@ -189,7 +189,7 @@
 	}
 
 	.title {
-		font-size: clamp(36px, 6vw, 80px);
+		font-size: clamp(31px, 4.2vw, 61px);
 		margin: 0;
 		letter-spacing: -0.03em;
 		line-height: 0.95;
@@ -210,15 +210,11 @@
 		display: flex;
 		flex-direction: column;
 		gap: 28px;
-		transition: transform var(--dur-mid) var(--ease-snap),
-			border-color var(--dur-mid) var(--ease-snap);
+		transition: border-color var(--dur-mid) var(--ease-snap);
 	}
 
 	.card.saas {
-		border: 2px solid var(--pulse);
-	}
-	.card.saas:hover {
-		border-color: var(--pulse-deep);
+		border: 1px solid var(--k-text);
 	}
 
 	.card.self {
@@ -232,8 +228,8 @@
 		position: absolute;
 		top: -12px;
 		left: 24px;
-		background: var(--pulse);
-		color: var(--paper);
+		background: var(--k-text);
+		color: var(--k-surface);
 		font-size: 10px;
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
@@ -301,13 +297,10 @@
 		color: var(--k-text-mute);
 	}
 	.tick {
-		color: var(--pulse);
+		color: var(--k-text);
 		font-family: var(--font-mono);
 		font-weight: 600;
 		font-size: 14px;
-	}
-	.card.saas .tick {
-		color: var(--pulse);
 	}
 
 	.cta-primary,
@@ -320,7 +313,6 @@
 		font-weight: 600;
 		font-size: 15px;
 		padding: 16px 24px;
-		will-change: transform;
 		transition: background var(--dur-fast) var(--ease-snap),
 			border-color var(--dur-fast) var(--ease-snap);
 	}
@@ -328,9 +320,11 @@
 	.cta-primary {
 		background: var(--pulse);
 		color: var(--paper);
+		border-radius: 999px;
+		will-change: transform;
 	}
 	.cta-primary:hover {
-		background: var(--pulse-deep);
+		background: var(--pulse-soft);
 	}
 
 	.cta-secondary {

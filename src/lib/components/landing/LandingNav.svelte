@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { t } from '$lib/i18n/landing.js';
 	import type { Lang } from '$lib/i18n/landing.js';
-	import { magnetic } from '$lib/motion.js';
+	import { press } from '$lib/motion.js';
+	import NavLogo from '$lib/components/brand/NavLogo.svelte';
 
 	interface Props {
 		lang: Lang;
@@ -30,9 +31,8 @@
 
 <nav class="landing-nav" class:scrolled>
 	<div class="inner">
-		<a href="/" class="wordmark">
-			<span class="word">Scorely</span>
-			<span class="dot" aria-hidden="true"></span>
+		<a href="/" class="wordmark" aria-label="Scorely">
+			<NavLogo />
 		</a>
 
 		<div class="links">
@@ -43,9 +43,11 @@
 		</div>
 
 		<div class="actions">
-			<button class="lang" onclick={onLangToggle}>{lang.toUpperCase()}</button>
+			<button class="lang" onclick={onLangToggle} aria-label={lang === 'de' ? 'Switch to English' : 'Auf Deutsch wechseln'}>
+					<span class:active={lang === 'de'}>DE</span> / <span class:active={lang === 'en'}>EN</span>
+				</button>
 			<a href="/signin" class="signin">{t[lang].nav.signin}</a>
-			<a href="/signup" class="cta" use:magnetic={{ strength: 0.25, radius: 60 }}>
+			<a href="/signup" class="cta" use:press>
 				<span>{t[lang].nav.cta}</span>
 			</a>
 			<button
@@ -56,9 +58,9 @@
 			>
 				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 					{#if menuOpen}
-						<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" />
+						<path d="M6 18L18 6M6 6l12 12" stroke-linecap="butt" />
 					{:else}
-						<path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="round" />
+						<path d="M4 7h16M4 12h16M4 17h16" stroke-linecap="butt" />
 					{/if}
 				</svg>
 			</button>
@@ -108,34 +110,8 @@
 	.wordmark {
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
 		text-decoration: none;
 		color: var(--k-text);
-		font-family: var(--font-display);
-		font-weight: var(--type-wght-bold);
-		font-size: 18px;
-		letter-spacing: -0.02em;
-		font-variation-settings: 'wght' 680, 'opsz' 22;
-		transition: font-variation-settings var(--dur-mid) var(--ease-snap);
-	}
-	.landing-nav.scrolled .wordmark {
-		font-variation-settings: 'wght' 580, 'opsz' 18;
-	}
-	.wordmark .dot {
-		width: 6px;
-		height: 6px;
-		border-radius: 50%;
-		background: var(--pulse);
-		display: inline-block;
-		animation: pulse-dot 2.4s var(--ease-glide) infinite;
-	}
-	@keyframes pulse-dot {
-		0%, 100% { transform: scale(1); opacity: 1; }
-		50% { transform: scale(1.4); opacity: 0.55; }
-	}
-	:global([data-motion='static']) .wordmark .dot,
-	:global([data-motion='damped']) .wordmark .dot {
-		animation: none;
 	}
 
 	.links {
@@ -180,18 +156,21 @@
 		font-family: var(--font-mono);
 		font-size: 11px;
 		letter-spacing: 0.08em;
-		color: var(--k-text-mute);
+		color: var(--k-text-dim);
 		background: transparent;
 		border: 1px solid var(--k-line);
-		border-radius: 4px;
+		border-radius: 0;
 		padding: 5px 8px;
 		cursor: pointer;
 		transition: color var(--dur-fast) var(--ease-snap),
 			border-color var(--dur-fast) var(--ease-snap);
 	}
 	.lang:hover {
-		color: var(--k-text);
 		border-color: var(--k-text-mute);
+	}
+	.lang .active {
+		color: var(--k-text);
+		font-weight: 700;
 	}
 
 	.signin {
@@ -220,7 +199,7 @@
 		transition: background var(--dur-fast) var(--ease-snap);
 	}
 	.cta:hover {
-		background: var(--pulse-deep);
+		background: var(--pulse-soft);
 	}
 
 	.hamburger {

@@ -196,7 +196,7 @@
 		display: grid;
 		grid-template-rows: 64px 64px;
 		row-gap: 3px;
-		font-family: 'Montserrat', 'Arial', sans-serif;
+		font-family: var(--font-sans);
 	}
 
 	.scoreboard.with-jersey {
@@ -369,33 +369,32 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-weight: 400;
-		font-size: 28px;
-		letter-spacing: 1px;
+		font-weight: var(--type-wght-display, 780);
+		font-size: 24px;
+		letter-spacing: 0.1em;
 		white-space: nowrap;
-		animation: fadeIn 0.3s ease;
-		color: black;
+		animation: alert-in calc(330ms * var(--motion-scale, 1)) var(--ease-snap, cubic-bezier(0.2, 0.9, 0.1, 1));
+		color: var(--ink, #0a0a0a);
 	}
 
+	/* Brand banner colours (manual p26): set point blue with paper type, match point red and
+	   timeout yellow with ink type */
 	.alert.timeout {
-		background: rgba(234, 179, 8, 0.95);
+		background: var(--color-warning, #eab308);
 	}
 	.alert.matchpoint {
-		background: rgba(239, 68, 68, 0.95);
-		color: white;
+		background: var(--pulse, #ff3d2e);
 	}
 	.alert.setpoint {
-		background: rgba(14, 165, 233, 0.85);
-		color: white;
+		background: var(--cool, #1d4ed8);
+		color: var(--paper, #f5f3ee);
 	}
 
-	@keyframes fadeIn {
+	@keyframes alert-in {
 		from {
-			opacity: 0;
 			transform: translateX(-10px);
 		}
 		to {
-			opacity: 1;
 			transform: translateX(0);
 		}
 	}

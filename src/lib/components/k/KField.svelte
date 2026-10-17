@@ -35,7 +35,7 @@
 	}
 
 	.k-field-label {
-		font-size: 11px;
+		font-size: 13px;
 		letter-spacing: 0.14em;
 		text-transform: uppercase;
 		color: var(--k-text-dim);

@@ -361,8 +361,8 @@
 		border-color: var(--pulse);
 	}
 	.tag-pending {
-		color: #eab308;
-		border-color: #eab308;
+		color: var(--color-warning);
+		border-color: var(--color-warning);
 	}
 	.tag-error {
 		color: var(--color-error);

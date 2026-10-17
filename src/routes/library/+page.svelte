@@ -4,7 +4,7 @@
 	import type { PageData } from './$types.js';
 	import type { LibraryOverlay, MatchState } from '$lib/types.js';
 	import ScoreboardDisplay from '$lib/components/ScoreboardDisplay.svelte';
-	import { SCOREBOARD_LAYOUTS, type ScoreboardOptions } from '$lib/components/scoreboards/index.js';
+	import { SCOREBOARD_LAYOUTS, type ScoreboardOptions, DEFAULT_LAYOUT_ID } from '$lib/components/scoreboards/index.js';
 	import { reveal } from '$lib/motion.js';
 	import LandingNav from '$lib/components/landing/LandingNav.svelte';
 	import Nav from '$lib/components/Nav.svelte';
@@ -48,7 +48,7 @@
 		designTemplateId: null
 	};
 
-	let selectedLayoutId = $state<string>(untrack(() => data.orgLayoutId ?? 'classic'));
+	let selectedLayoutId = $state<string>(untrack(() => data.orgLayoutId ?? DEFAULT_LAYOUT_ID));
 	let layoutOptions = $state<Record<string, ScoreboardOptions>>({});
 
 	$effect(() => {
@@ -449,14 +449,14 @@
 		font-size: 10px;
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
-		color: var(--paper);
+		color: var(--ink);
 		background: var(--pulse);
 		padding: 4px 10px;
 		align-self: flex-start;
 	}
 
 	.preview-frame {
-		background: #0a0a0a;
+		background: var(--ink);
 		padding: 24px 16px;
 		overflow-x: auto;
 		display: flex;
@@ -479,9 +479,9 @@
 	.select-btn {
 		font-family: var(--font-sans);
 		font-size: 13px;
-		font-weight: 600;
+		font-weight: var(--type-wght-medium);
 		padding: 10px 22px;
-		border-radius: 999px;
+		border-radius: 0;
 		background: transparent;
 		color: var(--k-text);
 		border: 1px solid var(--k-line);

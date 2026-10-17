@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title>Passwort festlegen — Scorely</title>
+    <title>Passwort festlegen, Scorely</title>
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800;900&display=swap"/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;520;680;780&display=swap"/>
     <link rel="stylesheet" href="${url.resourcesPath}/css/scoreboard.css"/>
 </head>
 <body>
-    <div class="title">SCORELY</div>
+    <img class="logo" src="${url.resourcesPath}/img/lockup-stacked-on-ink.svg" alt="Scorely"/>
 
     <#if message?has_content>
     <div class="alert alert-${message.type}">${message.summary}</div>

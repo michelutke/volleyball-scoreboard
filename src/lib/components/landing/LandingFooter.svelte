@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Lang } from '$lib/i18n/landing.js';
-	import { magnetic, reveal } from '$lib/motion.js';
+	import Logo from '$lib/components/brand/Logo.svelte';
+	import { press, reveal } from '$lib/motion.js';
 
 	interface Props {
 		lang: Lang;
@@ -10,7 +11,8 @@
 
 	const translations = {
 		de: {
-			tagline: 'Score in motion.',
+			tagline: 'Linie isch drin',
+			company: 'Sport in motion.',
 			cta: 'Kostenlos testen →',
 			subline: 'Volleyball-Scoring für deinen Stream. Live. Echtzeit.',
 			copyright: '© 2026 Scorely',
@@ -21,7 +23,8 @@
 			]
 		},
 		en: {
-			tagline: 'Score in motion.',
+			tagline: 'Ball is in',
+			company: 'Sport in motion.',
 			cta: 'Try for free →',
 			subline: 'Volleyball scoring for your stream. Live. Real-time.',
 			copyright: '© 2026 Scorely',
@@ -38,17 +41,18 @@
 
 <footer class="footer">
 	<div class="inner">
-		<div class="closer" use:reveal={{ y: 32 }}>
+		<div class="closer" use:reveal>
 			<p class="kicker k-mono">Bereit zu scoren · Ready to score</p>
-			<h2 class="big-mark k-display">{tr.tagline}</h2>
+			<h2 class="big-mark k-display">{tr.tagline}<span class="ball"></span></h2>
 			<p class="subline">{tr.subline}</p>
-			<a href="/signup" class="cta" use:magnetic={{ strength: 0.18, radius: 70 }}>
+			<a href="/signup" class="cta" use:press>
 				<span>{tr.cta}</span>
 			</a>
 		</div>
 
 		<div class="meta">
-			<span class="brand k-display">Scorely<span class="dot" aria-hidden="true"></span></span>
+			<Logo variant="lockup" class="brand" />
+			<p class="company k-mono">{tr.company}</p>
 			<p class="copyright k-mono">{tr.copyright}</p>
 			<div class="links">
 				{#each tr.links as link}
@@ -92,12 +96,19 @@
 	}
 
 	.big-mark {
-		font-size: clamp(56px, 14vw, 200px);
-		line-height: 0.9;
+		font-size: clamp(39px, 7vw, 96px);
+		line-height: 0.95;
 		margin: 0;
-		letter-spacing: -0.04em;
+		letter-spacing: -0.035em;
 		color: var(--k-text);
-		font-variation-settings: 'wght' 800, 'opsz' 36;
+	}
+	.big-mark .ball {
+		display: inline-block;
+		width: 0.17em;
+		height: 0.17em;
+		margin-left: 0.04em;
+		border-radius: 50%;
+		background: var(--pulse);
 	}
 
 	.subline {
@@ -123,7 +134,7 @@
 		transition: background var(--dur-fast) var(--ease-snap);
 	}
 	.cta:hover {
-		background: var(--pulse-deep);
+		background: var(--pulse-soft);
 	}
 
 	.meta {
@@ -134,19 +145,19 @@
 		border-top: 1px solid var(--k-line);
 	}
 
-	.brand {
-		font-size: 22px;
-		font-weight: var(--type-wght-bold);
-		letter-spacing: -0.02em;
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
+	.meta :global(.brand) {
+		height: 28px;
+		width: auto;
+		align-self: flex-start;
+		color: var(--k-text);
 	}
-	.brand .dot {
-		width: 6px;
-		height: 6px;
-		border-radius: 50%;
-		background: var(--pulse);
+
+	.company {
+		font-size: 12px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--k-text-mute);
+		margin: 0;
 	}
 
 	.copyright {

@@ -7,6 +7,7 @@
 	import type { ActionData } from './$types';
 	import LandingNav from '$lib/components/landing/LandingNav.svelte';
 	import { KButton, KInput, KField } from '$lib/components/k';
+	import Logo from '$lib/components/brand/Logo.svelte';
 
 	let { form }: { form: ActionData } = $props();
 
@@ -66,6 +67,7 @@
 
 <div class="page">
 	<div class="wrap" class:wide={step === 'checkout'}>
+		<Logo variant="stacked" class="logo" />
 		{#if step === 'checkout'}
 			<header class="head">
 				<p class="kicker k-mono">Schritt 02 · Zahlung</p>
@@ -157,7 +159,7 @@
 					/>
 				</KField>
 
-				<KButton variant="primary" size="lg" full disabled={loading || passwordMismatch}>
+				<KButton variant="primary" size="lg" full pill disabled={loading || passwordMismatch}>
 					{loading ? '...' : 'Kostenlos starten'}
 				</KButton>
 			</form>
@@ -186,6 +188,12 @@
 		flex-direction: column;
 		gap: 32px;
 	}
+	.wrap :global(.logo) {
+		height: 96px;
+		width: auto;
+		align-self: flex-start;
+		color: var(--k-text);
+	}
 	.wrap.wide {
 		max-width: 720px;
 	}
@@ -197,10 +205,10 @@
 	}
 
 	.kicker {
-		font-size: 11px;
+		font-size: 13px;
 		letter-spacing: 0.18em;
 		text-transform: uppercase;
-		color: var(--pulse);
+		color: var(--k-text-dim);
 		margin: 0;
 	}
 
@@ -248,18 +256,18 @@
 		padding: 12px 14px;
 		background: color-mix(in srgb, var(--color-error) 10%, transparent);
 		border: 1px solid var(--color-error);
-		color: var(--color-error-light);
+		color: var(--color-error);
 	}
 
 	.below {
-		font-size: 12px;
+		font-size: 13px;
 		letter-spacing: 0.06em;
 		color: var(--k-text-dim);
 		text-align: center;
 		margin: 0;
 	}
 	.link {
-		color: var(--pulse);
+		color: var(--color-link);
 		text-decoration: none;
 	}
 	.link:hover {

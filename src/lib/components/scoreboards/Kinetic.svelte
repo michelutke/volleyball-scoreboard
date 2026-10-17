@@ -1,6 +1,16 @@
+<!--
+	The Scorely score bug (brand manual p26). Native size 436 x 128 at 1080p: paper mark cell,
+	two 64 px team rows, sets won on grey-700, points on grey-850. Banners (set point, match
+	point, timeout) slide out from under the bug in 330 ms snap and back in 132 ms, never blink.
+	The stream capture runs at about 5 to 15 fps and software mode forces `animation: none`, so
+	every state must read without motion: transitions only ever move toward the static end state.
+-->
 <script lang="ts">
 	import type { MatchState, Team } from '$lib/types.js';
 	import type { ScoreboardOptions } from './index.js';
+	import type { TransitionConfig } from 'svelte/transition';
+	import Logo from '$lib/components/brand/Logo.svelte';
+	import { ease } from '$lib/brand/reveal.js';
 
 	interface Props {
 		match: MatchState;
@@ -10,499 +20,365 @@
 		options?: ScoreboardOptions;
 	}
 
-	let { match, homeTimeoutsUsed, guestTimeoutsUsed, timeoutTeam, options = {} }: Props = $props();
+	let { match, timeoutTeam, options = {} }: Props = $props();
 
-	const themeMode = $derived((options.theme as string) ?? 'dark');
+	const TIMEOUT_SECONDS = 30;
+
+	const light = $derived(options.theme === 'light');
 	const accentWarm = $derived((options.accentWarm as string) ?? '#ff3d2e');
 	const accentCool = $derived((options.accentCool as string) ?? '#1d4ed8');
-	const showLogos = $derived(options.showLogos !== false);
+	const showLogos = $derived(options.showLogos === true);
 
 	function isAtSetPoint(pts: number, other: number, setNum: number): boolean {
 		const target = setNum === 5 ? 15 : 25;
 		return pts >= target - 1 && pts > other;
 	}
 
-	const homeSetPoint = $derived(
-		isAtSetPoint(match.homePoints, match.guestPoints, match.currentSet)
-	);
-	const guestSetPoint = $derived(
-		isAtSetPoint(match.guestPoints, match.homePoints, match.currentSet)
-	);
-	const homeMatchPoint = $derived(match.homeSets === 2 && homeSetPoint);
-	const guestMatchPoint = $derived(match.guestSets === 2 && guestSetPoint);
+	const homeSetPoint = $derived(match.status === 'live' && isAtSetPoint(match.homePoints, match.guestPoints, match.currentSet));
+	const guestSetPoint = $derived(match.status === 'live' && isAtSetPoint(match.guestPoints, match.homePoints, match.currentSet));
 
-	const homeServing = $derived(match.serviceTeam === 'home');
-	const guestServing = $derived(match.serviceTeam === 'guest');
-
-	function pad(n: number): string {
-		return n.toString().padStart(2, '0');
+	type BannerKind = 'timeout' | 'match' | 'set';
+	interface Banner {
+		kind: BannerKind;
+		label: string;
+		team: string;
 	}
 
-	const surface = $derived(themeMode === 'light' ? '#f5f3ee' : '#0a0a0a');
-	const surfaceAlt = $derived(themeMode === 'light' ? '#ebe8e1' : '#161616');
-	const text = $derived(themeMode === 'light' ? '#0a0a0a' : '#f5f3ee');
-	const textDim = $derived(themeMode === 'light' ? '#6b6b6b' : '#8a8a8a');
-	const line = $derived(themeMode === 'light' ? '#c8c5bd' : '#2a2a2a');
-
-	type BannerKind = 'timeout' | 'match' | 'set' | null;
-	function bannerFor(team: Team): { kind: BannerKind; label: string } {
-		if (timeoutTeam === team) return { kind: 'timeout', label: 'TIME OUT' };
-		if (team === 'home' && homeMatchPoint) return { kind: 'match', label: 'MATCH POINT' };
-		if (team === 'guest' && guestMatchPoint) return { kind: 'match', label: 'MATCH POINT' };
-		if (team === 'home' && homeSetPoint) return { kind: 'set', label: 'SET POINT' };
-		if (team === 'guest' && guestSetPoint) return { kind: 'set', label: 'SET POINT' };
-		return { kind: null, label: '' };
+	function teamName(team: Team): string {
+		return team === 'home' ? match.homeTeamName : match.guestTeamName;
 	}
 
-	const homeBanner = $derived(bannerFor('home'));
-	const guestBanner = $derived(bannerFor('guest'));
+	const banner = $derived.by((): Banner | null => {
+		if (timeoutTeam) return { kind: 'timeout', label: 'TIMEOUT', team: teamName(timeoutTeam) };
+		const pointTeam: Team | null = homeSetPoint ? 'home' : guestSetPoint ? 'guest' : null;
+		if (!pointTeam) return null;
+		const sets = pointTeam === 'home' ? match.homeSets : match.guestSets;
+		const isMatchPoint = sets === 2;
+		return isMatchPoint
+			? { kind: 'match', label: 'MATCH POINT', team: teamName(pointTeam) }
+			: { kind: 'set', label: 'SET POINT', team: teamName(pointTeam) };
+	});
+
+	let timeoutLeft = $state(TIMEOUT_SECONDS);
+	$effect(() => {
+		if (!timeoutTeam) return;
+		timeoutLeft = TIMEOUT_SECONDS;
+		const started = Date.now();
+		const id = setInterval(() => {
+			timeoutLeft = Math.max(0, TIMEOUT_SECONDS - Math.floor((Date.now() - started) / 1000));
+		}, 250);
+		return () => clearInterval(id);
+	});
+
+	const timeoutLabel = $derived(`0:${timeoutLeft.toString().padStart(2, '0')}`);
+
+	function motionScale(): number {
+		const n = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale'));
+		return Number.isFinite(n) ? n : 1;
+	}
+
+	/** Slide out from under the bug: the banner travels its own height from behind the bug. */
+	function underBug(_node: Element, { duration }: { duration: number }): TransitionConfig {
+		return {
+			duration: duration * motionScale(),
+			easing: (t) => ease('snap', t),
+			css: (t) => `transform: translateY(${(t - 1) * 100}%)`
+		};
+	}
 </script>
 
-<div
-	class="kinetic"
-	class:has-logos={showLogos}
-	data-show-sets={match.showSetScores || match.status === 'finished' || !!timeoutTeam || match.setScores.length > 0}
-	style:--k-surface-board={surface}
-	style:--k-surface-board-alt={surfaceAlt}
-	style:--k-text-board={text}
-	style:--k-text-dim-board={textDim}
-	style:--k-line-board={line}
-	style:--k-warm={accentWarm}
-	style:--k-cool={accentCool}
-	style:--home-jersey={match.homeJerseyColor}
-	style:--guest-jersey={match.guestJerseyColor}
->
-	<!-- HOME ROW -->
-	<div class="row home" class:serving={homeServing}>
-		{#if showLogos}
-			<div class="logo">
-				{#if match.homeTeamLogo}
-					<img src="/api/image-proxy?url={encodeURIComponent(match.homeTeamLogo)}" alt="" />
-				{:else}
-					<div class="jersey" style:background={match.homeJerseyColor}></div>
-				{/if}
+{#snippet teamRow(team: Team)}
+	{@const home = team === 'home'}
+	{@const serving = match.serviceTeam === team}
+	{@const points = home ? match.homePoints : match.guestPoints}
+	{@const logoUrl = home ? match.homeTeamLogo : match.guestTeamLogo}
+	<div class="row">
+		<div class="name-cell">
+			<span class="serve" class:on={serving} aria-hidden="true"></span>
+			{#if showLogos && logoUrl}
+				<img class="team-logo" src="/api/image-proxy?url={encodeURIComponent(logoUrl)}" alt="" />
+			{/if}
+			<span class="name">{teamName(team).toUpperCase()}</span>
+		</div>
+		{#if match.setScores.length > 0}
+			<div class="history">
+				{#each match.setScores as s, i (i)}
+					{@const own = home ? s.home : s.guest}
+					{@const other = home ? s.guest : s.home}
+					<span class="set" class:lost={own < other}>{own}</span>
+				{/each}
 			</div>
 		{/if}
-
-		<div class="name-cell">
-			<span class="name">{match.homeTeamName.toUpperCase()}</span>
-			{#if homeServing}
-				<span class="service" aria-hidden="true">●</span>
-			{/if}
-		</div>
-
-		<div class="sets-cell">
-			<span class="sets-num">{match.homeSets}</span>
-		</div>
-
-		<div class="set-scores">
-			{#each match.setScores as s}
-				<span class="set-score" class:won={s.home > s.guest}>{s.home}</span>
-			{/each}
-		</div>
-
-		<div class="points-cell" class:point-home={homeServing}>
-			{#key match.homePoints}
-				<span class="points">{pad(match.homePoints)}</span>
+		<div class="sets">{home ? match.homeSets : match.guestSets}</div>
+		<div class="points">
+			{#key points}
+				<span class="digits">{points}</span>
 			{/key}
 		</div>
-
-		<div class="timeouts">
-			<span class="t-dot" class:used={homeTimeoutsUsed >= 1}></span>
-			<span class="t-dot" class:used={homeTimeoutsUsed >= 2}></span>
-		</div>
-
-		{#if homeBanner.kind}
-			<div
-				class="row-banner"
-				class:kind-set={homeBanner.kind === 'set'}
-				class:kind-match={homeBanner.kind === 'match'}
-				class:kind-timeout={homeBanner.kind === 'timeout'}
-			>
-				{homeBanner.label}
-			</div>
-		{/if}
 	</div>
+{/snippet}
 
-	<!-- GUEST ROW -->
-	<div class="row guest" class:serving={guestServing}>
-		{#if showLogos}
-			<div class="logo">
-				{#if match.guestTeamLogo}
-					<img src="/api/image-proxy?url={encodeURIComponent(match.guestTeamLogo)}" alt="" />
-				{:else}
-					<div class="jersey" style:background={match.guestJerseyColor}></div>
-				{/if}
-			</div>
-		{/if}
-
-		<div class="name-cell">
-			<span class="name">{match.guestTeamName.toUpperCase()}</span>
-			{#if guestServing}
-				<span class="service" aria-hidden="true">●</span>
-			{/if}
+<div
+	class="bug"
+	class:light
+	style:--bug-warm={accentWarm}
+	style:--bug-cool={accentCool}
+	aria-label="{match.homeTeamName} {match.homePoints} : {match.guestPoints} {match.guestTeamName}"
+>
+	<div class="board">
+		<div class="mark-cell">
+			<Logo variant="mark" class="bug-mark" />
 		</div>
-
-		<div class="sets-cell">
-			<span class="sets-num">{match.guestSets}</span>
+		<div class="rows">
+			{@render teamRow('home')}
+			{@render teamRow('guest')}
 		</div>
-
-		<div class="set-scores">
-			{#each match.setScores as s}
-				<span class="set-score" class:won={s.guest > s.home}>{s.guest}</span>
-			{/each}
-		</div>
-
-		<div class="points-cell" class:point-guest={guestServing}>
-			{#key match.guestPoints}
-				<span class="points">{pad(match.guestPoints)}</span>
+	</div>
+	<div class="banner-slot">
+		{#if banner}
+			{#key banner.kind + banner.team}
+				<div
+					class="banner kind-{banner.kind}"
+					in:underBug={{ duration: 330 }}
+					out:underBug={{ duration: 132 }}
+				>
+					<span class="banner-label">{banner.label}</span>
+					<span class="banner-team">{banner.team.toUpperCase()}</span>
+					{#if banner.kind === 'timeout'}
+						<span class="banner-clock">{timeoutLabel}</span>
+					{/if}
+				</div>
 			{/key}
-		</div>
-
-		<div class="timeouts">
-			<span class="t-dot" class:used={guestTimeoutsUsed >= 1}></span>
-			<span class="t-dot" class:used={guestTimeoutsUsed >= 2}></span>
-		</div>
-
-		{#if guestBanner.kind}
-			<div
-				class="row-banner"
-				class:kind-set={guestBanner.kind === 'set'}
-				class:kind-match={guestBanner.kind === 'match'}
-				class:kind-timeout={guestBanner.kind === 'timeout'}
-			>
-				{guestBanner.label}
-			</div>
 		{/if}
 	</div>
 </div>
 
 <style>
-	.kinetic {
-		display: inline-flex;
-		flex-direction: column;
-		align-items: flex-start;
+	.bug {
+		--bug-surface: var(--ink, #0a0a0a);
+		--bug-text: var(--paper, #f5f3ee);
+		--bug-dim: var(--grey-500, #6b6b6b);
+		--bug-line: var(--grey-700, #2a2a2a);
+		--bug-sets: var(--grey-700, #2a2a2a);
+		--bug-points: var(--grey-850, #161616);
+		--bug-mark-cell: var(--paper, #f5f3ee);
+		--bug-mark: var(--ink, #0a0a0a);
+		display: inline-grid;
+		min-width: 436px;
 		font-family: var(--font-sans);
-		color: var(--k-text-board);
+		color: var(--bug-text);
+	}
+	.bug.light {
+		--bug-surface: var(--paper, #f5f3ee);
+		--bug-text: var(--ink, #0a0a0a);
+		--bug-line: var(--grey-300, #c8c5bd);
+		--bug-sets: var(--grey-300, #c8c5bd);
+		--bug-points: var(--grey-100, #ebe8e1);
+		--bug-mark-cell: var(--ink, #0a0a0a);
+		--bug-mark: var(--paper, #f5f3ee);
+	}
+
+	.board {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		height: 128px;
+		background: var(--bug-surface);
+	}
+
+	.mark-cell {
+		flex: 0 0 64px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--bug-mark-cell);
+		color: var(--bug-mark);
+	}
+	.mark-cell :global(.bug-mark) {
+		width: 44px;
+		height: 44px;
+	}
+
+	.rows {
+		flex: 1;
+		min-width: 0;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: 64px 64px;
 	}
 
 	.row {
 		display: flex;
 		align-items: stretch;
-		height: 64px;
-		width: max-content;
-		background: var(--k-surface-board);
-		border: 1px solid var(--k-line-board);
-		transition: background 0.3s ease;
 	}
-	.row.guest {
-		border-top: none;
-	}
-	.row.serving {
-		background: color-mix(in srgb, var(--k-warm) 6%, var(--k-surface-board));
-	}
-
-	.logo {
-		flex: 0 0 64px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 8px;
-		border-right: 1px solid var(--k-line-board);
-		background: var(--k-surface-board-alt);
-	}
-	.logo img {
-		width: 100%;
-		height: 100%;
-		object-fit: contain;
-	}
-	.jersey {
-		width: 32px;
-		height: 32px;
+	.row + .row {
+		box-shadow: inset 0 1px 0 var(--bug-line);
 	}
 
 	.name-cell {
-		flex: 1 1 260px;
-		min-width: 200px;
+		flex: 1;
 		display: flex;
 		align-items: center;
-		gap: 12px;
-		padding: 0 22px;
-		border-right: 1px solid var(--k-line-board);
-		overflow: hidden;
-	}
-
-	.name {
-		font-family: var(--font-display);
-		font-weight: 700;
-		font-variation-settings: 'wght' 700, 'opsz' 28;
-		font-size: 18px;
-		letter-spacing: -0.01em;
-		color: var(--k-text-board);
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		flex: 1;
+		gap: 8px;
+		padding: 0 16px 0 14px;
 		min-width: 0;
 	}
 
-	.service {
-		color: var(--k-warm);
-		font-size: 12px;
-		flex-shrink: 0;
-		animation: service-pulse 1.6s ease infinite;
+	.serve {
+		flex: 0 0 10px;
+		height: 10px;
+		border-radius: 50%;
 	}
-	@keyframes service-pulse {
-		0%,
-		100% {
-			opacity: 1;
-			transform: scale(1);
-		}
-		50% {
-			opacity: 0.5;
-			transform: scale(0.85);
-		}
+	.serve.on {
+		background: var(--bug-warm);
 	}
 
-	.sets-cell {
-		flex: 0 0 64px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border-right: 1px solid var(--k-line-board);
-		font-family: var(--font-mono);
-		font-feature-settings: 'tnum';
+	.team-logo {
+		width: 28px;
+		height: 28px;
+		object-fit: contain;
 	}
 
-	.sets-num {
-		font-size: 24px;
-		font-weight: 600;
-		color: var(--k-text-board);
-		letter-spacing: -0.04em;
-	}
-
-	.set-scores {
-		display: flex;
-		align-items: stretch;
-		flex-shrink: 0;
-	}
-	.kinetic[data-show-sets='true'] .set-scores {
-		border-right: 1px solid var(--k-line-board);
-	}
-	.kinetic[data-show-sets='false'] .set-scores {
-		display: none;
-	}
-
-	.set-score {
-		flex: 0 0 56px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-family: var(--font-mono);
-		font-feature-settings: 'tnum';
+	.name {
+		font-weight: var(--type-wght-display, 780);
 		font-size: 18px;
-		font-weight: 500;
-		color: var(--k-text-dim-board);
-		border-right: 1px solid var(--k-line-board);
-		padding: 0 8px;
-	}
-	.set-score:last-child {
-		border-right: none;
-	}
-	.row.home .set-score.won {
-		color: var(--k-text-board);
-		border-bottom: 2px solid var(--home-jersey, var(--k-warm));
-	}
-	.row.guest .set-score.won {
-		color: var(--k-text-board);
-		border-bottom: 2px solid var(--guest-jersey, var(--k-cool));
+		letter-spacing: 0.01em;
+		line-height: 1;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
-	.points-cell {
-		flex: 0 0 100px;
+	.history {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding-right: 14px;
+		font-family: var(--font-mono);
+		font-variant-numeric: tabular-nums;
+		font-size: 15px;
+	}
+	.set {
+		min-width: 2ch;
+		text-align: right;
+	}
+	.set.lost {
+		color: var(--bug-dim);
+	}
+
+	.sets,
+	.points {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		border-right: 1px solid var(--k-line-board);
-		position: relative;
-		overflow: hidden;
-		background: var(--k-surface-board);
-	}
-
-	.points-cell.point-home::after,
-	.points-cell.point-guest::after {
-		content: '';
-		position: absolute;
-		left: 0;
-		bottom: 0;
-		height: 2px;
-		width: 100%;
-		background: var(--k-warm);
-		transform-origin: left;
-		animation: serve-bar 1.6s ease infinite;
-	}
-	@keyframes serve-bar {
-		0%,
-		100% {
-			transform: scaleX(0.4);
-		}
-		50% {
-			transform: scaleX(1);
-		}
-	}
-
-	.points {
 		font-family: var(--font-mono);
-		font-feature-settings: 'tnum';
-		font-size: 36px;
+		font-variant-numeric: tabular-nums;
 		font-weight: 700;
-		color: var(--k-text-board);
-		letter-spacing: -0.05em;
-		line-height: 1;
-		animation: digit-roll 0.42s var(--ease-mass, cubic-bezier(0.6, 0.05, 0.1, 1));
+	}
+	.sets {
+		flex: 0 0 36px;
+		font-size: 20px;
+		background: var(--bug-sets);
+	}
+	.points {
+		flex: 0 0 80px;
+		font-size: 36px;
+		background: var(--bug-points);
+		overflow: hidden;
 	}
 
-	@keyframes digit-roll {
+	/* Point update: 330 ms snap roll, no squash, no flash */
+	.digits {
+		display: block;
+		animation: roll calc(330ms * var(--motion-scale, 1)) var(--ease-snap, cubic-bezier(0.2, 0.9, 0.1, 1));
+	}
+	@keyframes roll {
 		from {
 			transform: translateY(60%);
-			opacity: 0;
 		}
 		to {
 			transform: translateY(0);
-			opacity: 1;
 		}
 	}
 
-	.timeouts {
-		flex: 0 0 40px;
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		gap: 4px;
-		padding: 0 10px;
-		align-items: center;
+	.banner-slot {
+		position: relative;
+		overflow: hidden;
+		height: 36px;
 	}
 
-	.t-dot {
-		width: 8px;
-		height: 8px;
-		border: 1px solid var(--k-text-dim-board);
-		border-radius: 50%;
-		transition: background 0.3s var(--ease-snap, cubic-bezier(0.2, 0.9, 0.1, 1));
-	}
-	.row.home .t-dot.used {
-		background: var(--home-jersey, var(--k-warm));
-		border-color: var(--home-jersey, var(--k-warm));
-	}
-	.row.guest .t-dot.used {
-		background: var(--guest-jersey, var(--k-cool));
-		border-color: var(--guest-jersey, var(--k-cool));
-	}
-
-	.row-banner {
-		flex: 0 0 auto;
-		margin-left: 4px;
-		padding: 0 22px;
+	.banner {
+		position: absolute;
+		inset: 0;
 		display: flex;
 		align-items: center;
-		font-family: var(--font-mono);
-		font-size: 13px;
-		letter-spacing: 0.18em;
-		font-weight: 600;
+		gap: 16px;
+		padding: 0 16px;
+		font-weight: var(--type-wght-display, 780);
+		font-size: 15px;
+		letter-spacing: 0.1em;
 		white-space: nowrap;
-		animation: banner-slide 0.45s var(--ease-mass, cubic-bezier(0.6, 0.05, 0.1, 1));
 	}
-
-	.row-banner.kind-set {
-		background: var(--k-cool);
+	.banner-team {
+		font-weight: var(--type-wght-bold, 680);
+	}
+	.banner-clock {
+		margin-left: auto;
+		font-family: var(--font-mono);
+		font-variant-numeric: tabular-nums;
+		font-weight: 700;
+		font-size: 18px;
+		letter-spacing: 0;
+	}
+	.kind-set {
+		background: var(--bug-cool);
 		color: var(--paper, #f5f3ee);
 	}
-	.row-banner.kind-match {
-		background: var(--k-warm);
-		color: var(--paper, #f5f3ee);
+	.kind-match {
+		background: var(--bug-warm);
+		color: var(--ink, #0a0a0a);
 	}
-	.row-banner.kind-timeout {
-		background: #eab308;
-		color: #0a0a0a;
-	}
-
-	@keyframes banner-slide {
-		from {
-			transform: translateX(12px);
-			opacity: 0;
-		}
-		to {
-			transform: translateX(0);
-			opacity: 1;
-		}
+	.kind-timeout {
+		background: var(--color-warning, #eab308);
+		color: var(--ink, #0a0a0a);
 	}
 
-	:global([data-motion='static']) .service,
-	:global([data-motion='static']) .points-cell::after,
-	:global([data-motion='damped']) .points-cell::after {
-		animation: none;
-	}
-	:global([data-motion='static']) .points {
-		animation: none;
-	}
-	:global([data-motion='static']) .row-banner {
-		animation: none;
-	}
-
-	/* Narrow screens: hide set-scores entirely so the row stays compact and readable */
-	@media (max-width: 720px) {
-		.set-scores {
-			display: none !important;
-		}
-	}
-
-	/* Phones: compact every cell so the whole board fits ~250px */
 	@media (max-width: 480px) {
-		.row {
-			height: 50px;
+		.bug {
+			min-width: 0;
+			max-width: 100%;
 		}
-		.logo {
-			flex: 0 0 40px;
-			padding: 6px;
+		.history {
+			display: none;
 		}
-		.jersey {
-			width: 24px;
-			height: 24px;
+		/* Type steps down the 1.25 scale on phones (manual p24: points 36 / 30) */
+		.board {
+			height: 104px;
+		}
+		.rows {
+			grid-template-rows: 52px 52px;
+		}
+		.mark-cell {
+			flex-basis: 48px;
+		}
+		.mark-cell :global(.bug-mark) {
+			width: 32px;
+			height: 32px;
 		}
 		.name-cell {
-			flex: 1 1 96px;
-			min-width: 96px;
-			padding: 0 12px;
-			gap: 8px;
+			padding: 0 10px;
+			gap: 6px;
 		}
 		.name {
-			font-size: 14px;
+			font-size: 15px;
 		}
-		.sets-cell {
-			flex: 0 0 40px;
-		}
-		.sets-num {
-			font-size: 18px;
-		}
-		.points-cell {
-			flex: 0 0 56px;
+		.sets {
+			flex-basis: 28px;
+			font-size: 16px;
 		}
 		.points {
-			font-size: 24px;
-		}
-		.timeouts {
-			flex: 0 0 24px;
-			padding: 0 6px;
-			gap: 3px;
-		}
-		.t-dot {
-			width: 6px;
-			height: 6px;
-		}
-		.row-banner {
-			font-size: 10px;
-			padding: 0 10px;
-			letter-spacing: 0.12em;
+			flex-basis: 56px;
+			font-size: 30px;
 		}
 	}
 </style>

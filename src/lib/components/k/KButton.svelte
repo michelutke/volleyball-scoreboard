@@ -11,6 +11,7 @@
 		size?: Size;
 		magnetic?: boolean;
 		full?: boolean;
+		pill?: boolean;
 		children: Snippet;
 	}
 
@@ -23,12 +24,13 @@
 		size = 'md',
 		magnetic: useMagnetic = false,
 		full = false,
+		pill = false,
 		href,
 		children,
 		...rest
 	}: Props = $props();
 
-	const klass = $derived(`k-btn k-btn-${variant} k-btn-${size}${full ? ' k-btn-full' : ''}`);
+	const klass = $derived(`k-btn k-btn-${variant} k-btn-${size}${full ? ' k-btn-full' : ''}${pill ? ' k-btn-pill' : ''}`);
 </script>
 
 {#if href}
@@ -48,10 +50,10 @@
 		justify-content: center;
 		gap: 8px;
 		font-family: var(--font-sans);
-		font-weight: 600;
+		font-weight: var(--type-wght-medium);
 		text-decoration: none;
 		border: 1px solid transparent;
-		border-radius: 999px;
+		border-radius: 0;
 		cursor: pointer;
 		will-change: transform;
 		transition:
@@ -61,7 +63,7 @@
 		white-space: nowrap;
 	}
 	.k-btn:focus-visible {
-		outline: 2px solid var(--pulse);
+		outline: 2px solid var(--color-focus);
 		outline-offset: 3px;
 	}
 	.k-btn:disabled,
@@ -82,6 +84,10 @@
 	.k-btn-lg {
 		font-size: 16px;
 		padding: 16px 28px;
+	}
+
+	.k-btn-pill {
+		border-radius: 999px;
 	}
 
 	.k-btn-full {
@@ -109,6 +115,9 @@
 	.k-btn-ghost {
 		background: transparent;
 		color: var(--k-text-mute);
+	}
+	a.k-btn-ghost {
+		color: var(--color-link);
 	}
 	.k-btn-ghost:hover {
 		color: var(--k-text);

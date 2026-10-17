@@ -42,7 +42,7 @@ export const SCOREBOARD_LAYOUTS: ScoreboardLayout[] = [
 	{
 		id: 'kinetic',
 		name: 'Kinetic',
-		description: 'Editorial broadcast · mono numerals, animated digit roll, opposing accents.',
+		description: 'Scorely score bug · mark cell, mono numerals, set point and timeout banners.',
 		component: Kinetic as unknown as Component<ScoreboardProps>,
 		supportsThemes: ['light', 'dark'],
 		customizableOptions: [
@@ -52,15 +52,19 @@ export const SCOREBOARD_LAYOUTS: ScoreboardLayout[] = [
 			]},
 			{ key: 'accentWarm', label: 'Warm accent', type: 'color', default: '#ff3d2e' },
 			{ key: 'accentCool', label: 'Cool accent', type: 'color', default: '#1d4ed8' },
-			{ key: 'showLogos', label: 'Team-Logos', type: 'boolean', default: true }
+			{ key: 'showLogos', label: 'Team-Logos', type: 'boolean', default: false }
 		]
 	}
 ];
 
-export const DEFAULT_LAYOUT_ID = 'classic';
+export const DEFAULT_LAYOUT_ID = 'kinetic';
 
 export function getLayout(id: string | null | undefined): ScoreboardLayout {
-	return SCOREBOARD_LAYOUTS.find((l) => l.id === id) ?? SCOREBOARD_LAYOUTS[0];
+	return (
+		SCOREBOARD_LAYOUTS.find((l) => l.id === id) ??
+		SCOREBOARD_LAYOUTS.find((l) => l.id === DEFAULT_LAYOUT_ID) ??
+		SCOREBOARD_LAYOUTS[0]
+	);
 }
 
 export { Classic, Kinetic };

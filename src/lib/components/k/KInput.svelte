@@ -32,8 +32,8 @@
 	}
 	.k-input:focus {
 		outline: none;
-		border-color: var(--pulse);
-		background: color-mix(in srgb, var(--pulse) 4%, var(--k-surface));
+		border-color: var(--color-focus);
+		box-shadow: 0 0 0 1px var(--color-focus);
 	}
 	.k-input:disabled {
 		opacity: 0.5;

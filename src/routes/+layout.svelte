@@ -1,8 +1,6 @@
 <script lang="ts">
 	import '../app.css';
 	import {
-		generateAccentPalette,
-		ACCENT_CSS_PROPS,
 		getStoredTheme,
 		getEffectiveTheme,
 		getStoredMotion,
@@ -40,8 +38,6 @@
 		}
 	});
 
-	const palette = $derived(data.accentColor ? generateAccentPalette(data.accentColor, effectiveTheme) : null);
-
 	$effect(() => {
 		document.documentElement.dataset.theme = effectiveTheme;
 	});
@@ -72,19 +68,6 @@
 			document.documentElement.removeAttribute('data-motion');
 		} else {
 			document.documentElement.dataset.motion = effectiveMotion;
-		}
-	});
-
-	$effect(() => {
-		const style = document.documentElement.style;
-		if (palette) {
-			for (const [prop, key] of ACCENT_CSS_PROPS) {
-				style.setProperty(prop, palette[key]);
-			}
-		} else {
-			for (const [prop] of ACCENT_CSS_PROPS) {
-				style.removeProperty(prop);
-			}
 		}
 	});
 </script>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateAccentPalette, DEFAULT_ACCENT } from './theme.js';
+import { generateAccentPalette, clubAccentStyle, DEFAULT_ACCENT } from './theme.js';
 
 describe('generateAccentPalette', () => {
 	it('returns 6 hex color strings', () => {
@@ -31,5 +31,24 @@ describe('generateAccentPalette', () => {
 		const blue = generateAccentPalette('#3498db');
 		const red = generateAccentPalette('#e74c3c');
 		expect(blue.accent).not.toBe(red.accent);
+	});
+});
+
+describe('clubAccentStyle', () => {
+	it('returns scoped club accent vars, never the global accent', () => {
+		const style = clubAccentStyle('#e74c3c');
+		expect(style).toContain('--club-accent:');
+		expect(style).not.toMatch(/--color-accent/);
+	});
+
+	it('returns empty string for missing or invalid colours', () => {
+		expect(clubAccentStyle(null)).toBe('');
+		expect(clubAccentStyle('red')).toBe('');
+	});
+});
+
+describe('DEFAULT_ACCENT', () => {
+	it('is pulse red', () => {
+		expect(DEFAULT_ACCENT).toBe('#ff3d2e');
 	});
 });

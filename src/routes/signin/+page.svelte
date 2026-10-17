@@ -4,6 +4,7 @@
 	import { untrack } from 'svelte';
 	import type { PageData } from './$types';
 	import LandingNav from '$lib/components/landing/LandingNav.svelte';
+	import Logo from '$lib/components/brand/Logo.svelte';
 
 	let lang = $state<'de' | 'en'>('de');
 
@@ -45,8 +46,7 @@
 <LandingNav {lang} onLangToggle={() => { lang = lang === 'de' ? 'en' : 'de'; }} basePath="/" />
 
 <div class="page-bg">
-	<img src="/vbcthun-ball.svg" alt="Scorely" class="logo" />
-	<h1 class="title">SCORELY</h1>
+	<Logo variant="stacked" class="logo" />
 
 	{#if successMsg}
 		<div class="alert alert-success">{successMsg}</div>
@@ -56,54 +56,26 @@
 	{/if}
 
 	<form onsubmit={handleSubmit}>
-		<div class="scoreboard-wrap">
-			<div class="scoreboard">
-				<div class="row home-row">
-					<div class="strip"></div>
-					<div class="name-cell">
-						<input
-							class="name-input"
-							type="text"
-							bind:value={email}
-							placeholder="E-Mail / Benutzername"
-							autocomplete="username"
-							required
-						/>
-					</div>
-					<div class="sets-cell">2</div>
-					<div class="set-cell h-win">25</div>
-					<div class="set-cell lose">18</div>
-					<div class="set-cell h-win">15</div>
-					<div class="points-cell">44</div>
-					<div class="timeout-cell">
-						<div class="timeout-box used"></div>
-						<div class="timeout-box used"></div>
-					</div>
-				</div>
-				<div class="row guest-row">
-					<div class="strip"></div>
-					<div class="name-cell">
-						<input
-							class="name-input"
-							type="password"
-							bind:value={password}
-							placeholder="Passwort"
-							autocomplete="current-password"
-							required
-						/>
-					</div>
-					<div class="sets-cell">1</div>
-					<div class="set-cell lose">18</div>
-					<div class="set-cell g-win">25</div>
-					<div class="set-cell lose">10</div>
-					<div class="points-cell">31</div>
-					<div class="timeout-cell">
-						<div class="timeout-box"></div>
-						<div class="timeout-box"></div>
-					</div>
-				</div>
-			</div>
-		</div>
+		<label class="field">
+			<span class="label k-mono">E-Mail / Benutzername</span>
+			<input
+				class="input"
+				type="text"
+				bind:value={email}
+				autocomplete="username"
+				required
+			/>
+		</label>
+		<label class="field">
+			<span class="label k-mono">Passwort</span>
+			<input
+				class="input"
+				type="password"
+				bind:value={password}
+				autocomplete="current-password"
+				required
+			/>
+		</label>
 
 		<div class="actions">
 			<button type="submit" disabled={loading}>
@@ -125,215 +97,114 @@
 <style>
 	.page-bg {
 		min-height: 100vh;
-		background: radial-gradient(
-				ellipse 60% 50% at 20% 0%,
-				color-mix(in srgb, var(--pulse) 22%, transparent) 0%,
-				transparent 55%
-			),
-			var(--ink);
+		background: var(--k-surface);
+		color: var(--k-text);
 		font-family: var(--font-sans);
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		padding: 5rem 1rem 2rem;
-		color: #f0f0f0;
+		padding: 6rem var(--grid-margin) 3rem;
 	}
 
-	.logo {
-		width: 56px;
-		height: 56px;
-		margin-bottom: 1rem;
-		opacity: 0.9;
-	}
-
-	.title {
-		font-family: var(--font-display);
-		font-size: clamp(2.5rem, 10vw, 5rem);
-		font-weight: 800;
-		font-variation-settings: 'wght' 800, 'opsz' 36;
-		color: #fff;
-		letter-spacing: -0.02em;
-		margin-bottom: 2rem;
-		text-align: center;
+	.page-bg :global(.logo) {
+		height: 120px;
+		width: auto;
+		color: var(--k-text);
+		margin-bottom: 2.5rem;
 	}
 
 	.alert {
 		width: 100%;
-		max-width: 680px;
+		max-width: 400px;
 		font-size: 0.875rem;
-		padding: 0.625rem 0.875rem;
-		border-radius: 0.5rem;
-		text-align: center;
+		padding: 0.75rem 1rem;
+		border-radius: 0;
+		border: 1px solid var(--k-line);
 		margin-bottom: 1rem;
 	}
 	.alert-error {
-		background: rgba(239, 68, 68, 0.12);
-		border: 1px solid rgba(239, 68, 68, 0.3);
-		color: #f87171;
+		border-color: var(--color-error);
+		color: var(--color-error);
 	}
 	.alert-success {
-		background: rgba(34, 197, 94, 0.12);
-		border: 1px solid rgba(34, 197, 94, 0.3);
-		color: #86efac;
+		border-color: var(--color-success);
+		color: var(--color-success);
 	}
 
 	form {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
+		gap: 1rem;
 		width: 100%;
+		max-width: 400px;
 	}
 
-	.scoreboard-wrap {
-		overflow-x: auto;
-		width: 100%;
-		max-width: 680px;
-	}
-	.scoreboard {
+	.field {
 		display: flex;
 		flex-direction: column;
-		gap: 3px;
-		min-width: 550px;
+		gap: 6px;
 	}
-
-	.row {
-		display: grid;
-		grid-template-columns: 10px minmax(240px, 1fr) 64px 56px 56px 56px 72px 18px;
-		height: 64px;
-		border-radius: 0.5rem;
-		overflow: hidden;
+	.label {
+		font-size: 13px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
 	}
-
-	.name-cell {
-		display: flex;
-		align-items: center;
-		padding: 0 1rem;
-	}
-
-	.sets-cell {
-		background: #111;
-		border-left: 2px solid #333;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: #fff;
-	}
-
-	.set-cell {
-		background: #141414;
-		border-left: 1px solid #333;
-		border-bottom: 3px solid transparent;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 0.9375rem;
-		font-weight: 600;
-	}
-	.h-win {
-		color: #fff;
-		border-bottom-color: #c0392b;
-	}
-	.g-win {
-		color: #fff;
-		border-bottom-color: #4a5568;
-	}
-	.lose {
-		color: rgba(255, 255, 255, 0.4);
-	}
-
-	.points-cell {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 2rem;
-		font-weight: 900;
-		color: #fff;
-	}
-
-	.timeout-cell {
-		border-left: 1px solid #fff;
-		display: flex;
-		flex-direction: column;
-		gap: 3px;
-		padding: 8px 3px;
-	}
-	.timeout-box {
-		flex: 1;
-		border-radius: 2px;
-		background: rgba(255, 255, 255, 0.3);
-	}
-	.timeout-box.used {
-		background: #fff;
-	}
-
-	.home-row .strip {
-		background: #c0392b;
-	}
-	.home-row .name-cell {
-		background: linear-gradient(to right, #1e0505, #161616);
-	}
-	.home-row .points-cell {
-		background: #c0392b;
-	}
-	.home-row .timeout-cell {
-		background: #c0392b;
-	}
-
-	.guest-row .strip {
-		background: #4a5568;
-	}
-	.guest-row .name-cell {
-		background: #141414;
-	}
-	.guest-row .points-cell {
-		background: #4a5568;
-	}
-	.guest-row .timeout-cell {
-		background: #4a5568;
-	}
-
-	.name-input {
-		background: transparent;
-		border: none;
-		color: #fff;
-		font-weight: 400;
-		font-size: 22px;
+	.input {
+		width: 100%;
+		background: var(--k-surface-alt);
+		border: 1px solid var(--k-line);
+		border-radius: 0;
+		color: var(--k-text);
 		font-family: var(--font-sans);
-		width: 100%;
-		outline: none;
+		font-weight: var(--type-wght-regular);
+		font-size: 16px;
+		padding: 14px 16px;
+		transition: border-color var(--dur-fast) var(--ease-snap);
 	}
-	.name-input::placeholder {
-		color: rgba(255, 255, 255, 0.4);
+	.input:hover {
+		border-color: var(--k-text-mute);
+	}
+	.input:focus {
+		outline: none;
+		border-color: var(--color-focus);
+		box-shadow: 0 0 0 1px var(--color-focus);
 	}
 
 	.actions {
-		margin-top: 1.5rem;
+		margin-top: 0.75rem;
 		width: 100%;
-		max-width: 360px;
 		display: flex;
 		flex-direction: column;
-		gap: 0.75rem;
+		gap: 1rem;
 	}
 
 	button[type='submit'] {
 		width: 100%;
 		background: var(--pulse);
 		color: var(--paper);
-		font-size: 0.9375rem;
-		font-weight: 600;
+		font-size: 16px;
+		font-weight: var(--type-wght-medium);
 		font-family: inherit;
 		padding: 0.875rem 1rem;
 		border: none;
 		border-radius: 999px;
 		cursor: pointer;
-		transition: background var(--dur-fast) var(--ease-snap);
-		letter-spacing: 0.02em;
+		transition:
+			background var(--dur-fast) var(--ease-snap),
+			transform var(--dur-fast) var(--ease-snap);
 	}
 	button[type='submit']:hover {
-		background: var(--pulse-deep);
+		background: var(--pulse-soft);
+	}
+	button[type='submit']:active {
+		transform: scale(1.03, 0.94);
+		transform-origin: bottom;
+	}
+	button[type='submit']:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 3px;
 	}
 	button[type='submit']:disabled {
 		opacity: 0.5;
@@ -343,54 +214,36 @@
 	.forgot {
 		text-align: center;
 	}
-	.forgot a {
-		font-size: 0.8125rem;
-		color: #888;
+	.forgot a,
+	.signup-link a {
+		font-size: 0.875rem;
+		color: var(--color-link);
 		text-decoration: none;
 	}
-	.forgot a:hover {
-		color: #aaa;
+	.forgot a:hover,
+	.signup-link a:hover {
+		text-decoration: underline;
+	}
+	.forgot a:focus-visible,
+	.signup-link a:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 3px;
 	}
 
 	.signup-link {
-		margin-top: 1.5rem;
-		font-size: 0.8125rem;
-		color: #666;
-	}
-	.signup-link a {
-		color: #888;
-		text-decoration: none;
-	}
-	.signup-link a:hover {
-		color: #aaa;
+		margin-top: 2rem;
+		font-size: 0.875rem;
+		color: var(--k-text-mute);
 	}
 
 	@media (max-width: 560px) {
 		.page-bg {
-			padding: 2rem 0.75rem;
+			padding: 5.5rem 1rem 2rem;
 			justify-content: flex-start;
 		}
-		.title {
-			margin-bottom: 1.25rem;
-		}
-		.scoreboard {
-			min-width: 0;
-		}
-		.scoreboard-wrap {
-			overflow-x: hidden;
-		}
-		.row {
-			grid-template-columns: 8px 1fr 52px 60px 14px;
-			height: 56px;
-		}
-		.row > .set-cell {
-			display: none;
-		}
-		.name-input {
-			font-size: 18px;
-		}
-		.actions {
-			max-width: 100%;
+		.page-bg :global(.logo) {
+			height: 96px;
+			margin-bottom: 1.75rem;
 		}
 	}
 </style>

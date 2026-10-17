@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import Logo from '$lib/components/brand/Logo.svelte';
 	import type { MatchState, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
 
 	let { data } = $props();
@@ -227,6 +228,14 @@
 </svelte:head>
 
 <div class="control">
+	<header class="bar">
+		<Logo variant="mark" heavy class="bar-mark" />
+		<span class="k-mono kicker">/ {(match?.homeTeamName ?? 'Scoring').toUpperCase()}</span>
+		{#if match?.status === 'live'}
+			<span class="live-badge k-pill"><span class="live-dot k-live-dot"></span>LIVE</span>
+		{/if}
+	</header>
+
 	{#if !match}
 		<div class="start-screen">
 			<button onclick={createMatch} class="btn-primary text-xl py-4 px-10">
@@ -238,7 +247,6 @@
 			<!-- 1. Spielstand-Übersicht Card (full width) -->
 			<div class="card col-span-full">
 				<div class="card-header">
-					<span class="card-icon">&#9878;</span>
 					<h2>Spielstand-Übersicht</h2>
 					<label class="toggle-label">
 						Satzresultate
@@ -325,8 +333,16 @@
 					<!-- Home Side -->
 					<div class="scoring-team">
 						<div class="scoring-team-header">
-							<span class="scoring-team-icon">&#9675;</span>
 							<span class="font-bold">{match.homeTeamName}</span>
+							{#if match.serviceTeam === 'home'}<span class="serve-dot" aria-label="Aufschlag"></span>{/if}
+						</div>
+						<div class="points k-mono">{match.homePoints}</div>
+						<div class="team-meta k-mono">
+							<span>SETS {match.homeSets}</span>
+							<span class="to">TO
+								<span class="to-dot" class:used={matchTimeouts.home >= 1}></span>
+								<span class="to-dot" class:used={matchTimeouts.home >= 2}></span>
+							</span>
 						</div>
 
 						<div class="scoring-section">
@@ -357,8 +373,16 @@
 					<!-- Guest Side -->
 					<div class="scoring-team">
 						<div class="scoring-team-header">
-							<span class="scoring-team-icon">&#128101;</span>
 							<span class="font-bold">{match.guestTeamName}</span>
+							{#if match.serviceTeam === 'guest'}<span class="serve-dot" aria-label="Aufschlag"></span>{/if}
+						</div>
+						<div class="points k-mono">{match.guestPoints}</div>
+						<div class="team-meta k-mono">
+							<span>SETS {match.guestSets}</span>
+							<span class="to">TO
+								<span class="to-dot" class:used={matchTimeouts.guest >= 1}></span>
+								<span class="to-dot" class:used={matchTimeouts.guest >= 2}></span>
+							</span>
 						</div>
 
 						<div class="scoring-section">
@@ -390,7 +414,7 @@
 				{#if activeTimeout}
 					<div class="timeout-banner">
 						Auszeit {activeTimeout.teamName} · {activeTimeout.secondsLeft}s
-						<button onclick={cancelTimeout} class="btn-timeout-cancel">&#10005; Abbrechen</button>
+						<button onclick={cancelTimeout} class="btn-timeout-cancel">Abbrechen</button>
 					</div>
 				{/if}
 
@@ -402,27 +426,27 @@
 						class:btn-service-active={match?.serviceTeam === 'home'}
 						disabled={match?.serviceTeam === 'home'}
 					>
-						&#127952; {match?.homeTeamName}
+						{match?.homeTeamName}
 					</button>
 					<button
 						onclick={() => callTimeout('home')}
 						disabled={matchTimeouts.home >= 2 || !!activeTimeout}
 						class="btn-action"
 					>
-						&#9201; Auszeit
+						Timeout
 					</button>
 					<button onclick={undo} disabled={loading} class="btn-action">
-						&#8617; Zurueck
+						Rückgängig
 					</button>
 					<button onclick={resetMatch} class="btn-action btn-action-danger">
-						&#8635; Reset
+						Reset
 					</button>
 					<button
 						onclick={() => callTimeout('guest')}
 						disabled={matchTimeouts.guest >= 2 || !!activeTimeout}
 						class="btn-action"
 					>
-						&#9201; Auszeit
+						Timeout
 					</button>
 					<button
 						onclick={() => { if (match?.serviceTeam !== 'guest') switchService(); }}
@@ -430,7 +454,7 @@
 						class:btn-service-active={match?.serviceTeam === 'guest'}
 						disabled={match?.serviceTeam === 'guest'}
 					>
-						&#127952; {match?.guestTeamName}
+						{match?.guestTeamName}
 					</button>
 				</div>
 			</div>
@@ -438,7 +462,6 @@
 			<!-- 3. Teamnamen Card -->
 			<div class="card">
 				<div class="card-header">
-					<span class="card-icon">T</span>
 					<h2>Teamnamen</h2>
 				</div>
 				<div class="card-body">
@@ -464,7 +487,7 @@
 						onclick={() => { updateSettings('homeTeamName', homeNameInput); updateSettings('guestTeamName', guestNameInput); }}
 						class="btn-primary w-full"
 					>
-						&#128190; Aktualisieren
+						Aktualisieren
 					</button>
 				</div>
 			</div>
@@ -472,7 +495,6 @@
 			<!-- 4. Trikotfarben Card -->
 			<div class="card">
 				<div class="card-header">
-					<span class="card-icon">&#9898;</span>
 					<h2>Trikotfarben</h2>
 					<label class="toggle-label">
 						Sichtbar
@@ -518,51 +540,17 @@
 			{#if setTimelines.length > 0}
 				<div class="card col-span-full">
 					<div class="card-header">
-						<span class="card-icon">&#128200;</span>
 						<h2>Spielverlauf</h2>
 					</div>
 					<div class="card-body">
-						{#each setTimelines as timeline}
-							{@const lastPointIdx = timeline.events.findLastIndex((e) => e.type === 'point')}
-							<div class="timeline-set">
-								<div class="timeline-set-header">
-									<span>Satz {timeline.set}</span>
-									{#if timeline.finalScore}
-										<span class="timeline-final-score">{timeline.finalScore.home}:{timeline.finalScore.guest}</span>
-										<span class="timeline-winner-name">{timeline.finalScore.home > timeline.finalScore.guest ? match?.homeTeamName : match?.guestTeamName}</span>
-									{:else}
-										<span class="timeline-live-badge">Live</span>
-									{/if}
+						{#each setTimelines.toReversed() as timeline (timeline.set)}
+							{#each timeline.events.toReversed() as evt}
+								<div class="history-row k-mono">
+									<span class="history-set">S{timeline.set}</span>
+									<span class="history-score">{evt.type === 'point' ? `${evt.homePoints}:${evt.guestPoints}` : 'TO'}</span>
+									<span class="history-team">{evt.type === 'timeout' ? 'TIMEOUT ' : ''}{evt.team === 'home' ? match?.homeTeamName : match?.guestTeamName}</span>
 								</div>
-								<div class="timeline-scroll">
-									<div class="timeline-grid">
-										<!-- Home row -->
-										<div class="timeline-row">
-											{#each timeline.events as evt, idx}
-												{#if evt.type === 'timeout' && evt.team === 'home'}
-													<div class="timeline-cell timeline-cell-timeout">&#9201;</div>
-												{:else if evt.type === 'point' && evt.team === 'home'}
-													<div class="timeline-cell timeline-cell-home" class:timeline-cell-winner={timeline.finalScore && idx === lastPointIdx} style:background-color="{match?.homeJerseyColor}22">{evt.homePoints}</div>
-												{:else}
-													<div class="timeline-cell timeline-cell-dim">&ndash;</div>
-												{/if}
-											{/each}
-										</div>
-										<!-- Guest row -->
-										<div class="timeline-row">
-											{#each timeline.events as evt, idx}
-												{#if evt.type === 'timeout' && evt.team === 'guest'}
-													<div class="timeline-cell timeline-cell-timeout">&#9201;</div>
-												{:else if evt.type === 'point' && evt.team === 'guest'}
-													<div class="timeline-cell timeline-cell-guest" class:timeline-cell-winner={timeline.finalScore && idx === lastPointIdx} style:background-color="{match?.guestJerseyColor}22">{evt.guestPoints}</div>
-												{:else}
-													<div class="timeline-cell timeline-cell-dim">&ndash;</div>
-												{/if}
-											{/each}
-										</div>
-									</div>
-								</div>
-							</div>
+							{/each}
 						{/each}
 					</div>
 				</div>
@@ -589,6 +577,81 @@
 		font-family: var(--font-sans);
 	}
 
+	.bar {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		max-width: 1100px;
+		margin: 0 auto 12px;
+	}
+
+	:global(.bar-mark) { height: 24px; width: auto; flex-shrink: 0; color: var(--k-text); }
+
+	.kicker {
+		margin: 0;
+		font-size: 11px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
+	}
+
+	.live-badge {
+		margin-left: auto;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 6px 12px;
+		background: var(--pulse);
+		color: var(--ink);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		font-weight: var(--type-wght-bold);
+		letter-spacing: 0.08em;
+	}
+
+	.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--paper); }
+
+	.serve-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pulse); flex-shrink: 0; }
+
+	.points {
+		font-size: 96px;
+		line-height: 1;
+		font-weight: var(--type-wght-bold);
+		letter-spacing: -0.04em;
+		padding: 4px 0 12px;
+		border-bottom: 1px solid var(--k-line);
+	}
+
+	.team-meta {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin: 8px 0 16px;
+		font-size: 10px;
+		letter-spacing: 0.08em;
+		color: var(--k-text-dim);
+	}
+
+	.to { display: inline-flex; align-items: center; gap: 4px; }
+	.to-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--k-text); border: 1px solid var(--k-text); }
+	.to-dot.used { background: transparent; border-color: var(--k-text-dim); }
+
+	.history-row {
+		display: grid;
+		grid-template-columns: 36px 64px 1fr;
+		gap: 8px;
+		padding: 8px 0;
+		border-bottom: 1px solid var(--k-line);
+		font-size: 12px;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--k-text-mute);
+	}
+
+	.history-set { color: var(--k-text-dim); }
+	.history-score { color: var(--k-text); font-weight: var(--type-wght-bold); }
+	.history-team { text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 	.start-screen {
 		display: flex;
 		justify-content: center;
@@ -596,7 +659,6 @@
 		min-height: 80vh;
 	}
 
-	/* Grid Layout */
 	.grid-layout {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
@@ -605,15 +667,12 @@
 		margin: 0 auto;
 	}
 
-	.col-span-full {
-		grid-column: 1 / -1;
-	}
+	.col-span-full { grid-column: 1 / -1; }
 
-	/* Card */
 	.card {
-		background: var(--color-bg-panel);
-		border: 1px solid var(--color-border-default);
-		border-radius: 12px;
+		background: var(--k-surface-alt);
+		border: 1px solid var(--k-line);
+		border-radius: 0;
 		overflow: hidden;
 	}
 
@@ -622,20 +681,12 @@
 		align-items: center;
 		gap: 10px;
 		padding: 14px 20px;
-		border-bottom: 1px solid var(--color-border-default);
-		font-weight: 700;
-		font-size: 16px;
+		border-bottom: 1px solid var(--k-line);
+		font-weight: var(--type-wght-bold);
+		font-size: 15px;
 	}
 
-	.card-header h2 {
-		margin: 0;
-		font-size: 16px;
-	}
-
-	.card-icon {
-		color: var(--color-accent);
-		font-size: 18px;
-	}
+	.card-header h2 { margin: 0; font-size: 15px; letter-spacing: -0.01em; }
 
 	.card-body {
 		padding: 16px 20px;
@@ -644,57 +695,53 @@
 		gap: 12px;
 	}
 
-	/* Fields */
 	.field-label {
 		display: block;
-		font-size: 13px;
-		color: var(--color-text-secondary);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--k-text-mute);
 	}
 
 	.field-input {
 		display: block;
 		width: 100%;
-		margin-top: 4px;
-		padding: 10px 14px;
-		background: var(--color-bg-input);
-		border: 1px solid var(--color-border-subtle);
-		border-radius: 8px;
-		color: var(--color-text-primary);
-		font-size: 15px;
+		margin-top: 6px;
+		padding: 10px 12px;
+		background: var(--k-surface);
+		border: 1px solid var(--k-line);
+		border-radius: 0;
+		color: var(--k-text);
+		font-size: 14px;
 		outline: none;
-		transition: border-color 0.2s;
+		transition: border-color var(--dur-fast) var(--ease-snap);
 	}
 
-	.field-input:focus {
-		border-color: var(--color-accent);
-	}
+	.field-input:focus { border-color: var(--color-focus); }
 
-	/* Buttons */
 	.btn-primary {
 		padding: 10px 20px;
-		background: linear-gradient(135deg, var(--color-accent-mid), var(--color-accent-dark));
-		color: white;
-		border: none;
-		border-radius: 8px;
-		font-weight: 600;
+		background: var(--k-text);
+		color: var(--k-surface);
+		border: 1px solid var(--k-text);
+		border-radius: 0;
+		font-weight: var(--type-wght-bold);
 		font-size: 14px;
 		cursor: pointer;
-		transition: opacity 0.2s;
+		transition: background var(--dur-fast) var(--ease-snap);
 		text-align: center;
 	}
 
-	.btn-primary:hover {
-		opacity: 0.9;
-	}
+	.btn-primary:hover { background: var(--k-text-mute); border-color: var(--k-text-mute); }
 
-	/* Toggle */
 	.toggle-label {
 		margin-left: auto;
 		display: flex;
 		align-items: center;
 		gap: 8px;
 		font-size: 13px;
-		color: var(--color-text-secondary);
+		color: var(--k-text-mute);
 		font-weight: 400;
 	}
 
@@ -702,16 +749,14 @@
 		position: relative;
 		width: 44px;
 		height: 24px;
-		background: var(--color-border-subtle);
+		background: var(--k-line);
 		border: none;
-		border-radius: 12px;
+		border-radius: 0;
 		cursor: pointer;
-		transition: background 0.2s;
+		transition: background var(--dur-fast) var(--ease-snap);
 	}
 
-	.toggle.active {
-		background: var(--color-accent-mid);
-	}
+	.toggle.active { background: var(--k-text); }
 
 	.toggle-knob {
 		position: absolute;
@@ -719,129 +764,105 @@
 		left: 2px;
 		width: 20px;
 		height: 20px;
-		background: white;
-		border-radius: 50%;
-		transition: transform 0.2s;
+		background: var(--k-surface);
+		transition: transform var(--dur-fast) var(--ease-snap);
 	}
 
-	.toggle.active .toggle-knob {
-		transform: translateX(20px);
-	}
+	.toggle.active .toggle-knob { transform: translateX(20px); }
 
-	/* Color Picker */
-	.color-field {
-		display: flex;
-		flex-direction: column;
-		gap: 6px;
-	}
+	.color-field { display: flex; flex-direction: column; gap: 6px; }
+	.color-row { display: flex; align-items: center; gap: 10px; }
+	.color-picker { width: 40px; height: 40px; border: none; border-radius: 0; cursor: pointer; padding: 0; }
+	.color-hex { font-family: var(--font-mono); font-size: 13px; color: var(--k-text-mute); }
 
-	.color-row {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-	}
-
-	.color-picker {
-		width: 40px;
-		height: 40px;
-		border: none;
-		border-radius: 6px;
-		cursor: pointer;
-		padding: 0;
-	}
-
-	.color-hex {
-		font-family: monospace;
-		font-size: 14px;
-		color: var(--color-text-secondary);
-	}
-
-	/* Scoreboard Preview */
+	/* Scoreboard preview: a mock of the overlay, always dark */
 	.scoreboard-preview {
 		display: flex;
 		flex-direction: column;
 		gap: 3px;
 		padding: 20px;
-		border: 1px solid var(--color-accent);
-		border-radius: 8px;
-		box-shadow: 0 0 30px color-mix(in srgb, var(--color-accent) 15%, transparent), 0 0 60px color-mix(in srgb, var(--color-accent) 5%, transparent);
+		border: 1px solid var(--k-line);
 	}
 
-	.preview-row {
-		display: flex;
-		align-items: stretch;
-		height: 48px;
-	}
-
-	.preview-jersey {
-		width: 8px;
-		flex-shrink: 0;
-	}
+	.preview-row { display: flex; align-items: stretch; height: 48px; }
+	.preview-jersey { width: 8px; flex-shrink: 0; }
 
 	.preview-name {
-		background: #1a1a1a;
-		color: white;
+		background: var(--grey-800);
+		color: var(--paper);
 		padding: 0 16px;
 		display: flex;
 		align-items: center;
 		gap: 8px;
 		min-width: 160px;
 		font-size: 18px;
-		font-weight: 800;
+		font-weight: var(--type-wght-display);
 	}
 
-	.preview-name-dark {
-		background: #0a0a0a;
-	}
-
-	.preview-service {
-		width: 20px;
-		height: 20px;
-		opacity: 0.85;
-		margin-left: auto;
-	}
-
-	.preview-service-hidden {
-		visibility: hidden;
-	}
+	.preview-name-dark { background: var(--ink); }
+	.preview-service { width: 20px; height: 20px; opacity: 0.85; margin-left: auto; }
+	.preview-service-hidden { visibility: hidden; }
 
 	.preview-sets {
-		background: #1a1a1a;
-		color: white;
+		background: var(--grey-800);
+		color: var(--paper);
 		width: 44px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		font-size: 22px;
-		font-weight: 800;
-		border-left: 2px solid #2a2a2a;
+		font-weight: var(--type-wght-display);
+		border-left: 2px solid var(--grey-700);
 		font-variant-numeric: tabular-nums;
 	}
 
 	.preview-points {
-		color: white;
+		color: var(--paper);
 		width: 52px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		font-size: 26px;
-		font-weight: 800;
+		font-weight: var(--type-wght-display);
 		font-variant-numeric: tabular-nums;
 	}
 
-	.set-scores {
+	.preview-set-scores {
 		display: flex;
-		justify-content: center;
-		gap: 8px;
-		padding: 0 20px 16px;
+		align-items: stretch;
+		max-width: 0;
+		overflow: hidden;
+		opacity: 0;
+		transition: max-width var(--dur-mid) var(--ease-snap), opacity var(--dur-mid) var(--ease-snap);
 	}
 
+	.preview-set-scores.expanded { max-width: 300px; opacity: 1; }
+
+	.preview-set-cell {
+		background: var(--grey-800);
+		color: var(--grey-300);
+		width: 38px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 18px;
+		font-weight: var(--type-wght-display);
+		font-variant-numeric: tabular-nums;
+		border-left: 1px solid var(--grey-700);
+		border-bottom: 2px solid transparent;
+	}
+
+	.preview-set-cell-winner { border-bottom-color: var(--winner-color); color: var(--paper); }
+
+	.set-scores { display: flex; justify-content: center; gap: 8px; padding: 0 20px 16px; }
+
 	.set-badge {
-		background: var(--color-bg-input);
-		color: var(--color-text-secondary);
+		background: var(--k-surface);
+		color: var(--k-text-mute);
 		padding: 4px 10px;
-		border-radius: 6px;
-		font-size: 12px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.06em;
 		font-variant-numeric: tabular-nums;
 		border: 2px solid transparent;
 	}
@@ -851,345 +872,179 @@
 		justify-content: center;
 		gap: 24px;
 		padding: 8px 20px 16px;
-		font-size: 13px;
-		color: var(--color-text-secondary);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.06em;
+		color: var(--k-text-mute);
 		font-variant-numeric: tabular-nums;
 	}
 
-	.timeout-info-team {
-		background: var(--color-bg-input);
-		padding: 4px 12px;
-		border-radius: 6px;
-	}
+	.timeout-info-team { background: var(--k-surface); padding: 4px 12px; border: 1px solid var(--k-line); }
 
-	/* Scoring Section */
-	.scoring-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 0;
-	}
-
-	.scoring-team {
-		padding: 20px 24px;
-	}
-
-	.scoring-team:first-child {
-		border-right: 1px solid var(--color-border-default);
-	}
+	.scoring-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+	.scoring-team { padding: 20px 24px; }
+	.scoring-team:first-child { border-right: 1px solid var(--k-line); }
 
 	.scoring-team-header {
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		margin-bottom: 20px;
-		font-size: 16px;
+		margin-bottom: 8px;
+		font-weight: var(--type-wght-display);
+		font-size: 13px;
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
 	}
 
-	.scoring-team-icon {
-		font-size: 18px;
-	}
-
-	.scoring-section {
-		margin-bottom: 16px;
-	}
+	.scoring-section { margin-bottom: 16px; }
 
 	.scoring-label {
 		display: block;
 		text-align: center;
-		font-size: 13px;
-		color: var(--color-text-secondary);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
 		margin-bottom: 8px;
 	}
 
-	.scoring-buttons {
-		display: flex;
-		gap: 8px;
-		justify-content: center;
-	}
+	.scoring-buttons { display: flex; gap: 8px; justify-content: center; }
 
 	.btn-score {
 		width: 72px;
 		height: 56px;
-		border: 2px solid var(--color-accent-border);
-		background: var(--color-bg-elevated);
-		color: var(--color-accent);
+		border: 1px solid var(--k-line);
+		background: transparent;
+		color: var(--k-text);
 		font-size: 28px;
-		font-weight: 700;
-		border-radius: 12px;
+		font-weight: var(--type-wght-bold);
+		border-radius: 0;
 		cursor: pointer;
-		transition: all 0.15s;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 	}
 
-	.btn-score:hover {
-		background: var(--color-bg-elevated-hover);
-		border-color: var(--color-accent);
+	.btn-score:hover { border-color: var(--k-text); }
+	.btn-score:disabled { opacity: 0.4; cursor: not-allowed; }
+
+	.btn-score-plus { background: var(--k-text); border-color: var(--k-text); color: var(--k-surface); }
+	.btn-score-plus:hover { background: var(--k-text-mute); border-color: var(--k-text-mute); }
+
+	.btn-score-sm { width: 60px; height: 44px; font-size: 22px; }
+
+	.btn-score,
+	.btn-action,
+	.btn-service {
+		transition: transform var(--dur-mid) var(--ease-glide), border-color var(--dur-fast) var(--ease-snap), background var(--dur-fast) var(--ease-snap);
 	}
 
-	.btn-score:active {
-		transform: scale(0.95);
-	}
-
-	.btn-score:disabled {
-		opacity: 0.4;
-		cursor: not-allowed;
-	}
-
-	.btn-score-plus {
-		background: linear-gradient(135deg, var(--color-accent-deepest), var(--color-accent-deep));
-		border-color: var(--color-accent-mid);
-	}
-
-	.btn-score-plus:hover {
-		background: linear-gradient(135deg, var(--color-accent-deep), var(--color-accent-dark));
-	}
-
-	.btn-score-sm {
-		width: 60px;
-		height: 44px;
-		font-size: 22px;
+	.btn-score:active:not(:disabled),
+	.btn-action:active:not(:disabled),
+	.btn-service:active:not(:disabled) {
+		transform: scale(0.94);
+		transition-duration: var(--dur-fast);
+		transition-timing-function: var(--ease-snap);
 	}
 
 	.timeout-banner {
-		background: rgba(234, 179, 8, 0.15);
-		border: 1px solid rgba(234, 179, 8, 0.5);
+		background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+		border-top: 1px solid color-mix(in srgb, var(--color-warning) 40%, transparent);
+		border-bottom: 1px solid color-mix(in srgb, var(--color-warning) 40%, transparent);
 		color: var(--color-warning);
 		text-align: center;
 		padding: 10px 20px;
-		font-weight: 700;
-		font-size: 16px;
+		font-weight: var(--type-wght-bold);
+		font-size: 14px;
 		font-variant-numeric: tabular-nums;
 	}
 
-	/* Bottom Actions */
+	.btn-timeout-cancel {
+		margin-left: 16px;
+		padding: 4px 12px;
+		background: transparent;
+		border: 1px solid color-mix(in srgb, var(--color-error) 50%, transparent);
+		color: var(--color-error);
+		border-radius: 0;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.btn-timeout-cancel:hover { background: color-mix(in srgb, var(--color-error) 15%, transparent); border-color: var(--color-error); }
+
 	.scoring-actions {
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		gap: 12px;
 		padding: 16px 24px;
-		border-top: 1px solid var(--color-border-default);
+		border-top: 1px solid var(--k-line);
+		flex-wrap: wrap;
 	}
 
 	.btn-service {
-		padding: 10px 16px;
-		border: 1px solid var(--color-border-subtle);
-		background: var(--color-bg-elevated);
-		color: var(--color-text-secondary);
-		border-radius: 8px;
+		padding: 9px 16px;
+		border: 1px solid var(--k-line);
+		background: transparent;
+		color: var(--k-text-mute);
+		border-radius: 0;
 		font-size: 13px;
-		font-weight: 600;
+		font-weight: var(--type-wght-medium);
 		cursor: pointer;
-		transition: all 0.2s;
 	}
 
-	.btn-service:hover:not(:disabled) {
-		border-color: var(--color-accent);
-		color: var(--color-accent);
-	}
+	.btn-service:hover:not(:disabled) { border-color: var(--k-text); color: var(--k-text); }
 
-	.btn-service-active {
-		background: linear-gradient(135deg, var(--color-accent-deepest), var(--color-accent-deep));
-		border-color: var(--color-accent-mid);
-		color: white;
-		cursor: default;
-	}
+	.btn-service-active { background: var(--k-text); border-color: var(--k-text); color: var(--k-surface); cursor: default; }
 
 	.btn-action {
-		padding: 10px 20px;
-		border: 1px solid var(--color-accent-border);
-		background: var(--color-bg-elevated);
-		color: var(--color-accent);
-		border-radius: 8px;
-		font-size: 14px;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.btn-action:hover {
-		background: var(--color-bg-elevated-hover);
-		border-color: var(--color-accent);
-	}
-
-	.btn-action:disabled {
-		opacity: 0.4;
-		cursor: not-allowed;
-	}
-
-	.btn-action-danger {
-		border-color: color-mix(in srgb, var(--color-error) 30%, var(--color-bg-panel));
-		background: color-mix(in srgb, var(--color-error) 10%, var(--color-bg-panel));
-		color: var(--color-error-light);
-	}
-
-	.btn-action-danger:hover {
-		background: color-mix(in srgb, var(--color-error) 20%, var(--color-bg-panel));
-		border-color: var(--color-error-light);
-	}
-
-	.preview-set-scores {
-		display: flex;
-		align-items: stretch;
-		max-width: 0;
-		overflow: hidden;
-		opacity: 0;
-		transition: max-width 0.4s ease, opacity 0.3s ease;
-	}
-
-	.preview-set-scores.expanded {
-		max-width: 300px;
-		opacity: 1;
-	}
-
-	.preview-set-cell {
-		background: #1a1a1a;
-		color: var(--color-text-secondary);
-		width: 38px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 18px;
-		font-weight: 800;
-		font-variant-numeric: tabular-nums;
-		border-left: 1px solid #2a2a2a;
-		border-bottom: 2px solid transparent;
-	}
-
-	.preview-set-cell-winner {
-		border-bottom-color: var(--winner-color);
-		color: var(--color-text-primary);
-	}
-
-	.btn-timeout-cancel {
-		margin-left: 16px;
-		padding: 4px 12px;
-		background: color-mix(in srgb, var(--color-error) 20%, transparent);
-		border: 1px solid color-mix(in srgb, var(--color-error) 50%, transparent);
-		color: var(--color-error);
-		border-radius: 6px;
+		padding: 9px 18px;
+		border: 1px solid var(--k-line);
+		background: transparent;
+		color: var(--k-text);
+		border-radius: 0;
 		font-size: 13px;
-		font-weight: 600;
+		font-weight: var(--type-wght-medium);
 		cursor: pointer;
-		transition: all 0.2s;
 	}
 
-	.btn-timeout-cancel:hover {
-		background: color-mix(in srgb, var(--color-error) 30%, transparent);
-		border-color: var(--color-error);
-	}
+	.btn-action:hover:not(:disabled) { border-color: var(--k-text); }
+	.btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
+
+	.btn-action-danger { border-color: color-mix(in srgb, var(--color-error) 40%, transparent); color: var(--color-error); }
+	.btn-action-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--color-error) 12%, transparent); border-color: var(--color-error); }
 
 	.match-finished {
 		max-width: 1100px;
 		margin: 16px auto 0;
-		background: rgba(6, 78, 59, 0.3);
-		border: 1px solid #065f46;
-		border-radius: 12px;
+		border: 1px solid var(--k-text);
 		padding: 20px;
 		text-align: center;
 	}
 
-	/* Timeline */
-	.timeline-set {
-		margin-bottom: 16px;
-	}
-
-	.timeline-set:last-child {
-		margin-bottom: 0;
-	}
-
-	.timeline-set-header {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		margin-bottom: 8px;
-		font-size: 14px;
-		font-weight: 700;
-		color: var(--color-text-secondary);
-	}
-
-	.timeline-final-score {
-		font-variant-numeric: tabular-nums;
-		color: var(--color-text-primary);
-	}
-
-	.timeline-winner-name {
-		font-size: 12px;
-		color: var(--color-text-tertiary);
-		font-weight: 600;
-	}
-
-	.timeline-live-badge {
-		background: rgba(34, 197, 94, 0.2);
-		color: var(--color-success);
-		padding: 2px 8px;
-		border-radius: 4px;
-		font-size: 11px;
-		font-weight: 700;
-		text-transform: uppercase;
-	}
-
-	.timeline-scroll {
-		overflow-x: auto;
-		padding-bottom: 4px;
-	}
-
-	.timeline-grid {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-
-	.timeline-row {
-		display: flex;
-		gap: 2px;
-	}
-
-	.timeline-cell {
-		width: 30px;
-		height: 28px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 12px;
-		font-weight: 700;
-		font-family: monospace;
-		font-variant-numeric: tabular-nums;
-		border-radius: 3px;
-		flex-shrink: 0;
-	}
-
-	.timeline-cell-home,
-	.timeline-cell-guest {
-		color: var(--color-text-primary);
-	}
-
-	.timeline-cell-dim {
-		color: var(--color-border-subtle);
-		background: var(--color-bg-dim);
-	}
-
-	.timeline-cell-timeout {
-		background: rgba(234, 179, 8, 0.15);
-		color: var(--color-warning);
-		font-size: 14px;
-	}
-
-	.timeline-cell-winner {
-		border: 2px solid var(--color-warning);
-		box-shadow: 0 0 6px rgba(234, 179, 8, 0.4);
-	}
-
-	/* Utility */
 	.w-full { width: 100%; }
 	.font-bold { font-weight: 700; }
 	.text-xl { font-size: 20px; }
 	.text-sm { font-size: 13px; }
-	.text-gray-400 { color: var(--color-text-secondary); }
-	.text-gray-300 { color: var(--color-text-secondary); }
+	.text-gray-400 { color: var(--k-text-mute); }
+	.text-gray-300 { color: var(--k-text-mute); }
 	.flex { display: flex; }
 	.items-center { align-items: center; }
 	.justify-center { justify-content: center; }
+
+	@media (max-width: 480px) {
+		.control { padding: 8px; }
+		.card-header { padding: 10px 12px; }
+		.card-body { padding: 10px 12px; }
+		.scoring-team { padding: 10px 12px; }
+		.scoring-team-header { overflow: hidden; }
+		.scoring-team-header .font-bold { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.btn-score { width: 60px; }
+		.scoring-actions { padding: 10px 12px; gap: 8px; }
+	}
 </style>

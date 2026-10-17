@@ -3,8 +3,8 @@
 	import LandingFooter from '$lib/components/landing/LandingFooter.svelte';
 	import type { Lang } from '$lib/i18n/landing.js';
 	import { reveal } from '$lib/motion.js';
-	import { onMount } from 'svelte';
-	import { animate, scroll, type DOMKeyframesDefinition } from 'motion';
+	import communityBadge from '$lib/brand/badges/community.svg?raw';
+	import swissBadge from '$lib/brand/badges/swiss.svg?raw';
 	import Github from 'lucide-svelte/icons/git-fork';
 	import ArrowRight from 'lucide-svelte/icons/arrow-right';
 
@@ -12,26 +12,11 @@
 
 	const GITHUB_URL = 'https://github.com/michelutke/volleyball-scoreboard';
 
-	// Unsplash stock, darkened via CSS
-	// Vision: volleyball court action (broadcast feel)
-	// Mission: Swiss sport / volunteer team huddle (community)
-	// Values: volleyball spike (energy)
-	// OSS: code on screen
-	const IMAGES = {
-		vision:
-			'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=2000&q=70',
-		mission:
-			'https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=2000&q=70',
-		values:
-			'https://images.unsplash.com/photo-1599058917765-a780eda07a3e?auto=format&fit=crop&w=2000&q=70',
-		oss:
-			'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=2000&q=70'
-	};
-
 	const content = {
 		de: {
 			overline: 'Über uns · About',
 			title: 'Sport in motion.',
+			lines: ['Ball is in.', 'Linie isch drin.'],
 			vision: {
 				heading: 'Vision',
 				text: 'Jeder Schweizer Sportverein, unabhängig von Budget oder IT-Kenntnissen, begeistert seine Fans mit professionellen Livestreams im Broadcast-Look.'
@@ -75,6 +60,7 @@
 		en: {
 			overline: 'About',
 			title: 'Sport in motion.',
+			lines: ['Ball is in.', 'Linie isch drin.'],
 			vision: {
 				heading: 'Vision',
 				text: 'Every Swiss sports club, regardless of budget or IT knowledge, thrills its fans with professional broadcast-look livestreams.'
@@ -118,32 +104,6 @@
 	} as const;
 
 	const tr = $derived(content[lang]);
-
-	let parallaxRoots = $state<HTMLElement[]>([]);
-
-	onMount(() => {
-		const motionScale = parseFloat(
-			getComputedStyle(document.documentElement).getPropertyValue('--motion-scale')
-		);
-		if (!Number.isFinite(motionScale) || motionScale === 0) return;
-
-		const cleanups: Array<() => void> = [];
-		for (const root of parallaxRoots) {
-			if (!root) continue;
-			const img = root.querySelector<HTMLElement>('.bg-img');
-			if (!img) continue;
-			const stop = scroll(
-				animate(
-					img,
-					{ transform: ['translateY(-30%) scale(1.15)', 'translateY(30%) scale(1.15)'] } as DOMKeyframesDefinition,
-					{ duration: 1, ease: 'linear' }
-				),
-				{ target: root, offset: ['start end', 'end start'] }
-			);
-			cleanups.push(() => stop?.());
-		}
-		return () => cleanups.forEach((c) => c());
-	});
 </script>
 
 <LandingNav {lang} onLangToggle={() => (lang = lang === 'de' ? 'en' : 'de')} basePath="/" />
@@ -152,36 +112,31 @@
 	<header class="hero">
 		<div class="hero-inner">
 			<p class="overline k-mono">{tr.overline}</p>
-			<h1 class="title k-display" use:reveal={{ y: 32 }}>{tr.title}</h1>
+			<h1 class="title k-display" use:reveal={{ y: 16 }}>{tr.title}</h1>
+			<p class="lines">
+				{#each tr.lines as line, i}
+					<span class="line">{line}</span>{#if i < tr.lines.length - 1}<span class="sep" aria-hidden="true"></span>{/if}
+				{/each}
+			</p>
 		</div>
 	</header>
 
-	<section class="block" bind:this={parallaxRoots[0]}>
-		<div class="bg" aria-hidden="true">
-			<img src={IMAGES.vision} alt="" class="bg-img" loading="lazy" />
-		</div>
-		<div class="block-inner">
-			<p class="kicker k-mono">01 · Vision</p>
-			<h2 class="block-title k-display">{tr.vision.heading}</h2>
-			<p class="block-text">{tr.vision.text}</p>
-		</div>
-	</section>
-
-	<section class="block" bind:this={parallaxRoots[1]}>
-		<div class="bg" aria-hidden="true">
-			<img src={IMAGES.mission} alt="" class="bg-img" loading="lazy" />
-		</div>
-		<div class="block-inner">
-			<p class="kicker k-mono">02 · Mission</p>
-			<h2 class="block-title k-display">{tr.mission.heading}</h2>
-			<p class="block-text">{tr.mission.text}</p>
+	<section class="block">
+		<div class="split">
+			<div class="cell">
+				<p class="kicker k-mono">01 · Vision</p>
+				<h2 class="block-title k-display">{tr.vision.heading}</h2>
+				<p class="block-text">{tr.vision.text}</p>
+			</div>
+			<div class="cell">
+				<p class="kicker k-mono">02 · Mission</p>
+				<h2 class="block-title k-display">{tr.mission.heading}</h2>
+				<p class="block-text">{tr.mission.text}</p>
+			</div>
 		</div>
 	</section>
 
-	<section class="block tall" bind:this={parallaxRoots[2]}>
-		<div class="bg" aria-hidden="true">
-			<img src={IMAGES.values} alt="" class="bg-img" loading="lazy" />
-		</div>
+	<section class="block">
 		<div class="block-inner">
 			<p class="kicker k-mono">03 · Werte</p>
 			<h2 class="block-title k-display">{tr.values.heading}</h2>
@@ -189,32 +144,34 @@
 
 			<ol class="value-list">
 				{#each tr.values.items as value, i}
-					<li class="value-row" use:reveal={{ y: 24, delay: i * 0.06 }}>
+					<li class="value-row" use:reveal={{ y: 16, delay: i * 0.04 }}>
 						<span class="row-num k-mono">{String(i + 1).padStart(2, '0')}</span>
 						<div class="row-body">
 							<h3 class="row-title">{value.title}</h3>
 							<p class="row-desc">{value.desc}</p>
 						</div>
-						<span class="row-bar" aria-hidden="true"></span>
 					</li>
 				{/each}
 			</ol>
 		</div>
 	</section>
 
-	<section class="block closer" bind:this={parallaxRoots[3]}>
-		<div class="bg" aria-hidden="true">
-			<img src={IMAGES.oss} alt="" class="bg-img" loading="lazy" />
-		</div>
-		<div class="block-inner">
-			<p class="kicker k-mono">04 · Open Source</p>
-			<h2 class="block-title k-display">{tr.oss.heading}</h2>
-			<p class="block-text">{tr.oss.text}</p>
-			<a class="cta" href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
-				<Github size="18" strokeWidth="1.5" />
-				<span>{tr.oss.cta}</span>
-				<ArrowRight size="16" strokeWidth="2" />
-			</a>
+	<section class="block closer">
+		<div class="split">
+			<div class="cell">
+				<p class="kicker k-mono">04 · Open Source</p>
+				<h2 class="block-title k-display">{tr.oss.heading}</h2>
+				<p class="block-text">{tr.oss.text}</p>
+				<a class="cta" href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
+					<Github size="18" strokeWidth="2" />
+					<span>{tr.oss.cta}</span>
+					<ArrowRight size="16" strokeWidth="2" />
+				</a>
+			</div>
+			<div class="plate">
+				<div class="badge">{@html communityBadge}</div>
+				<div class="badge">{@html swissBadge}</div>
+			</div>
 		</div>
 	</section>
 </main>
@@ -237,12 +194,12 @@
 		margin: 0 auto;
 		display: flex;
 		flex-direction: column;
-		gap: 16px;
+		gap: 24px;
 	}
 
 	.overline,
 	.kicker {
-		font-size: 11px;
+		font-size: 13px;
 		letter-spacing: 0.18em;
 		text-transform: uppercase;
 		color: var(--k-text-dim);
@@ -250,50 +207,52 @@
 	}
 
 	.title {
-		font-size: clamp(48px, 9vw, 120px);
+		font-size: clamp(49px, 9vw, 120px);
 		line-height: 0.95;
 		letter-spacing: -0.035em;
 		margin: 0;
 	}
 
-	.block {
-		position: relative;
-		padding: 120px var(--grid-margin);
-		isolation: isolate;
-		overflow: hidden;
-		border-bottom: 1px solid var(--k-line);
-		color: var(--paper);
+	.lines {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 20px;
+		margin: 16px 0 0;
+		padding-top: 24px;
+		border-top: 1px solid var(--k-line);
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-display);
+		font-size: 25px;
+		color: var(--k-text);
 	}
-	.block.tall {
-		padding: 140px var(--grid-margin);
+	.sep {
+		width: 1px;
+		height: 24px;
+		background: var(--k-line);
 	}
 
-	.bg {
-		position: absolute;
-		inset: -40% 0;
-		z-index: -2;
-		overflow: hidden;
+	.block {
+		padding: 120px var(--grid-margin);
+		border-bottom: 1px solid var(--k-line);
 	}
-	.bg-img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		filter: brightness(0.32) saturate(1.05) contrast(1.05);
-		will-change: transform;
-		transform: scale(1.15);
+
+	.split {
+		max-width: var(--container-max);
+		margin: 0 auto;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0;
 	}
-	.bg::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-		background: linear-gradient(
-				to bottom,
-				color-mix(in srgb, var(--ink) 55%, transparent) 0%,
-				color-mix(in srgb, var(--ink) 30%, transparent) 50%,
-				color-mix(in srgb, var(--ink) 70%, transparent) 100%
-			),
-			color-mix(in srgb, var(--ink) 25%, transparent);
-		pointer-events: none;
+	.split > .cell {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		padding-right: 48px;
+	}
+	.split > .cell + .cell {
+		padding: 0 0 0 48px;
+		border-left: 1px solid var(--k-line);
 	}
 
 	.block-inner {
@@ -302,25 +261,19 @@
 		display: flex;
 		flex-direction: column;
 		gap: 16px;
-		position: relative;
 	}
 	.block-title {
-		font-size: clamp(32px, 5vw, 56px);
+		font-size: clamp(31px, 5vw, 49px);
 		line-height: 1;
 		letter-spacing: -0.025em;
 		margin: 0;
-		color: var(--paper);
 	}
 	.block-text {
-		font-size: 17px;
+		font-size: 16px;
 		line-height: 1.6;
-		color: color-mix(in srgb, var(--paper) 80%, transparent);
+		color: var(--k-text-mute);
 		margin: 0;
 		max-width: 60ch;
-	}
-
-	.kicker {
-		color: var(--pulse);
 	}
 
 	.value-list {
@@ -329,29 +282,21 @@
 		margin: 32px 0 0;
 		display: flex;
 		flex-direction: column;
-		border-top: 1px solid color-mix(in srgb, var(--paper) 16%, transparent);
+		border-top: 1px solid var(--k-line);
 	}
 
 	.value-row {
-		position: relative;
 		display: grid;
 		grid-template-columns: 56px 1fr;
 		gap: 24px;
 		padding: 28px 0;
-		border-bottom: 1px solid color-mix(in srgb, var(--paper) 16%, transparent);
-		transition: background var(--dur-fast) var(--ease-snap);
-	}
-	.value-row:hover {
-		background: color-mix(in srgb, var(--paper) 4%, transparent);
-	}
-	.value-row:hover .row-bar {
-		transform: scaleX(1);
+		border-bottom: 1px solid var(--k-line);
 	}
 
 	.row-num {
-		font-size: 12px;
+		font-size: 13px;
 		letter-spacing: 0.12em;
-		color: var(--pulse);
+		color: var(--k-text-dim);
 		padding-top: 4px;
 	}
 
@@ -364,30 +309,37 @@
 	.row-title {
 		font-family: var(--font-display);
 		font-weight: var(--type-wght-bold);
-		font-size: 22px;
+		font-size: 20px;
 		margin: 0;
-		color: var(--paper);
 		letter-spacing: -0.01em;
 	}
 
 	.row-desc {
-		font-size: 15px;
+		font-size: 16px;
 		line-height: 1.6;
-		color: color-mix(in srgb, var(--paper) 75%, transparent);
+		color: var(--k-text-mute);
 		margin: 0;
 		max-width: 64ch;
 	}
 
-	.row-bar {
-		position: absolute;
-		left: 0;
-		bottom: 0;
-		height: 1px;
+	.plate {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 32px;
+		padding: 48px;
+		background: var(--paper);
+		margin-left: 48px;
+	}
+	.badge {
+		width: min(100%, 200px);
+		min-width: 96px;
+		flex: 1 1 0;
+	}
+	.badge :global(svg) {
+		display: block;
 		width: 100%;
-		background: var(--pulse);
-		transform: scaleX(0);
-		transform-origin: left;
-		transition: transform var(--dur-mid) var(--ease-mass);
+		height: auto;
 	}
 
 	.closer {
@@ -404,16 +356,40 @@
 		background: var(--pulse);
 		color: var(--paper);
 		text-decoration: none;
-		font-weight: 600;
-		font-size: 14px;
+		font-weight: var(--type-wght-medium);
+		font-size: 16px;
 		border-radius: 999px;
 		transition: background var(--dur-fast) var(--ease-snap);
 	}
 	.cta:hover {
-		background: var(--pulse-deep);
+		background: var(--pulse-soft);
+	}
+	.cta:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 3px;
 	}
 
-	:global([data-motion='static']) .bg-img {
-		transform: none !important;
+	@media (max-width: 800px) {
+		.block {
+			padding: 72px var(--grid-margin);
+		}
+		.split {
+			grid-template-columns: 1fr;
+			gap: 48px;
+		}
+		.split > .cell,
+		.split > .cell + .cell {
+			padding: 0;
+			border-left: none;
+		}
+		.split > .cell + .cell {
+			padding-top: 48px;
+			border-top: 1px solid var(--k-line);
+		}
+		.plate {
+			margin-left: 0;
+			padding: 32px 24px;
+			gap: 16px;
+		}
 	}
 </style>

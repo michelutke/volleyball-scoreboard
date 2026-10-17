@@ -3,6 +3,7 @@
 	import { onMount, tick } from 'svelte';
 	import KThemeToggle from './k/KThemeToggle.svelte';
 	import KMotionToggle from './k/KMotionToggle.svelte';
+	import NavLogo from './brand/NavLogo.svelte';
 
 	let { clubName, isAdmin }: { clubName: string; isAdmin: boolean } = $props();
 
@@ -62,9 +63,8 @@
 </script>
 
 <nav class="app-nav">
-	<a href="/dashboard" class="brand">
-		<span class="word">Scorely</span>
-		<span class="dot" aria-hidden="true"></span>
+	<a href="/dashboard" class="brand" aria-label="Scorely Dashboard">
+		<NavLogo />
 		{#if clubName}
 			<span class="club k-mono">/ {clubName}</span>
 		{/if}
@@ -133,22 +133,10 @@
 
 	.brand {
 		display: inline-flex;
-		align-items: baseline;
-		gap: 8px;
+		align-items: center;
+		gap: 12px;
 		text-decoration: none;
 		color: var(--k-text);
-		font-family: var(--font-display);
-		font-weight: var(--type-wght-bold);
-		font-size: 17px;
-		letter-spacing: -0.02em;
-	}
-	.brand .dot {
-		width: 5px;
-		height: 5px;
-		border-radius: 50%;
-		background: var(--pulse);
-		display: inline-block;
-		align-self: center;
 	}
 	.brand .club {
 		font-size: 11px;

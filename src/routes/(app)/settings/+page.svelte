@@ -119,7 +119,7 @@
 
 			{#if isEdit}
 				<div class="panel">
-					<h2 class="panel-label k-mono">Akzentfarbe</h2>
+					<h2 class="panel-label k-mono">Clubfarbe (nur für Club-Overlays)</h2>
 					<div class="color-row">
 						<input id="accentColor" type="color" bind:value={accentColor} class="color-swatch" />
 						<span class="color-hex k-mono">{accentColor}</span>
@@ -192,7 +192,7 @@
 	.info-btn {
 		width: 18px;
 		height: 18px;
-		border-radius: 50%;
+		border-radius: 0;
 		font-size: 11px;
 		font-weight: 700;
 		background: var(--k-line);

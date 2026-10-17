@@ -9,7 +9,7 @@ export interface AccentPalette {
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
-export const DEFAULT_ACCENT = '#38bdf8';
+export const DEFAULT_ACCENT = '#ff3d2e';
 
 function hexToHsl(hex: string): [number, number, number] {
 	const r = parseInt(hex.slice(1, 3), 16) / 255;
@@ -41,14 +41,26 @@ function hslToHex(h: number, s: number, l: number): string {
 	return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
 }
 
-export const ACCENT_CSS_PROPS: readonly (readonly [string, keyof AccentPalette])[] = [
-	['--color-accent', 'accent'],
-	['--color-accent-mid', 'accentMid'],
-	['--color-accent-dark', 'accentDark'],
-	['--color-accent-deep', 'accentDeep'],
-	['--color-accent-deepest', 'accentDeepest'],
-	['--color-accent-border', 'accentBorder']
+/**
+ * Club accent custom properties. The club colour is only allowed in club overlays and
+ * club badges, never in the Scorely UI chrome, so it lives in its own `--club-accent*`
+ * namespace and is scoped to the scoreboard wrapper instead of the document root.
+ */
+export const CLUB_ACCENT_CSS_PROPS: readonly (readonly [string, keyof AccentPalette])[] = [
+	['--club-accent', 'accent'],
+	['--club-accent-mid', 'accentMid'],
+	['--club-accent-dark', 'accentDark'],
+	['--club-accent-deep', 'accentDeep'],
+	['--club-accent-deepest', 'accentDeepest'],
+	['--club-accent-border', 'accentBorder']
 ];
+
+/** Inline style string with the club accent palette, for club overlay and badge wrappers. */
+export function clubAccentStyle(hex: string | null | undefined, mode: 'light' | 'dark' = 'dark'): string {
+	if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return '';
+	const palette = generateAccentPalette(hex, mode);
+	return CLUB_ACCENT_CSS_PROPS.map(([prop, key]) => `${prop}: ${palette[key]}`).join('; ');
+}
 
 export function generateAccentPalette(hex: string, mode: 'light' | 'dark' = 'dark'): AccentPalette {
 	const [h, s] = hexToHsl(hex);
