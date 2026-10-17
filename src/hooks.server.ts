@@ -6,6 +6,7 @@ import { env } from '$env/dynamic/private';
 import { bootstrapKcOrgId, ensureOrganizationMapper, ensureDirectAccessGrants, ensureRealmSettings, syncClientRedirectUri } from '$lib/server/keycloak-admin';
 import { getBillingStatus } from '$lib/server/billing';
 import { isRateLimited } from '$lib/server/rate-limit.js';
+import { clearAuthCookies, sessionRejection } from '$lib/server/auth-session';
 import { isPublicPath } from '$lib/server/public-paths.js';
 
 export async function init() {
@@ -51,19 +52,15 @@ export const handle = sequence(authHandle, async ({ event, resolve }) => {
 		const session = await event.locals.auth();
 		if (!session) redirect(307, `/signin?callbackUrl=${encodeURIComponent(event.url.pathname)}`);
 
-		if (!session.user.orgId) {
-			// org extraction failed — clear session and redirect to prevent cross-org data leakage
-			console.error('[auth] orgId missing for user:', session.user.email, '— signing out');
-			for (const name of ['authjs.session-token', 'authjs.callback-url', 'authjs.csrf-token']) {
-				event.cookies.delete(name, { path: '/' });
-				event.cookies.delete(`__Secure-${name}`, { path: '/' });
-				event.cookies.delete(`__Host-${name}`, { path: '/' });
-			}
-			redirect(307, '/signin?error=OrgNotFound');
+		const rejection = sessionRejection(session);
+		if (rejection) {
+			console.error('[auth] session rejected:', rejection, 'user:', session.user.email, '- signing out');
+			clearAuthCookies(event.cookies);
+			redirect(307, `/signin?error=${rejection}`);
 		}
 
 		event.locals.session = session;
-		event.locals.orgId = session.user.orgId;
+		event.locals.orgId = session.user.orgId!;
 		event.locals.isAdmin = (session.user.roles ?? []).includes('admin');
 
 		if (env.STRIPE_SECRET_KEY && !BILLING_EXEMPT.test(path) && !SHARE_CONTROL.test(path)) {

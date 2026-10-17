@@ -19,7 +19,9 @@
 				? 'Ungültige E-Mail oder Passwort.'
 				: data.error === 'OrgNotFound'
 					? 'Organisation konnte nicht geladen werden. Bitte erneut anmelden.'
-					: ''
+					: data.error === 'SessionExpired'
+						? 'Sitzung abgelaufen. Bitte erneut anmelden.'
+						: ''
 		)
 	);
 	let successMsg = $state(untrack(() => (data.registered ? 'Konto erstellt · bitte melden Sie sich an.' : '')));

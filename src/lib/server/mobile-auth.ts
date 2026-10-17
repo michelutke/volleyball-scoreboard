@@ -1,3 +1,4 @@
+import { LRUCache } from 'lru-cache';
 import { createRemoteJWKSet, errors, jwtVerify, type JWTPayload } from 'jose';
 import { env } from '$env/dynamic/private';
 import {
@@ -63,7 +64,9 @@ export function validateMobilePayload(payload: JWTPayload | Record<string, unkno
 	return extractOrgId(payload);
 }
 
-const orgIdByUser = new Map<string, string>();
+const ORG_ID_CACHE_TTL_MS = 5 * 60 * 1000;
+const ORG_ID_CACHE_MAX = 1000;
+const orgIdByUser = new LRUCache<string, string>({ max: ORG_ID_CACHE_MAX, ttl: ORG_ID_CACHE_TTL_MS });
 
 async function lookupOrgId(alias: string | null, sub: string | undefined): Promise<string | null> {
 	const attempts: (() => Promise<string | undefined>)[] = [];
