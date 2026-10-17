@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import { page } from '$app/state';
+	import Logo from '$lib/components/brand/Logo.svelte';
+	import Pattern from '$lib/components/brand/Pattern.svelte';
 	import type { MatchState, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
 
 	let { data } = $props();
 
 	const controlToken = $derived(data.controlToken);
+	const shareUrl = $derived(`${page.url.host}/c/${data.controlToken}`);
 	let match = $state<MatchState | null>(null);
 	let matchTimeouts = $state({ home: 0, guest: 0 });
 	let loading = $state(false);
@@ -140,41 +144,6 @@
 		}
 	}
 
-	function darkenHex(hex: string, amount = 16): string {
-		const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - amount);
-		const g = Math.max(0, parseInt(hex.slice(3, 5), 16) - amount);
-		const b = Math.max(0, parseInt(hex.slice(5, 7), 16) - amount);
-		return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-	}
-
-	function lightenHex(hex: string, amount = 16): string {
-		const r = Math.min(255, parseInt(hex.slice(1, 3), 16) + amount);
-		const g = Math.min(255, parseInt(hex.slice(3, 5), 16) + amount);
-		const b = Math.min(255, parseInt(hex.slice(5, 7), 16) + amount);
-		return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-	}
-
-	function hexWithAlpha(hex: string, alpha: number): string {
-		const r = parseInt(hex.slice(1, 3), 16);
-		const g = parseInt(hex.slice(3, 5), 16);
-		const b = parseInt(hex.slice(5, 7), 16);
-		return `rgba(${r},${g},${b},${alpha})`;
-	}
-
-	function overlayBgStyle(bg: string, bg2: string, gradient: boolean, dark = false): string {
-		const c1 = dark ? darkenHex(bg) : bg;
-		const c2 = dark ? darkenHex(bg2) : bg2;
-		return gradient ? `linear-gradient(to right, ${c1}, ${c2})` : c1;
-	}
-
-	function previewScoreBg(m: MatchState): string {
-		return m.scoreColorGradient
-			? `linear-gradient(to bottom, ${m.scoreColor}, ${m.scoreColor2})`
-			: m.scoreColor;
-	}
-
-	let setScoresExpanded = $derived(match?.showSetScores || match?.status === 'finished' || !!activeTimeout);
-
 	let setTimelines = $derived.by((): SetTimeline[] => {
 		const history = data.scoreHistory;
 		const tHistory = data.timeoutHistory;
@@ -245,223 +214,113 @@
 </svelte:head>
 
 <div class="control">
-	<!-- Nav bar -->
-	<div class="nav-bar">
-		<div class="share-banner">
-			&#128279; Geteilter Zugriff · Nur für dieses Spiel
+	<header class="bar">
+		<div class="bar-id">
+			<Logo variant="mark" heavy class="bar-mark" />
+			<span class="k-mono kicker">SCORING · GETEILTER ZUGRIFF</span>
 		</div>
-	</div>
+		{#if match?.status === 'live'}
+			<span class="live-badge k-pill"><span class="live-dot k-live-dot"></span>LIVE</span>
+		{/if}
+	</header>
 
 	{#if !match}
 		<div class="start-screen">
-			<p class="text-gray-400">Match nicht gefunden</p>
+			<p class="text-mute">Match nicht gefunden</p>
 		</div>
 	{:else}
-		<div class="grid-layout">
-			<!-- Scoring Card -->
-			<div class="card col-span-full">
-				<div class="card-header">
-					<span class="card-icon">&#9878;</span>
-					<h2>Scoring</h2>
-				</div>
-				<div class="card-body flex items-center justify-center">
-					<div class="scoreboard-preview" class:with-jersey={match.showJerseyColors} class:has-logo={!!(match.homeTeamLogo || match.guestTeamLogo)} class:rounded={match.overlayRounded} style:--overlay-border={match.overlayDivider} style:color={match.overlayText}>
-						<div class="preview-row">
-							{#if match.showJerseyColors}
-								<div class="preview-jersey" style:background-color={match.homeJerseyColor}>
-									{#if match.homeTeamLogo}
-										<img src="/api/image-proxy?url={encodeURIComponent(match.homeTeamLogo)}" alt="" class="preview-jersey-logo" />
-									{/if}
-								</div>
-							{/if}
-							<div class="preview-name preview-name-dark" style:background={overlayBgStyle(match.overlayBg, match.overlayBg2, match.overlayBgGradient, true)} style:color={match.overlayText}>
-								{match.homeTeamName.toUpperCase()}
-								<img src="/vbcthun-ball.svg" alt="" class="preview-service" class:preview-service-hidden={match.serviceTeam !== 'home'} />
-							</div>
-							<div class="preview-sets" style:background-color={match.overlaySatsBg} style:color={match.overlayText} style:border-color={match.overlayDivider}>{match.homeSets}</div>
-							<div class="preview-set-scores" class:expanded={setScoresExpanded}>
-								{#each match.setScores as s}
-									<div class="preview-set-cell" class:preview-set-cell-winner={s.home > s.guest} style:--winner-color={match.homeJerseyColor} style:background-color={match.overlaySetScoreBg} style:border-left-color={match.overlayDivider} style:color={s.home > s.guest ? match.overlayText : hexWithAlpha(match.overlayText, 0.5)}>{s.home}</div>
-								{/each}
-							</div>
-							<div class="preview-points" style:background={previewScoreBg(match)}>{match.homePoints}</div>
-							<div class="preview-timeout-boxes" style:--jersey-color={match.homeJerseyColor}>
-								<div class="preview-timeout-box" class:taken={matchTimeouts.home >= 2} style:background-color={matchTimeouts.home < 2 ? match.homeJerseyColor : undefined}></div>
-								<div class="preview-timeout-box" class:taken={matchTimeouts.home >= 1} style:background-color={matchTimeouts.home < 1 ? match.homeJerseyColor : undefined}></div>
-							</div>
-						</div>
-						<div class="preview-row">
-							{#if match.showJerseyColors}
-								<div class="preview-jersey" style:background-color={match.guestJerseyColor}>
-									{#if match.guestTeamLogo}
-										<img src="/api/image-proxy?url={encodeURIComponent(match.guestTeamLogo)}" alt="" class="preview-jersey-logo" />
-									{/if}
-								</div>
-							{/if}
-							<div class="preview-name" style:background={overlayBgStyle(match.overlayBg, match.overlayBg2, match.overlayBgGradient)} style:color={match.overlayText}>
-								{match.guestTeamName.toUpperCase()}
-								<img src="/vbcthun-ball.svg" alt="" class="preview-service" class:preview-service-hidden={match.serviceTeam !== 'guest'} />
-							</div>
-							<div class="preview-sets" style:background-color={match.overlaySatsBg} style:color={match.overlayText} style:border-color={match.overlayDivider}>{match.guestSets}</div>
-							<div class="preview-set-scores" class:expanded={setScoresExpanded}>
-								{#each match.setScores as s}
-									<div class="preview-set-cell" class:preview-set-cell-winner={s.guest > s.home} style:--winner-color={match.guestJerseyColor} style:background-color={match.overlaySetScoreBg} style:border-left-color={match.overlayDivider} style:color={s.guest > s.home ? match.overlayText : hexWithAlpha(match.overlayText, 0.5)}>{s.guest}</div>
-								{/each}
-							</div>
-							<div class="preview-points" style:background={previewScoreBg(match)}>{match.guestPoints}</div>
-							<div class="preview-timeout-boxes" style:--jersey-color={match.guestJerseyColor}>
-								<div class="preview-timeout-box" class:taken={matchTimeouts.guest >= 2} style:background-color={matchTimeouts.guest < 2 ? match.guestJerseyColor : undefined}></div>
-								<div class="preview-timeout-box" class:taken={matchTimeouts.guest >= 1} style:background-color={matchTimeouts.guest < 1 ? match.guestJerseyColor : undefined}></div>
-							</div>
-						</div>
-					</div>
-				</div>
+		<main class="tool">
+			<p class="k-mono kicker">{match.homeTeamName} VS {match.guestTeamName} · KEIN KONTO NÖTIG</p>
 
-				{#if match.setScores.length > 0}
-					<div class="set-scores">
-						{#each match.setScores as s, i}
-							<span class="set-badge" style:border-color={s.home > s.guest ? match.homeJerseyColor : match.guestJerseyColor}>S{i + 1}: {s.home}-{s.guest}</span>
-						{/each}
-					</div>
-				{/if}
-
-				<div class="timeout-info">
-					<span class="timeout-info-team">{match.homeTeamName}: {matchTimeouts.home}/2 Auszeiten</span>
-					<span class="timeout-info-team">{match.guestTeamName}: {matchTimeouts.guest}/2 Auszeiten</span>
-				</div>
-
-				<div class="scoring-grid">
-					<div class="scoring-team">
-						<div class="scoring-team-header">
-							<span class="scoring-team-icon">&#9675;</span>
-							<span class="font-bold">{match.homeTeamName}</span>
+			<div class="teams">
+				{#each [{ team: 'home', name: match.homeTeamName, points: match.homePoints, sets: match.homeSets }, { team: 'guest', name: match.guestTeamName, points: match.guestPoints, sets: match.guestSets }] as const as t (t.team)}
+					<div class="team">
+						<div class="team-name">
+							<span>{t.name}</span>
+							{#if match.serviceTeam === t.team}<span class="serve-dot" aria-label="Aufschlag"></span>{/if}
 						</div>
-						<div class="scoring-team-btns">
-							<button onclick={() => addPoint('home')} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
-							<div class="scoring-secondary">
-								<button onclick={() => callTimeout('home')} disabled={matchTimeouts.home >= 2 || !!activeTimeout} class="btn-action">&#9201; Auszeit</button>
-								<button onclick={() => { if (match?.serviceTeam !== 'home') switchService(); }} class="btn-service" class:btn-service-active={match?.serviceTeam === 'home'} disabled={match?.serviceTeam === 'home'}>
-									&#127952; Service
-								</button>
-							</div>
+						<div class="points k-mono">{t.points}</div>
+						<div class="team-meta k-mono">
+							<span>SETS {t.sets}</span>
+							<span class="to">TO
+								<span class="to-dot" class:used={matchTimeouts[t.team] >= 1}></span>
+								<span class="to-dot" class:used={matchTimeouts[t.team] >= 2}></span>
+							</span>
 						</div>
+						<button onclick={() => addPoint(t.team)} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
+						<button onclick={() => removePoint(t.team)} disabled={loading || !!activeTimeout} class="btn-action">&minus; Punkt</button>
+						<button onclick={() => callTimeout(t.team)} disabled={matchTimeouts[t.team] >= 2 || !!activeTimeout} class="btn-action">Timeout</button>
+						{#if t.team === 'home'}
+							<button onclick={undo} disabled={loading} class="btn-action">Rückgängig</button>
+						{:else}
+							<button onclick={() => advancedOpen = true} class="btn-action">Erweitert</button>
+						{/if}
 					</div>
-					<div class="scoring-team">
-						<div class="scoring-team-header">
-							<span class="scoring-team-icon">&#128101;</span>
-							<span class="font-bold">{match.guestTeamName}</span>
-						</div>
-						<div class="scoring-team-btns">
-							<button onclick={() => addPoint('guest')} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
-							<div class="scoring-secondary">
-								<button onclick={() => callTimeout('guest')} disabled={matchTimeouts.guest >= 2 || !!activeTimeout} class="btn-action">&#9201; Auszeit</button>
-								<button onclick={() => { if (match?.serviceTeam !== 'guest') switchService(); }} class="btn-service" class:btn-service-active={match?.serviceTeam === 'guest'} disabled={match?.serviceTeam === 'guest'}>
-									&#127952; Service
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				{#if activeTimeout}
-					<div class="timeout-banner">
-						Auszeit {activeTimeout.teamName} · {activeTimeout.secondsLeft}s
-						<button onclick={cancelTimeout} class="btn-timeout-cancel">&#10005; Abbrechen</button>
-					</div>
-				{/if}
-
-				<div class="scoring-actions">
-					<button onclick={() => advancedOpen = true} class="btn-action">&#9881; Erweitert</button>
-					<button onclick={undo} disabled={loading} class="btn-action">&#8617; Zurück</button>
-				</div>
+				{/each}
 			</div>
 
-			<!-- Spielverlauf Card -->
-			{#if setTimelines.length > 0}
-				<div class="card col-span-full">
-					<div class="card-header">
-						<span class="card-icon">&#128200;</span>
-						<h2>Spielverlauf</h2>
-					</div>
-					<div class="card-body">
-						{#each setTimelines as timeline}
-							{@const lastPointIdx = timeline.events.findLastIndex((e) => e.type === 'point')}
-							<div class="timeline-set">
-								<div class="timeline-set-header">
-									<span>Satz {timeline.set}</span>
-									{#if timeline.finalScore}
-										<span class="timeline-final-score">{timeline.finalScore.home}:{timeline.finalScore.guest}</span>
-										<span class="timeline-winner-name">{timeline.finalScore.home > timeline.finalScore.guest ? match?.homeTeamName : match?.guestTeamName}</span>
-									{:else}
-										<span class="timeline-live-badge">Live</span>
-									{/if}
-								</div>
-								<div class="timeline-scroll">
-									<div class="timeline-grid">
-										<div class="timeline-row">
-											{#each timeline.events as evt, idx}
-												{#if evt.type === 'timeout' && evt.team === 'home'}
-													<div class="timeline-cell timeline-cell-timeout">&#9201;</div>
-												{:else if evt.type === 'point' && evt.team === 'home'}
-													<div class="timeline-cell timeline-cell-home" class:timeline-cell-winner={timeline.finalScore && idx === lastPointIdx} style:background-color="{match?.homeJerseyColor}22">{evt.homePoints}</div>
-												{:else}
-													<div class="timeline-cell timeline-cell-dim">&ndash;</div>
-												{/if}
-											{/each}
-										</div>
-										<div class="timeline-row">
-											{#each timeline.events as evt, idx}
-												{#if evt.type === 'timeout' && evt.team === 'guest'}
-													<div class="timeline-cell timeline-cell-timeout">&#9201;</div>
-												{:else if evt.type === 'point' && evt.team === 'guest'}
-													<div class="timeline-cell timeline-cell-guest" class:timeline-cell-winner={timeline.finalScore && idx === lastPointIdx} style:background-color="{match?.guestJerseyColor}22">{evt.guestPoints}</div>
-												{:else}
-													<div class="timeline-cell timeline-cell-dim">&ndash;</div>
-												{/if}
-											{/each}
-										</div>
-									</div>
-								</div>
-							</div>
-						{/each}
-					</div>
+			{#if activeTimeout}
+				<div class="timeout-banner k-mono">
+					Auszeit {activeTimeout.teamName} · {activeTimeout.secondsLeft}s
+					<button onclick={cancelTimeout} class="btn-timeout-cancel">Abbrechen</button>
 				</div>
 			{/if}
-		</div>
 
-		{#if match.status === 'finished'}
-			<div class="match-finished">
-				<p class="text-xl font-bold">Match beendet!</p>
-				<p class="text-gray-300">
-					{match.homeSets > match.guestSets ? match.homeTeamName : match.guestTeamName} gewinnt {match.homeSets}:{match.guestSets}
-				</p>
+			{#if match.status === 'finished'}
+				<div class="match-finished">
+					<p class="finished-title">Match beendet</p>
+					<p class="text-mute">
+						{match.homeSets > match.guestSets ? match.homeTeamName : match.guestTeamName} gewinnt {match.homeSets}:{match.guestSets}
+					</p>
+				</div>
+			{/if}
+
+			{#if setTimelines.some((t) => t.events.length > 0)}
+				<section class="history">
+					<p class="k-mono kicker">SPIELVERLAUF</p>
+					{#each setTimelines.toReversed() as timeline (timeline.set)}
+					{#each timeline.events.toReversed() as evt}
+						<div class="history-row k-mono">
+							<span class="history-set">S{timeline.set}</span>
+							<span class="history-score">{evt.type === 'point' ? `${evt.homePoints}:${evt.guestPoints}` : 'TO'}</span>
+							<span class="history-team">{evt.type === 'timeout' ? 'TIMEOUT ' : ''}{evt.team === 'home' ? match?.homeTeamName : match?.guestTeamName}</span>
+						</div>
+					{/each}
+					{/each}
+				</section>
+			{/if}
+
+			<p class="note">
+				Du zählst für {match.homeTeamName}. Jeder Tipp geht direkt in den Stream, also entscheide wie ein Linienrichter: genau.
+			</p>
+		</main>
+
+		<footer class="foot">
+			<div class="foot-text">
+				<p class="foot-title">Ball is in<span class="foot-dot"></span></p>
+				<p class="k-mono foot-url">{shareUrl}</p>
 			</div>
-		{/if}
+			<Pattern name="score" d={8} fg="var(--k-line)" bg="var(--k-surface-alt)" height={168} />
+		</footer>
 
-		<!-- Advanced Dialog -->
 		<dialog bind:this={advancedDialogEl} class="dialog" onclose={() => advancedOpen = false} onclick={(e) => { if (e.target === e.currentTarget) advancedOpen = false; }}>
 			<div class="dialog-header">
 				<h3>Erweitert</h3>
-				<button class="dialog-close" onclick={() => advancedOpen = false}>&times;</button>
+				<button class="dialog-close" onclick={() => advancedOpen = false} aria-label="Schliessen">&times;</button>
 			</div>
 			<div class="dialog-body">
 				<div class="advanced-grid">
-					<div class="advanced-team">
-						<div class="advanced-team-header">{match?.homeTeamName}</div>
-						<button onclick={() => removePoint('home')} disabled={loading} class="btn-action">&minus; Punkt</button>
-						<button onclick={() => addSet('home')} disabled={loading} class="btn-action">+ Satz</button>
-						<button onclick={() => removeSet('home')} disabled={loading} class="btn-action">&minus; Satz</button>
-					</div>
-					<div class="advanced-team">
-						<div class="advanced-team-header">{match?.guestTeamName}</div>
-						<button onclick={() => removePoint('guest')} disabled={loading} class="btn-action">&minus; Punkt</button>
-						<button onclick={() => addSet('guest')} disabled={loading} class="btn-action">+ Satz</button>
-						<button onclick={() => removeSet('guest')} disabled={loading} class="btn-action">&minus; Satz</button>
-					</div>
+					{#each [{ team: 'home', name: match.homeTeamName }, { team: 'guest', name: match.guestTeamName }] as const as t (t.team)}
+						<div class="advanced-team">
+							<div class="advanced-team-header">{t.name}</div>
+							<button onclick={() => addSet(t.team)} disabled={loading} class="btn-action">+ Satz</button>
+							<button onclick={() => removeSet(t.team)} disabled={loading} class="btn-action">&minus; Satz</button>
+						</div>
+					{/each}
 				</div>
 			</div>
 			<div class="dialog-footer">
-				<button onclick={resetMatch} class="btn-action btn-action-danger">&#8635; Reset</button>
+				<button onclick={resetMatch} class="btn-action btn-action-danger">Reset</button>
 			</div>
 		</dialog>
 	{/if}
@@ -472,470 +331,276 @@
 		min-height: 100vh;
 		background: var(--k-surface);
 		color: var(--k-text);
-		padding: 20px;
 		font-family: var(--font-sans);
-	}
-
-	.nav-bar {
-		display: flex;
-		align-items: center;
-		gap: 16px;
-		max-width: 1100px;
-		margin: 0 auto 16px;
-	}
-
-	.share-banner {
-		background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-		border: 1px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
-		color: var(--color-accent);
-		border-radius: 8px;
-		padding: 8px 16px;
-		font-size: 13px;
-		font-weight: 600;
-	}
-
-	.start-screen {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		min-height: 80vh;
-	}
-
-	.grid-layout {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 16px;
-		max-width: 1100px;
-		margin: 0 auto;
-	}
-
-	.col-span-full { grid-column: 1 / -1; }
-
-	.card {
-		background: var(--color-bg-panel);
-		border: 1px solid var(--color-border-default);
-		border-radius: 12px;
-		overflow: hidden;
-	}
-
-	.card-header {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		padding: 14px 20px;
-		border-bottom: 1px solid var(--color-border-default);
-		font-weight: 700;
-		font-size: 16px;
-	}
-
-	.card-header h2 { margin: 0; font-size: 16px; }
-	.card-icon { color: var(--color-accent); font-size: 18px; }
-
-	.card-body {
-		padding: 16px 20px;
 		display: flex;
 		flex-direction: column;
+	}
+
+	.bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
 		gap: 12px;
-	}
-
-	/* Scoreboard preview */
-	.scoreboard-preview {
-		display: grid;
-		grid-template-rows: 48px 48px;
-		row-gap: 3px;
-		padding: 20px;
-		border-radius: 8px;
-	}
-
-	.scoreboard-preview.with-jersey {
-		grid-template-columns: 8px minmax(160px, auto) 44px auto 52px auto;
-	}
-
-	.scoreboard-preview.with-jersey.has-logo {
-		grid-template-columns: 48px minmax(160px, auto) 44px auto 52px auto;
-	}
-
-	.scoreboard-preview:not(.with-jersey) {
-		grid-template-columns: minmax(160px, auto) 44px auto 52px auto;
-	}
-
-	.preview-row {
-		display: grid;
-		grid-template-columns: subgrid;
-		grid-column: 1 / -1;
-		align-items: stretch;
-	}
-
-	.preview-jersey { flex-shrink: 0; position: relative; }
-	.preview-jersey-logo {
-		position: absolute;
-		inset: 0;
 		width: 100%;
-		height: 100%;
-		object-fit: contain;
-		padding: 4px;
+		max-width: 720px;
+		margin: 0 auto;
+		padding: 16px 20px;
 	}
 
-	.preview-name {
-		padding: 0 16px;
+	.bar-id { display: flex; align-items: center; gap: 12px; min-width: 0; }
+	:global(.bar-mark) { height: 24px; width: auto; flex-shrink: 0; color: var(--k-text); }
+
+	.kicker {
+		margin: 0;
+		font-size: 11px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
+	}
+
+	.live-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 6px 12px;
+		background: var(--pulse);
+		color: var(--ink);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		font-weight: var(--type-wght-bold);
+		letter-spacing: 0.08em;
+	}
+
+	.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--paper); }
+
+	.start-screen { display: flex; justify-content: center; align-items: center; min-height: 60vh; }
+
+	.tool {
+		width: 100%;
+		max-width: 720px;
+		margin: 0 auto;
+		padding: 8px 20px 32px;
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+		flex: 1;
+	}
+
+	.teams { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+	.team { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+	.team-name {
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		font-size: 18px;
-		font-weight: 800;
-	}
-
-	.scoreboard-preview.rounded:not(.with-jersey) .preview-row:first-child .preview-name { border-radius: 8px 0 0 0; }
-	.scoreboard-preview.rounded.with-jersey .preview-row:first-child .preview-jersey { border-radius: 8px 0 0 0; }
-	.scoreboard-preview.rounded .preview-row:first-child .preview-timeout-boxes { border-radius: 0 8px 0 0; }
-	.scoreboard-preview.rounded:not(.with-jersey) .preview-row:last-child .preview-name { border-radius: 0 0 0 8px; }
-	.scoreboard-preview.rounded.with-jersey .preview-row:last-child .preview-jersey { border-radius: 0 0 0 8px; }
-	.scoreboard-preview.rounded .preview-row:last-child .preview-timeout-boxes { border-radius: 0 0 8px 0; }
-	.preview-service { width: 20px; height: 20px; opacity: 0.85; margin-left: auto; }
-	.preview-service-hidden { visibility: hidden; }
-
-	.preview-sets {
-		width: 44px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 22px;
-		font-weight: 800;
-		border-left: 2px solid var(--overlay-border, #2a2a2a);
-		font-variant-numeric: tabular-nums;
-	}
-
-	.preview-points {
-		width: 52px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 26px;
-		font-weight: 800;
-		font-variant-numeric: tabular-nums;
-	}
-
-	.preview-set-scores {
-		display: flex;
-		align-items: stretch;
-		max-width: 0;
-		overflow: hidden;
-		opacity: 0;
-		transition: max-width 0.4s ease, opacity 0.3s ease;
-	}
-
-	.preview-set-scores.expanded { max-width: 300px; opacity: 1; }
-
-	.preview-set-cell {
-		color: var(--color-text-secondary);
-		width: 38px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 18px;
-		font-weight: 800;
-		font-variant-numeric: tabular-nums;
-		border-left: 1px solid var(--overlay-border, #2a2a2a);
-		border-bottom: 2px solid transparent;
-	}
-
-	.preview-set-cell-winner { border-bottom-color: var(--winner-color); color: var(--color-text-primary); }
-
-	.preview-timeout-boxes { display: flex; flex-direction: column; gap: 0; justify-content: center; border-left: 1px solid var(--overlay-text, white); overflow: hidden; }
-	.preview-timeout-box { width: 8px; height: 50%; }
-	.preview-timeout-box:first-child { border-bottom: 1px solid var(--overlay-text, white); }
-	.scoreboard-preview.rounded .preview-row:first-child .preview-timeout-box:first-child { border-radius: 0 4px 0 0; }
-	.scoreboard-preview.rounded .preview-row:last-child .preview-timeout-box:last-child { border-radius: 0 0 4px 0; }
-	.preview-timeout-box.taken { background: transparent; border: 1px solid var(--jersey-color); border-left: none; }
-
-	.set-scores { display: flex; justify-content: center; gap: 8px; padding: 0 20px 16px; }
-
-	.set-badge {
-		background: var(--color-border-default);
-		color: var(--color-text-secondary);
-		padding: 4px 10px;
-		border-radius: 6px;
-		font-size: 12px;
-		font-variant-numeric: tabular-nums;
-		border: 2px solid transparent;
-	}
-
-	.timeout-info {
-		display: flex;
-		justify-content: center;
-		gap: 24px;
-		padding: 8px 20px 16px;
+		font-weight: var(--type-wght-display);
 		font-size: 13px;
-		color: var(--color-text-secondary);
-		font-variant-numeric: tabular-nums;
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
-	.timeout-info-team { background: var(--color-border-default); padding: 4px 12px; border-radius: 6px; }
+	.serve-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pulse); flex-shrink: 0; }
 
-	/* Scoring grid */
-	.scoring-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 0;
-		border-top: 1px solid var(--color-border-default);
+	.points {
+		font-size: 96px;
+		line-height: 1;
+		font-weight: var(--type-wght-bold);
+		letter-spacing: -0.04em;
+		padding: 4px 0 12px;
+		border-bottom: 1px solid var(--k-line);
 	}
 
-	.scoring-team { padding: 20px 24px; }
-	.scoring-team:first-child { border-right: 1px solid var(--color-border-default); }
-
-	.scoring-team-header {
+	.team-meta {
 		display: flex;
+		justify-content: space-between;
 		align-items: center;
-		gap: 10px;
-		margin-bottom: 16px;
-		font-size: 16px;
+		margin-bottom: 4px;
+		font-size: 10px;
+		letter-spacing: 0.08em;
+		color: var(--k-text-dim);
 	}
 
-	.scoring-team-btns { display: flex; flex-direction: column; }
-	.scoring-team-icon { font-size: 18px; }
+	.to { display: inline-flex; align-items: center; gap: 4px; }
+
+	.to-dot {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: var(--k-text);
+		border: 1px solid var(--k-text);
+	}
+
+	.to-dot.used { background: transparent; border-color: var(--k-text-dim); }
+
+	.btn-point,
+	.btn-action {
+		border-radius: 0;
+		cursor: pointer;
+		font-family: var(--font-sans);
+		transition: transform var(--dur-mid) var(--ease-glide);
+	}
+
+	.btn-point:active,
+	.btn-action:active {
+		transform: scale(0.94);
+		transition-duration: var(--dur-fast);
+		transition-timing-function: var(--ease-snap);
+	}
 
 	.btn-point {
 		width: 100%;
-		height: 64px;
-		border: 2px solid var(--color-accent-mid);
-		background: linear-gradient(135deg, var(--color-accent-deepest), var(--color-accent-deep));
-		color: white;
-		font-size: 24px;
-		font-weight: 700;
-		border-radius: 12px;
-		cursor: pointer;
-		transition: all 0.15s;
-		margin-bottom: 12px;
+		height: 72px;
+		border: 1px solid var(--k-text);
+		background: var(--k-text);
+		color: var(--k-surface);
+		font-size: 16px;
+		font-weight: var(--type-wght-bold);
 	}
 
-	.btn-point:hover { background: linear-gradient(135deg, var(--color-accent-deep), var(--color-accent-dark)); }
-	.btn-point:active { transform: scale(0.97); }
 	.btn-point:disabled { opacity: 0.4; cursor: not-allowed; }
 
-	.scoring-secondary { display: flex; gap: 8px; }
-	.scoring-secondary .btn-action,
-	.scoring-secondary .btn-service { flex: 1; text-align: center; }
+	.btn-action {
+		width: 100%;
+		min-height: 40px;
+		padding: 8px 12px;
+		border: 1px solid var(--k-line);
+		background: transparent;
+		color: var(--k-text);
+		font-size: 13px;
+		font-weight: var(--type-wght-medium);
+		text-align: center;
+	}
+
+	.btn-action:hover:not(:disabled) { border-color: var(--k-text); }
+	.btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
+
+	.btn-action-danger { color: var(--color-error); border-color: var(--color-error); width: auto; }
 
 	.timeout-banner {
-		background: color-mix(in srgb, var(--color-warning) 15%, transparent);
-		border: 1px solid color-mix(in srgb, var(--color-warning) 50%, transparent);
-		color: var(--color-warning);
+		border: 1px solid var(--k-text);
+		color: var(--k-text);
 		text-align: center;
 		padding: 10px 20px;
-		font-weight: 700;
-		font-size: 16px;
+		font-weight: var(--type-wght-bold);
+		font-size: 14px;
 		font-variant-numeric: tabular-nums;
 	}
 
 	.btn-timeout-cancel {
 		margin-left: 16px;
 		padding: 4px 12px;
-		background: color-mix(in srgb, var(--color-error) 20%, transparent);
-		border: 1px solid color-mix(in srgb, var(--color-error) 50%, transparent);
+		background: transparent;
+		border: 1px solid var(--color-error);
 		color: var(--color-error);
-		border-radius: 6px;
+		border-radius: 0;
+		font-size: 12px;
+		font-weight: var(--type-wght-medium);
+		cursor: pointer;
+	}
+
+	.match-finished { border: 1px solid var(--k-line); padding: 20px; text-align: center; }
+	.finished-title { margin: 0 0 4px; font-size: 20px; font-weight: var(--type-wght-display); }
+
+	.history { border-top: 1px solid var(--k-line); padding-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+	.history-row {
+		display: grid;
+		grid-template-columns: 36px 64px 1fr;
+		gap: 8px;
+		padding: 8px 0;
+		border-bottom: 1px solid var(--k-line);
+		font-size: 12px;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--k-text-mute);
+	}
+
+	.history-set { color: var(--k-text-dim); }
+	.history-score { color: var(--k-text); font-weight: var(--type-wght-bold); }
+	.history-team { text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+	.note {
+		margin: 0;
+		padding-top: 16px;
+		border-top: 1px solid var(--k-line);
 		font-size: 13px;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.2s;
+		line-height: 1.5;
+		color: var(--k-text-mute);
 	}
 
-	.btn-timeout-cancel:hover { background: color-mix(in srgb, var(--color-error) 30%, transparent); border-color: var(--color-error); }
+	.foot { background: var(--k-surface-alt); }
+	.foot-text { max-width: 720px; margin: 0 auto; padding: 32px 20px 24px; }
+	.foot-title { margin: 0; font-size: 25px; font-weight: var(--type-wght-display); letter-spacing: -0.02em; }
 
-	.scoring-actions {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 12px;
-		padding: 16px 24px;
-		border-top: 1px solid var(--color-border-default);
+	.foot-dot {
+		display: inline-block;
+		width: 0.24em;
+		height: 0.24em;
+		margin-left: 0.06em;
+		border-radius: 50%;
+		background: var(--pulse);
 	}
 
-	/* Buttons */
-	.btn-action {
-		padding: 10px 20px;
-		border: 1px solid var(--color-accent-border);
-		background: var(--color-bg-elevated);
-		color: var(--color-accent);
-		border-radius: 8px;
-		font-size: 14px;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
+	.foot-url { margin: 8px 0 0; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--k-text-dim); word-break: break-all; }
 
-	.btn-action:hover { background: var(--color-bg-elevated-hover); border-color: var(--color-accent); }
-	.btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
-
-	.btn-action-danger { border-color: color-mix(in srgb, var(--color-error) 30%, var(--color-bg-panel)); background: color-mix(in srgb, var(--color-error) 10%, var(--color-bg-panel)); color: var(--color-error-light); }
-	.btn-action-danger:hover { background: color-mix(in srgb, var(--color-error) 20%, var(--color-bg-panel)); border-color: var(--color-error-light); }
-
-	.btn-service {
-		padding: 10px 16px;
-		border: 1px solid var(--color-border-subtle);
-		background: var(--color-bg-elevated);
-		color: var(--color-text-secondary);
-		border-radius: 8px;
-		font-size: 13px;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.btn-service:hover:not(:disabled) { border-color: var(--color-accent); color: var(--color-accent); }
-
-	.btn-service-active {
-		background: linear-gradient(135deg, var(--color-accent-deepest), var(--color-accent-deep));
-		border-color: var(--color-accent-mid);
-		color: white;
-		cursor: default;
-	}
-
-	/* Dialogs */
 	.dialog {
-		background: var(--color-bg-panel);
-		color: var(--color-text-primary);
-		border: 1px solid var(--color-border-default);
-		border-radius: 12px;
+		background: var(--k-surface);
+		color: var(--k-text);
+		border: 1px solid var(--k-line);
+		border-radius: 0;
 		padding: 0;
 		max-width: 480px;
 		width: 90vw;
 		margin: auto;
 	}
 
-	.dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+	.dialog::backdrop { background: color-mix(in srgb, var(--ink) 60%, transparent); }
 
 	.dialog-header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		padding: 16px 20px;
-		border-bottom: 1px solid var(--color-border-default);
+		border-bottom: 1px solid var(--k-line);
 	}
 
-	.dialog-header h3 { margin: 0; font-size: 16px; font-weight: 700; }
+	.dialog-header h3 { margin: 0; font-size: 16px; font-weight: var(--type-wght-bold); }
 
 	.dialog-close {
 		background: none;
 		border: none;
-		color: var(--color-text-secondary);
+		color: var(--k-text-mute);
 		font-size: 24px;
 		cursor: pointer;
 		padding: 0;
 		line-height: 1;
 	}
 
-	.dialog-close:hover { color: var(--color-text-primary); }
+	.dialog-close:hover { color: var(--k-text); }
 
-	.dialog-body {
-		padding: 16px 20px;
-		display: flex;
-		flex-direction: column;
-		gap: 20px;
-	}
+	.dialog-body { padding: 16px 20px; }
 
 	.advanced-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
 	.advanced-team { display: flex; flex-direction: column; gap: 8px; padding: 0 12px; }
-	.advanced-team:first-child { border-right: 1px solid var(--color-border-default); }
-	.advanced-team-header { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
-	.advanced-team .btn-action { width: 100%; text-align: center; }
+	.advanced-team:first-child { border-right: 1px solid var(--k-line); }
+	.advanced-team-header { font-size: 13px; font-weight: var(--type-wght-display); text-transform: uppercase; margin-bottom: 4px; }
 
 	.dialog-footer {
 		display: flex;
 		justify-content: flex-end;
 		gap: 12px;
 		padding: 16px 20px;
-		border-top: 1px solid var(--color-border-default);
+		border-top: 1px solid var(--k-line);
 	}
 
-	/* Match finished */
-	.match-finished {
-		max-width: 1100px;
-		margin: 16px auto 0;
-		background: rgba(6, 78, 59, 0.3);
-		border: 1px solid #065f46;
-		border-radius: 12px;
-		padding: 20px;
-		text-align: center;
-	}
-
-	/* Timeline */
-	.timeline-set { margin-bottom: 16px; }
-	.timeline-set:last-child { margin-bottom: 0; }
-
-	.timeline-set-header {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		margin-bottom: 8px;
-		font-size: 14px;
-		font-weight: 700;
-		color: var(--color-text-secondary);
-	}
-
-	.timeline-final-score { font-variant-numeric: tabular-nums; color: var(--color-text-primary); }
-	.timeline-winner-name { font-size: 12px; color: var(--color-text-tertiary); font-weight: 600; }
-	.timeline-live-badge { background: color-mix(in srgb, var(--color-success) 20%, transparent); color: var(--color-success); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
-	.timeline-scroll { overflow-x: auto; padding-bottom: 4px; }
-	.timeline-grid { display: flex; flex-direction: column; gap: 2px; }
-	.timeline-row { display: flex; gap: 2px; }
-
-	.timeline-cell {
-		width: 30px;
-		height: 28px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 12px;
-		font-weight: 700;
-		font-family: monospace;
-		font-variant-numeric: tabular-nums;
-		border-radius: 3px;
-		flex-shrink: 0;
-	}
-
-	.timeline-cell-home, .timeline-cell-guest { color: var(--color-text-primary); }
-	.timeline-cell-dim { color: var(--color-border-subtle); background: var(--color-bg-dim); }
-	.timeline-cell-timeout { background: color-mix(in srgb, var(--color-warning) 15%, transparent); color: var(--color-warning); font-size: 14px; }
-	.timeline-cell-winner { border: 2px solid var(--color-warning); box-shadow: 0 0 6px color-mix(in srgb, var(--color-warning) 40%, transparent); }
-
-	/* Utilities */
-	.font-bold { font-weight: 700; }
-	.text-xl { font-size: 20px; }
-	.text-gray-400 { color: var(--color-text-secondary); }
-	.text-gray-300 { color: var(--color-text-secondary); }
-	.flex { display: flex; }
-	.items-center { align-items: center; }
-	.justify-center { justify-content: center; }
+	.text-mute { color: var(--k-text-mute); margin: 0; }
 
 	@media (max-width: 480px) {
-		.control { padding: 8px; }
-		.nav-bar { margin-bottom: 8px; }
-		.card-header { padding: 10px 12px; }
-		.card-body { padding: 10px 12px; }
-
-		.scoreboard-preview { padding: 10px; }
-		.scoreboard-preview:not(.with-jersey) {
-			grid-template-columns: minmax(0, 1fr) 36px auto 40px auto;
-		}
-		.scoreboard-preview.with-jersey {
-			grid-template-columns: 8px minmax(0, 1fr) 36px auto 40px auto;
-		}
-		.scoreboard-preview.with-jersey.has-logo {
-			grid-template-columns: 36px minmax(0, 1fr) 36px auto 40px auto;
-		}
-		.preview-name { font-size: 13px; padding: 0 8px; }
-		.preview-sets { width: 36px; font-size: 18px; }
-		.preview-points { width: 40px; font-size: 20px; }
-		.preview-set-scores.expanded { max-width: 140px; }
-		.preview-set-cell { width: 28px; font-size: 14px; }
-
-		.scoring-team { padding: 10px 12px; }
-		.scoring-team-header { font-size: 13px; margin-bottom: 8px; overflow: hidden; }
-		.scoring-team-header .font-bold { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-		.btn-point { height: 52px; font-size: 18px; margin-bottom: 8px; }
-
-		.scoring-secondary { flex-direction: column; gap: 6px; }
-		.btn-action { padding: 8px 12px; font-size: 12px; }
+		.bar { padding: 14px 16px; }
+		.tool { padding: 4px 16px 24px; }
+		.team-name { font-size: 12px; }
 	}
 </style>
