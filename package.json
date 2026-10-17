@@ -22,7 +22,7 @@
 		"test:watch": "vitest"
 	},
 	"devDependencies": {
-		"@sveltejs/kit": "^2.56.1",
+		"@sveltejs/kit": "^2.70.3",
 		"@sveltejs/vite-plugin-svelte": "^7.0.0",
 		"@tailwindcss/vite": "^4.2.2",
 		"@types/node": "^25.5.2",
@@ -30,7 +30,7 @@
 		"drizzle-kit": "^0.31.10",
 		"husky": "^9.1.7",
 		"license-checker": "^25.0.1",
-		"svelte": "^5.55.5",
+		"svelte": "^5.57.2",
 		"svelte-check": "^4.4.5",
 		"tailwindcss": "^4.2.1",
 		"typescript": "^5.9.3",
@@ -38,10 +38,10 @@
 		"vitest": "^4.1.2"
 	},
 	"dependencies": {
-		"@auth/sveltekit": "^1.11.1",
+		"@auth/sveltekit": "^1.11.3",
 		"@fontsource-variable/inter": "^5.2.8",
 		"@stripe/stripe-js": "^8.11.0",
-		"@sveltejs/adapter-node": "^5.5.4",
+		"@sveltejs/adapter-node": "^5.5.7",
 		"drizzle-orm": "^0.45.4",
 		"jose": "^6.2.3",
 		"lru-cache": "^11.2.7",
@@ -51,5 +51,8 @@
 		"qrcode": "^1.5.4",
 		"stripe": "^20.4.1",
 		"zod": "^4.3.6"
+	},
+	"overrides": {
+		"cookie": "^0.7.2"
 	}
 }
