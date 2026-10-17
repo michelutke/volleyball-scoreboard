@@ -41,14 +41,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	try {
 		const userId = await inviteUserByEmail(body.email, kcOrgId);
+		if (!userId) return json({ error: 'Diese E-Mail ist bereits registriert.' }, { status: 409 });
 		return json({ id: userId, email: body.email, emailSent: true }, { status: 201 });
 	} catch (err) {
-		const msg = err instanceof Error ? err.message : '';
-		const isAlreadyMember = msg.toLowerCase().includes('conflict') || msg.includes('409');
-		if (!isAlreadyMember) console.error('[users] invite failed:', err);
-		return json(
-			{ error: isAlreadyMember ? 'Nutzer ist bereits Mitglied dieser Organisation' : 'Einladung fehlgeschlagen' },
-			{ status: isAlreadyMember ? 400 : 500 }
-		);
+		console.error('[users] invite failed:', err);
+		return json({ error: 'Einladung fehlgeschlagen' }, { status: 500 });
 	}
 };

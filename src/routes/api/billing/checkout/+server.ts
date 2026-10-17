@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getStripe } from '$lib/server/stripe';
-import { getStripeCustomerId } from '$lib/server/billing';
+import { getStripeCustomerId, hasHadSubscription } from '$lib/server/billing';
 import { env } from '$env/dynamic/private';
 
 export const POST: RequestHandler = async ({ locals, url }) => {
@@ -9,6 +9,7 @@ export const POST: RequestHandler = async ({ locals, url }) => {
 	if (!env.STRIPE_SECRET_KEY || !env.STRIPE_PRICE_ID) throw error(503, 'Billing not configured');
 
 	const customerId = await getStripeCustomerId(locals.orgId);
+	const trialEligible = !(await hasHadSubscription(locals.orgId));
 
 	const session = await getStripe().checkout.sessions.create({
 		mode: 'subscription',
@@ -16,7 +17,7 @@ export const POST: RequestHandler = async ({ locals, url }) => {
 		customer: customerId ?? undefined,
 		metadata: { orgId: locals.orgId },
 		subscription_data: {
-			trial_period_days: 3,
+			...(trialEligible ? { trial_period_days: 3 } : {}),
 			metadata: { orgId: locals.orgId }
 		},
 		payment_method_collection: 'always',

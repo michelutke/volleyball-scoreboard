@@ -1,6 +1,8 @@
 import { json } from '@sveltejs/kit';
 import { verifyMobileToken, type MobileIdentity } from '$lib/server/mobile-auth';
 import type { TokenResult } from '$lib/server/match-service';
+import { getBillingStatus } from '$lib/server/billing';
+import { env } from '$env/dynamic/private';
 
 export function mobileJson(body: unknown, status = 200): Response {
 	return json(body, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -10,10 +12,19 @@ export function unauthorized(): Response {
 	return mobileJson({ error: 'Unauthorized' }, 401);
 }
 
-export async function authenticateMobile(request: Request): Promise<MobileIdentity | null> {
+export function subscriptionInactive(): Response {
+	return mobileJson({ error: 'Abo inaktiv' }, 402);
+}
+
+export async function authenticateMobile(request: Request): Promise<MobileIdentity | Response> {
 	const auth = request.headers.get('authorization');
-	if (!auth?.startsWith('Bearer ')) return null;
-	return verifyMobileToken(auth.slice('Bearer '.length));
+	if (!auth?.startsWith('Bearer ')) return unauthorized();
+	const identity = await verifyMobileToken(auth.slice('Bearer '.length));
+	if (!identity) return unauthorized();
+	if (env.STRIPE_SECRET_KEY && (await getBillingStatus(identity.orgId)) === 'blocked') {
+		return subscriptionInactive();
+	}
+	return identity;
 }
 
 const MAX_INT4 = 2_147_483_647;

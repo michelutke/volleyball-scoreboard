@@ -25,8 +25,11 @@
 	const TIMEOUT_SECONDS = 30;
 
 	const light = $derived(options.theme === 'light');
-	const accentWarm = $derived((options.accentWarm as string) ?? '#ff3d2e');
-	const accentCool = $derived((options.accentCool as string) ?? '#1d4ed8');
+	const HEX_COLOR = /^#[0-9a-fA-F]{3,8}$/;
+	const safeColor = (value: unknown, fallback: string): string =>
+		typeof value === 'string' && HEX_COLOR.test(value) ? value : fallback;
+	const accentWarm = $derived(safeColor(options.accentWarm, '#ff3d2e'));
+	const accentCool = $derived(safeColor(options.accentCool, '#1d4ed8'));
 	const showLogos = $derived(options.showLogos === true);
 
 	function isAtSetPoint(pts: number, other: number, setNum: number): boolean {

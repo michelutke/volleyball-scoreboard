@@ -10,6 +10,8 @@ vi.mock('$lib/server/match-service', () => ({
 	renewControlToken: renewControlTokenMock
 }));
 
+vi.mock('$lib/server/billing', () => ({ getBillingStatus: vi.fn().mockResolvedValue('allowed') }));
+
 const { POST } = await import('./+server.js');
 
 const IDENTITY = { orgId: 'org-1', sub: 'user-1', roles: [] };

@@ -7,6 +7,7 @@ import { bootstrapKcOrgId, ensureOrganizationMapper, ensureDirectAccessGrants, e
 import { getBillingStatus } from '$lib/server/billing';
 import { isRateLimited } from '$lib/server/rate-limit.js';
 import { clearAuthCookies, sessionRejection } from '$lib/server/auth-session';
+import { isPublicPath } from '$lib/server/public-paths.js';
 
 export async function init() {
 	await bootstrapKcOrgId();
@@ -20,7 +21,6 @@ export const handleError: HandleServerError = ({ error, event }) => {
 	console.error('[500]', event.url.pathname, error);
 };
 
-const PUBLIC_PATHS = ['/', '/auth', '/api/health', '/signin', '/signout', '/signup', '/privacy', '/imprint', '/about', '/api/billing/webhook', '/api/auth/auto-login', '/library', '/api/overlay-sandbox', '/api/image-proxy'];
 const OVERLAY_PATTERN = /^\/matches\/[^/]+\/overlay/;
 const LEGACY_OVERLAY = /^\/overlay($|\/)/;
 const SHARE_CONTROL = /^\/(c|api\/c)\//;
@@ -43,7 +43,7 @@ const securityHeaders: Record<string, string> = {
 export const handle = sequence(authHandle, async ({ event, resolve }) => {
 	const path = event.url.pathname;
 	const isPublic =
-		PUBLIC_PATHS.some((p) => (p === '/' ? path === '/' : path.startsWith(p))) ||
+		isPublicPath(path) ||
 		isOverlay(path) ||
 		MATCH_STREAM_PATTERN.test(path) ||
 		SHARE_CONTROL.test(path);

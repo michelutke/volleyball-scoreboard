@@ -5,6 +5,7 @@ const getOrgMatchMock = vi.hoisted(() => vi.fn());
 const startMatchMock = vi.hoisted(() => vi.fn());
 
 vi.mock('$lib/server/db/index.js', () => ({ db: {} }));
+vi.mock('$lib/server/billing', () => ({ getBillingStatus: vi.fn().mockResolvedValue('allowed') }));
 vi.mock('$lib/server/mobile-auth', () => ({ verifyMobileToken: verifyMobileTokenMock }));
 vi.mock('$lib/server/match-service', async (importOriginal) => ({
 	...(await importOriginal<typeof import('$lib/server/match-service')>()),

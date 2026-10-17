@@ -16,6 +16,8 @@ vi.mock('$lib/server/mobile-auth', () => ({
 	verifyMobileToken: verifyMobileTokenMock
 }));
 
+vi.mock('$lib/server/billing', () => ({ getBillingStatus: vi.fn().mockResolvedValue('allowed') }));
+
 const { GET } = await import('./+server.js');
 
 function makeRequest(headers: Record<string, string>): Request {
