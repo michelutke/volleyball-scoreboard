@@ -2,6 +2,7 @@
 	import { t } from '$lib/i18n/landing.js';
 	import type { Lang } from '$lib/i18n/landing.js';
 	import { magnetic } from '$lib/motion.js';
+	import NavLogo from '$lib/components/brand/NavLogo.svelte';
 
 	interface Props {
 		lang: Lang;
@@ -30,9 +31,8 @@
 
 <nav class="landing-nav" class:scrolled>
 	<div class="inner">
-		<a href="/" class="wordmark">
-			<span class="word">Scorely</span>
-			<span class="dot" aria-hidden="true"></span>
+		<a href="/" class="wordmark" aria-label="Scorely">
+			<NavLogo />
 		</a>
 
 		<div class="links">
@@ -108,34 +108,8 @@
 	.wordmark {
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
 		text-decoration: none;
 		color: var(--k-text);
-		font-family: var(--font-display);
-		font-weight: var(--type-wght-bold);
-		font-size: 18px;
-		letter-spacing: -0.02em;
-		font-variation-settings: 'wght' 680, 'opsz' 22;
-		transition: font-variation-settings var(--dur-mid) var(--ease-snap);
-	}
-	.landing-nav.scrolled .wordmark {
-		font-variation-settings: 'wght' 580, 'opsz' 18;
-	}
-	.wordmark .dot {
-		width: 6px;
-		height: 6px;
-		border-radius: 50%;
-		background: var(--pulse);
-		display: inline-block;
-		animation: pulse-dot 2.4s var(--ease-glide) infinite;
-	}
-	@keyframes pulse-dot {
-		0%, 100% { transform: scale(1); opacity: 1; }
-		50% { transform: scale(1.4); opacity: 0.55; }
-	}
-	:global([data-motion='static']) .wordmark .dot,
-	:global([data-motion='damped']) .wordmark .dot {
-		animation: none;
 	}
 
 	.links {
@@ -183,7 +157,7 @@
 		color: var(--k-text-mute);
 		background: transparent;
 		border: 1px solid var(--k-line);
-		border-radius: 4px;
+		border-radius: 0;
 		padding: 5px 8px;
 		cursor: pointer;
 		transition: color var(--dur-fast) var(--ease-snap),
