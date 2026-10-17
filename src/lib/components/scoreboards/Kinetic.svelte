@@ -201,7 +201,9 @@
 
 	.rows {
 		flex: 1;
+		min-width: 0;
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		grid-template-rows: 64px 64px;
 	}
 
@@ -344,9 +346,39 @@
 	@media (max-width: 480px) {
 		.bug {
 			min-width: 0;
+			max-width: 100%;
 		}
 		.history {
 			display: none;
+		}
+		/* Type steps down the 1.25 scale on phones (manual p24: points 36 / 30) */
+		.board {
+			height: 104px;
+		}
+		.rows {
+			grid-template-rows: 52px 52px;
+		}
+		.mark-cell {
+			flex-basis: 48px;
+		}
+		.mark-cell :global(.bug-mark) {
+			width: 32px;
+			height: 32px;
+		}
+		.name-cell {
+			padding: 0 10px;
+			gap: 6px;
+		}
+		.name {
+			font-size: 15px;
+		}
+		.sets {
+			flex-basis: 28px;
+			font-size: 16px;
+		}
+		.points {
+			flex-basis: 56px;
+			font-size: 30px;
 		}
 	}
 </style>
