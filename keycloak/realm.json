@@ -9,6 +9,8 @@
   "registrationEmailAsUsername": false,
   "duplicateEmailsAllowed": false,
   "resetPasswordAllowed": true,
+  "ssoSessionIdleTimeout": 604800,
+  "ssoSessionMaxLifespan": 2592000,
   "editUsernameAllowed": false,
   "bruteForceProtected": true,
   "attributes": {

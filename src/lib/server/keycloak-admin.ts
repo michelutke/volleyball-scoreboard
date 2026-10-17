@@ -409,6 +409,10 @@ export async function ensureRealmSettings(): Promise<void> {
 			body: JSON.stringify({
 				registrationEmailAsUsername: false,
 				resetPasswordAllowed: true,
+				// App sessions refresh against the Keycloak SSO session, so it must outlive the app's
+				// 7 day session (Keycloak defaults: 30 min idle, 10 h max)
+				ssoSessionIdleTimeout: 7 * 24 * 3600,
+				ssoSessionMaxLifespan: 30 * 24 * 3600,
 				internationalizationEnabled: true,
 				supportedLocales: ['de', 'en'],
 				defaultLocale: 'de'

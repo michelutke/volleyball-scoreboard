@@ -6,7 +6,14 @@ import { base } from '$app/paths';
 import { env } from '$env/dynamic/private';
 import { redirect } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
-import { getKcOrgIdForUser, getKcOrgIdFromAlias, getKcOrgIdByScanningMembers } from '$lib/server/keycloak-admin';
+import {
+	deriveIdentity,
+	expiryFromNow,
+	jwtCallback,
+	sessionCallback,
+	SESSION_MAX_AGE_SECONDS,
+	type TokenSet
+} from '$lib/server/auth-tokens';
 
 declare module '@auth/core/types' {
 	interface Session {
@@ -16,12 +23,15 @@ declare module '@auth/core/types' {
 			image?: string | null;
 			orgId?: string;
 			roles?: string[];
-			idToken?: string;
 		};
+		error?: string;
 	}
 	interface User {
 		orgId?: string;
 		roles?: string[];
+		idToken?: string;
+		refreshToken?: string;
+		accessTokenExpires?: number;
 	}
 }
 
@@ -30,45 +40,10 @@ declare module '@auth/core/jwt' {
 		orgId?: string;
 		roles?: string[];
 		idToken?: string;
+		refreshToken?: string;
+		accessTokenExpires?: number;
+		error?: string;
 	}
-}
-
-/**
- * KC 26 serializes the `organization` claim as either:
- *   object: { "alias": { "id": "uuid" } }          (older format)
- *   array:  ["alias", { "alias": { "id": "uuid" } }]  (KC 26 multivalued)
- */
-function extractOrgIdFromClaim(claim: unknown): string | undefined {
-	if (!claim) return undefined;
-	if (Array.isArray(claim)) {
-		for (const item of claim) {
-			if (item && typeof item === 'object') {
-				const id = Object.values(item as Record<string, { id?: string }>)[0]?.id;
-				if (id) return id;
-			}
-		}
-		return undefined;
-	}
-	return Object.values(claim as Record<string, { id?: string }>)[0]?.id;
-}
-
-/**
- * Extract the org alias string from the `organization` claim.
- * The alias is always present even when `addOrganizationId` is not configured.
- * Array format: ["alias", {...}] — first string element is the alias.
- * Object format: { "alias": {...} } — first key is the alias.
- */
-function extractOrgAlias(claim: unknown): string | undefined {
-	if (!claim) return undefined;
-	if (Array.isArray(claim)) {
-		const alias = claim.find((item) => typeof item === 'string');
-		return alias as string | undefined;
-	}
-	if (typeof claim === 'object') {
-		const key = Object.keys(claim as object)[0];
-		return key || undefined;
-	}
-	return undefined;
 }
 
 const baseConfig: SvelteKitAuthConfig = {
@@ -101,37 +76,22 @@ const baseConfig: SvelteKitAuthConfig = {
 					console.error('[auth] KC ROPC failed:', tokenRes.status, errBody);
 					return null;
 				}
-				const tokens: { access_token: string } = await tokenRes.json();
+				const tokens: TokenSet = await tokenRes.json();
 				try {
-					const payload = JSON.parse(Buffer.from(tokens.access_token.split('.')[1], 'base64url').toString());
-					const orgClaim = payload.organization ?? payload.organizations;
-					let orgId: string | undefined = (payload.org_id as string | undefined) ??
-						extractOrgIdFromClaim(orgClaim);
-					// Fallback 1: resolve alias via service account (works without manage-clients/view-users)
-					if (!orgId) {
-						const alias = extractOrgAlias(orgClaim);
-						if (alias) {
-							try { orgId = await getKcOrgIdFromAlias(alias); } catch { /* non-fatal */ }
-						}
-					}
-					// Fallback 2: KC admin API user→organizations lookup
-					if (!orgId && payload.sub) {
-						try { orgId = await getKcOrgIdForUser(payload.sub as string); } catch { /* non-fatal */ }
-					}
-					// Fallback 3: scan all org member lists (SA only, no master admin needed)
-					if (!orgId && payload.sub) {
-						try { orgId = await getKcOrgIdByScanningMembers(payload.sub as string); } catch { /* non-fatal */ }
-					}
-					if (!orgId) {
-						console.error('[auth] ROPC: orgId extraction failed for user:', payload.email, payload.sub);
+					const identity = await deriveIdentity(tokens.access_token);
+					if (!identity.orgId) {
+						console.error('[auth] ROPC: orgId extraction failed for user:', identity.email, identity.sub);
 						return null;
 					}
 					return {
-						id: payload.sub,
-						email: payload.email,
-						name: payload.name,
-						orgId,
-						roles: (payload.realm_access?.roles as string[]) ?? []
+						id: identity.sub,
+						email: identity.email,
+						name: identity.name,
+						orgId: identity.orgId,
+						roles: identity.roles,
+						idToken: tokens.id_token,
+						refreshToken: tokens.refresh_token,
+						accessTokenExpires: expiryFromNow(tokens.expires_in)
 					};
 				} catch {
 					return null;
@@ -139,60 +99,8 @@ const baseConfig: SvelteKitAuthConfig = {
 			}
 		})
 	],
-	callbacks: {
-		async jwt({ token, account, user }) {
-			if (account?.access_token) {
-				try {
-					const payload = JSON.parse(
-						Buffer.from(account.access_token.split('.')[1], 'base64url').toString()
-					);
-					const orgClaim = payload.organization ?? payload.organizations;
-					let orgId: string | undefined = (payload.org_id as string | undefined) ??
-						extractOrgIdFromClaim(orgClaim);
-					// Fallback 1: resolve alias via service account (works without manage-clients/view-users)
-					if (!orgId) {
-						const alias = extractOrgAlias(orgClaim);
-						if (alias) {
-							try { orgId = await getKcOrgIdFromAlias(alias); } catch { /* non-fatal */ }
-						}
-					}
-					// Fallback 2: KC admin API user→organizations lookup
-					if (!orgId && payload.sub) {
-						try { orgId = await getKcOrgIdForUser(payload.sub as string); } catch { /* non-fatal */ }
-					}
-					// Fallback 3: scan all org member lists (SA only, no master admin needed)
-					if (!orgId && payload.sub) {
-						try { orgId = await getKcOrgIdByScanningMembers(payload.sub as string); } catch { /* non-fatal */ }
-					}
-					if (!orgId) {
-						console.error('[auth] OIDC: orgId extraction failed for sub:', payload.sub);
-					}
-					token.orgId = orgId;
-					token.roles = (payload.realm_access?.roles as string[]) ?? [];
-				} catch (err) {
-					console.error('KC token decode failed', err);
-				}
-			}
-			if (account?.id_token) token.idToken = account.id_token;
-			// Credentials flow: user object carries orgId + roles
-			if (user?.orgId) token.orgId = user.orgId;
-			if (user?.roles) token.roles = user.roles;
-			// Token refresh: re-attempt admin API if orgId still missing
-			if (!token.orgId && token.sub) {
-				try { token.orgId = await getKcOrgIdForUser(token.sub); } catch { /* non-fatal */ }
-				if (!token.orgId) {
-					console.error('[auth] jwt refresh: orgId still missing for sub:', token.sub);
-				}
-			}
-			return token;
-		},
-		session({ session, token }) {
-			session.user.orgId = token.orgId;
-			session.user.roles = token.roles ?? [];
-			session.user.idToken = token.idToken;
-			return session;
-		}
-	}
+	session: { strategy: 'jwt', maxAge: SESSION_MAX_AGE_SECONDS },
+	callbacks: { jwt: jwtCallback, session: sessionCallback }
 };
 
 export const { handle, signIn, signOut } = SvelteKitAuth(baseConfig);

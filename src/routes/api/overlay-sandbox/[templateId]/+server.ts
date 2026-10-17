@@ -14,7 +14,7 @@ type Template = typeof designTemplates.$inferSelect;
 async function canView(template: Template, { url, locals }: RequestEvent): Promise<boolean> {
 	if (template.isPublic) return true;
 	const session = locals.session ?? (await locals.auth());
-	if (session?.user?.orgId && session.user.orgId === template.orgId) return true;
+	if (!session?.error && session?.user?.orgId && session.user.orgId === template.orgId) return true;
 
 	const matchId = parseInt(url.searchParams.get('match') ?? '');
 	if (isNaN(matchId)) return false;

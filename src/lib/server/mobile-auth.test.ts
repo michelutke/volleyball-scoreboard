@@ -117,6 +117,28 @@ describe('resolveMobileOrgId', () => {
 		expect(getKcOrgIdForUserMock).toHaveBeenCalledTimes(1);
 	});
 
+	it('re-queries Keycloak once the cached org expires', async () => {
+		let now = performance.now();
+		const nowSpy = vi.spyOn(performance, 'now').mockImplementation(() => now);
+		const tick = async (ms: number) => {
+			now += ms;
+			await new Promise((resolve) => setTimeout(resolve, 5));
+		};
+		try {
+			getKcOrgIdForUserMock.mockResolvedValue(UUID);
+			const payload = { azp: MOBILE_CLIENT_ID, sub: 'user-ttl', organization: ['miggi-s-club'] };
+			await resolveMobileOrgId(payload);
+			await tick(4 * 60 * 1000);
+			await resolveMobileOrgId(payload);
+			expect(getKcOrgIdForUserMock).toHaveBeenCalledTimes(1);
+			await tick(2 * 60 * 1000);
+			await resolveMobileOrgId(payload);
+			expect(getKcOrgIdForUserMock).toHaveBeenCalledTimes(2);
+		} finally {
+			nowSpy.mockRestore();
+		}
+	});
+
 	it('returns null when every lookup finds nothing', async () => {
 		expect(
 			await resolveMobileOrgId({ azp: MOBILE_CLIENT_ID, sub: 'user-d', organization: ['ghost'] })

@@ -4,6 +4,7 @@ import { serverCredentialsSignIn } from '../../../../auth';
 import { verifyAndActivateSession } from '$lib/server/billing';
 import { env } from '$env/dynamic/private';
 import { isRateLimited } from '$lib/server/rate-limit.js';
+import { clearAuthCookies } from '$lib/server/auth-session';
 
 export const POST: RequestHandler = async (event) => {
 	if (isRateLimited(`auto-login:${event.getClientAddress()}`, { maxAttempts: 5, windowMs: 15 * 60 * 1000 })) {
@@ -30,11 +31,7 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	// Clear any existing session before signing in as the new user
-	for (const name of ['authjs.session-token', 'authjs.callback-url', 'authjs.csrf-token']) {
-		event.cookies.delete(name, { path: '/' });
-		event.cookies.delete(`__Secure-${name}`, { path: '/' });
-		event.cookies.delete(`__Host-${name}`, { path: '/' });
-	}
+	clearAuthCookies(event.cookies);
 
 	const result = await serverCredentialsSignIn(event, email, password, '/dashboard');
 	return json(result);
