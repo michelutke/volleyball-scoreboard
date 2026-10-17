@@ -403,10 +403,19 @@ export async function ensureRealmSettings(): Promise<void> {
 		const res = await fetch(`${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}`, {
 			method: 'PUT',
 			headers: { Authorization: `Bearer ${masterToken}`, 'Content-Type': 'application/json' },
-			body: JSON.stringify({ registrationEmailAsUsername: false })
+			// realm.json only applies on first import, so settings the app relies on are patched here.
+			// resetPasswordAllowed backs the "Passwort vergessen?" link on /signin; German first for
+			// Keycloak's built in pages (password reset, info, error).
+			body: JSON.stringify({
+				registrationEmailAsUsername: false,
+				resetPasswordAllowed: true,
+				internationalizationEnabled: true,
+				supportedLocales: ['de', 'en'],
+				defaultLocale: 'de'
+			})
 		});
 		if (!res.ok) console.warn('[keycloak] ensureRealmSettings failed:', res.status);
-		else console.log('[keycloak] realm settings ensured: registrationEmailAsUsername=false');
+		else console.log('[keycloak] realm settings ensured: registrationEmailAsUsername=false, resetPasswordAllowed=true, defaultLocale=de');
 	} catch (e) {
 		console.warn('[keycloak] ensureRealmSettings failed (non-fatal):', e);
 	}
