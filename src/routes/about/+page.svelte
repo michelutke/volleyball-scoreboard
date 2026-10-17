@@ -3,6 +3,7 @@
 	import LandingFooter from '$lib/components/landing/LandingFooter.svelte';
 	import type { Lang } from '$lib/i18n/landing.js';
 	import { reveal } from '$lib/motion.js';
+	import { animate, scroll, type DOMKeyframesDefinition } from 'motion';
 	import communityBadge from '$lib/brand/badges/community.svg?raw';
 	import swissBadge from '$lib/brand/badges/swiss.svg?raw';
 	import Github from 'lucide-svelte/icons/git-fork';
@@ -11,6 +12,13 @@
 	let lang = $state<Lang>('de');
 
 	const GITHUB_URL = 'https://github.com/michelutke/volleyball-scoreboard';
+
+	const IMAGES = {
+		vision: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=2000&q=70',
+		mission: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=2000&q=70',
+		values: 'https://images.unsplash.com/photo-1599058917765-a780eda07a3e?auto=format&fit=crop&w=2000&q=70',
+		oss: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=2000&q=70'
+	};
 
 	const content = {
 		de: {
@@ -104,7 +112,29 @@
 	} as const;
 
 	const tr = $derived(content[lang]);
+
+	/** Scroll-linked background parallax; answers scroll only and renders static at motion scale 0. */
+	function parallax(root: HTMLElement) {
+		const scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale'));
+		const img = root.querySelector<HTMLElement>('.bg-img');
+		if (!img || !Number.isFinite(scale) || scale === 0) return;
+		const stop = scroll(
+			animate(
+				img,
+				{ transform: ['translateY(-30%) scale(1.15)', 'translateY(30%) scale(1.15)'] } as DOMKeyframesDefinition,
+				{ duration: 1, ease: 'linear' }
+			),
+			{ target: root, offset: ['start end', 'end start'] }
+		);
+		return { destroy: () => stop?.() };
+	}
 </script>
+
+{#snippet backdrop(src: string)}
+	<div class="bg" aria-hidden="true">
+		<img {src} alt="" class="bg-img" loading="lazy" />
+	</div>
+{/snippet}
 
 <LandingNav {lang} onLangToggle={() => (lang = lang === 'de' ? 'en' : 'de')} basePath="/" />
 
@@ -123,22 +153,22 @@
 
 	<section class="block">
 		<div class="split">
-			<div class="cell">
-				<p class="kicker k-mono">01 · Vision</p>
+			<div class="cell photo" use:parallax>
+				{@render backdrop(IMAGES.vision)}
 				<h2 class="block-title k-display">{tr.vision.heading}</h2>
 				<p class="block-text">{tr.vision.text}</p>
 			</div>
-			<div class="cell">
-				<p class="kicker k-mono">02 · Mission</p>
+			<div class="cell photo" use:parallax>
+				{@render backdrop(IMAGES.mission)}
 				<h2 class="block-title k-display">{tr.mission.heading}</h2>
 				<p class="block-text">{tr.mission.text}</p>
 			</div>
 		</div>
 	</section>
 
-	<section class="block">
+	<section class="block photo" use:parallax>
+		{@render backdrop(IMAGES.values)}
 		<div class="block-inner">
-			<p class="kicker k-mono">03 · Werte</p>
 			<h2 class="block-title k-display">{tr.values.heading}</h2>
 			<p class="block-text">{tr.values.lead}</p>
 
@@ -158,8 +188,8 @@
 
 	<section class="block closer">
 		<div class="split">
-			<div class="cell">
-				<p class="kicker k-mono">04 · Open Source</p>
+			<div class="cell photo" use:parallax>
+				{@render backdrop(IMAGES.oss)}
 				<h2 class="block-title k-display">{tr.oss.heading}</h2>
 				<p class="block-text">{tr.oss.text}</p>
 				<a class="cta" href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
@@ -179,6 +209,41 @@
 <LandingFooter {lang} />
 
 <style>
+	/* Photo backdrops: darkened so paper type stays readable in both themes */
+	.photo {
+		position: relative;
+		isolation: isolate;
+		overflow: hidden;
+		color: var(--paper);
+		--k-text: var(--paper);
+		--k-text-mute: var(--grey-300);
+		--k-text-dim: var(--grey-300);
+		--k-line: color-mix(in srgb, var(--paper) 20%, transparent);
+	}
+	.bg {
+		position: absolute;
+		inset: -40% 0;
+		z-index: -1;
+		overflow: hidden;
+	}
+	.bg-img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		filter: brightness(0.32) saturate(1.05) contrast(1.05);
+		will-change: transform;
+		transform: scale(1.15);
+	}
+	.bg::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: color-mix(in srgb, var(--ink) 35%, transparent);
+	}
+	:global([data-motion='static']) .bg-img {
+		transform: none !important;
+	}
+
 	.page {
 		background: var(--k-surface);
 		color: var(--k-text);
@@ -197,8 +262,7 @@
 		gap: 24px;
 	}
 
-	.overline,
-	.kicker {
+	.overline {
 		font-size: 13px;
 		letter-spacing: 0.18em;
 		text-transform: uppercase;
@@ -253,6 +317,13 @@
 	.split > .cell + .cell {
 		padding: 0 0 0 48px;
 		border-left: 1px solid var(--k-line);
+	}
+	.split > .cell.photo,
+	.split > .cell.photo + .cell {
+		padding: 56px 48px;
+		border-left: none;
+		min-height: 360px;
+		justify-content: flex-end;
 	}
 
 	.block-inner {
@@ -385,6 +456,15 @@
 		.split > .cell + .cell {
 			padding-top: 48px;
 			border-top: 1px solid var(--k-line);
+		}
+		.split > .cell.photo,
+		.split > .cell.photo + .cell {
+			padding: 40px 24px;
+			border-top: none;
+			min-height: 280px;
+		}
+		.split:has(.photo) {
+			gap: 0;
 		}
 		.plate {
 			margin-left: 0;
