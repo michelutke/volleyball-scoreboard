@@ -13,7 +13,12 @@ import type { RequestHandler } from './$types.js';
  * overlay's inline scripts. This response carries its own sandboxed CSP instead.
  */
 export const POST: RequestHandler = async ({ request }) => {
-	const form = await request.formData();
+	let form: FormData;
+	try {
+		form = await request.formData();
+	} catch {
+		return new Response('Bad request', { status: 400 });
+	}
 	const code = form.get('code');
 	if (typeof code !== 'string') return new Response('Bad request', { status: 400 });
 	if (new TextEncoder().encode(code).byteLength > MAX_CUSTOM_CODE_BYTES) {

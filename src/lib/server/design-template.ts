@@ -35,10 +35,14 @@ export async function getDefaultTemplate(orgId: string) {
 	});
 }
 
-/** Apply a template's colors to a single match (scoped to org). */
+/**
+ * Apply a template's colors to a single match. Both the match and the template must belong to
+ * the org: library templates are copied into the org on install, so a cross-org reference is
+ * never legitimate and would expose another org's private custom code via the overlay page.
+ */
 export async function applyTemplateToMatch(templateId: number, matchId: number, orgId: string) {
 	const template = await db.query.designTemplates.findFirst({
-		where: eq(designTemplates.id, templateId)
+		where: and(eq(designTemplates.id, templateId), eq(designTemplates.orgId, orgId))
 	});
 	if (!template) return null;
 
