@@ -405,47 +405,25 @@
 			: o.overlayBg;
 	}
 
-	const MOCK_MATCH = {
-		homeTeam: 'VBC Thun',
-		guestTeam: 'Volley Lugano',
-		homePoints: 14,
-		guestPoints: 10,
-		homeSets: 1,
-		guestSets: 0,
-		currentSet: 2,
-		setScores: [
-			{ home: 25, guest: 20 },
-			{ home: 14, guest: 10 }
-		],
-		serviceTeam: 'home',
-		status: 'live',
-		homeJerseyColor: '#c0392b',
-		guestJerseyColor: '#1e6ab5',
-		homeTeamLogo: null,
-		guestTeamLogo: null,
-		timeout: { active: false, team: null },
-		isSetPoint: false,
-		isMatchPoint: false
-	};
-
-	function buildPreviewHtml(code: string): string {
-		return `<!DOCTYPE html><html><head><style>
-:root{--overlay-bg:${editOverlayBg};--overlay-bg2:${editOverlayBg2};--overlay-text:${editOverlayText};--overlay-divider:${editOverlayDivider};--overlay-sats-bg:${editOverlaySatsBg};--overlay-set-score-bg:${editOverlaySetScoreBg};--score-color:${editScoreColor};--score-color2:${editScoreColor2};}
-body{margin:0;background:transparent;}
-</style></head><body>${code}
-<script>setTimeout(()=>window.dispatchEvent(new MessageEvent('message',{data:{type:'matchState',data:${JSON.stringify(MOCK_MATCH)}}})),200);<\/script>
-</body></html>`;
-	}
-
-	let previewSrcdoc = $state('');
-	let _previewDebounce: ReturnType<typeof setTimeout>;
+	// Live preview: a hidden form posts the unsaved code into the named iframe. srcdoc is not
+	// used because it inherits this page's CSP, which blocks the overlay's inline scripts.
+	let previewForm = $state<HTMLFormElement | null>(null);
+	const previewFields = $derived({
+		code: editCustomCode ?? '',
+		overlayBg: editOverlayBg,
+		overlayBg2: editOverlayBg2,
+		overlayText: editOverlayText,
+		overlayDivider: editOverlayDivider,
+		overlaySatsBg: editOverlaySatsBg,
+		overlaySetScoreBg: editOverlaySetScoreBg,
+		scoreColor: editScoreColor,
+		scoreColor2: editScoreColor2
+	});
 	$effect(() => {
-		const html =
-			editCustomCodeEnabled && editCustomCode ? buildPreviewHtml(editCustomCode) : '';
-		clearTimeout(_previewDebounce);
-		_previewDebounce = setTimeout(() => {
-			previewSrcdoc = html;
-		}, 400);
+		void previewFields;
+		if (!editCustomCodeEnabled || !editCustomCode) return;
+		const timer = setTimeout(() => previewForm?.submit(), 400);
+		return () => clearTimeout(timer);
 	});
 </script>
 
@@ -667,8 +645,19 @@ body{margin:0;background:transparent;}
 		<div class="form-body">
 			<div class="preview-wrap">
 				{#if editCustomCodeEnabled && editCustomCode}
+					<form
+						bind:this={previewForm}
+						method="POST"
+						action="/api/overlay-sandbox/preview"
+						target="overlay-preview"
+						hidden
+					>
+						{#each Object.entries(previewFields) as [name, value] (name)}
+							<input type="hidden" {name} {value} />
+						{/each}
+					</form>
 					<iframe
-						srcdoc={previewSrcdoc}
+						name="overlay-preview"
 						sandbox="allow-scripts"
 						class="preview-frame"
 						title="Vorschau"
