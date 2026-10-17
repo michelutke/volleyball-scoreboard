@@ -11,7 +11,7 @@ vi.mock('$lib/server/db/index.js', () => ({
 	}
 }));
 
-const { ensureOverlaySlug, slugify } = await import('./overlay-slug');
+const { ensureOverlaySlug, slugify, isValidSlug, pickFreeSlug } = await import('./overlay-slug');
 
 describe('slugify', () => {
 	it('lowercases and dashes non-alphanumerics', () => {
@@ -20,6 +20,46 @@ describe('slugify', () => {
 
 	it('returns empty string for nothing usable', () => {
 		expect(slugify('!!!')).toBe('');
+	});
+});
+
+describe('isValidSlug', () => {
+	it('accepts 3 to 64 lowercase alphanumeric and inner dash characters', () => {
+		expect(isValidSlug('abc')).toBe(true);
+		expect(isValidSlug('vbc-thun-1')).toBe(true);
+		expect(isValidSlug('x'.repeat(64))).toBe(true);
+	});
+
+	it('rejects everything else', () => {
+		for (const slug of ['', 'ab', 'x'.repeat(65), '-abc', 'abc-', 'ABC', 'a_b', 'a b', 'a/b']) {
+			expect(isValidSlug(slug)).toBe(false);
+		}
+	});
+});
+
+describe('pickFreeSlug', () => {
+	beforeEach(() => {
+		findFirstMock.mockReset();
+	});
+
+	it('returns the slugified input when free', async () => {
+		findFirstMock.mockResolvedValueOnce(undefined);
+		expect(await pickFreeSlug('user-ABC123', 'org-1')).toBe('user-abc123');
+	});
+
+	it('uses the org-derived suffix when the slug is too short', async () => {
+		findFirstMock.mockResolvedValue(undefined);
+		expect(await pickFreeSlug('VB', '0123abcd-ffff')).toBe('vb-0123abcd');
+	});
+
+	it('appends a random suffix when slug and org-suffixed slug are both taken', async () => {
+		findFirstMock
+			.mockResolvedValueOnce({ orgId: 'other', value: 'vbc' })
+			.mockResolvedValueOnce({ orgId: 'other', value: 'vbc-0123abcd' })
+			.mockResolvedValue(undefined);
+		const slug = await pickFreeSlug('vbc', '0123abcd-ffff');
+		expect(slug).toMatch(/^vbc-[0-9a-f]{6}$/);
+		expect(isValidSlug(slug)).toBe(true);
 	});
 });
 

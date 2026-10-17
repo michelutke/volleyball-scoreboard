@@ -2,7 +2,8 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import { settings } from '$lib/server/db/schema.js';
 import { encrypt } from '$lib/server/crypto.js';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
+import { isSlugTaken, isValidSlug } from '$lib/server/overlay-slug.js';
 import type { RequestHandler } from './$types.js';
 
 export const GET: RequestHandler = async ({ locals }) => {
@@ -19,7 +20,6 @@ export const GET: RequestHandler = async ({ locals }) => {
 const ALLOWED_SETTING_KEYS = new Set([
 	'clubName',
 	'overlaySlug',
-	'permalinkOverlayMatchId',
 	'swissVolleyApiKey',
 	'accentColor'
 ]);
@@ -33,6 +33,16 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
 	for (const key of Object.keys(body)) {
 		if (!ALLOWED_SETTING_KEYS.has(key)) {
 			return json({ error: `Setting key '${key}' is not allowed` }, { status: 400 });
+		}
+	}
+
+	if ('overlaySlug' in body) {
+		const slug = body.overlaySlug;
+		if (typeof slug !== 'string' || !isValidSlug(slug)) {
+			return json({ error: 'Ungültiger Overlay-Link.' }, { status: 400 });
+		}
+		if (await isSlugTaken(slug, orgId)) {
+			return json({ error: 'Dieser Overlay-Link ist bereits vergeben.' }, { status: 409 });
 		}
 	}
 

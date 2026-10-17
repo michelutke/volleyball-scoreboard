@@ -2,6 +2,9 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '$lib/server/db/index.js';
 import { settings } from '$lib/server/db/schema.js';
 
+const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{1,62}[a-z0-9])$/;
+const MAX_BASE_LENGTH = 48;
+
 export function slugify(input: string): string {
 	return input
 		.toLowerCase()
@@ -9,11 +12,39 @@ export function slugify(input: string): string {
 		.replace(/^-|-$/g, '');
 }
 
-async function isSlugTaken(slug: string, orgId: string): Promise<boolean> {
+export function isValidSlug(slug: string): boolean {
+	return SLUG_PATTERN.test(slug);
+}
+
+export async function isSlugTaken(slug: string, orgId: string): Promise<boolean> {
 	const row = await db.query.settings.findFirst({
 		where: and(eq(settings.key, 'overlaySlug'), eq(settings.value, slug))
 	});
 	return !!row && row.orgId !== orgId;
+}
+
+function randomSuffix(): string {
+	return crypto.randomUUID().replace(/-/g, '').slice(0, 6);
+}
+
+/**
+ * Returns a valid, currently unused slug derived from `input`. Falls back to an org-derived
+ * suffix, then to random suffixes, if the plain slug is invalid or taken by another org.
+ */
+export async function pickFreeSlug(input: string, orgId: string): Promise<string> {
+	const orgSuffix = orgId.replace(/[^a-z0-9]/gi, '').slice(0, 8).toLowerCase();
+	const base = slugify(input).slice(0, MAX_BASE_LENGTH).replace(/-$/, '');
+	const candidates = base ? [base, `${base}-${orgSuffix}`] : [`org-${orgSuffix}`];
+
+	for (const candidate of candidates) {
+		if (isValidSlug(candidate) && !(await isSlugTaken(candidate, orgId))) return candidate;
+	}
+
+	for (let attempt = 0; attempt < 5; attempt++) {
+		const candidate = `${base || 'org'}-${randomSuffix()}`;
+		if (!(await isSlugTaken(candidate, orgId))) return candidate;
+	}
+	return `${base || 'org'}-${crypto.randomUUID().replace(/-/g, '')}`.slice(0, 64);
 }
 
 /**
@@ -29,10 +60,7 @@ export async function ensureOverlaySlug(orgId: string): Promise<string> {
 	const clubName = await db.query.settings.findFirst({
 		where: and(eq(settings.orgId, orgId), eq(settings.key, 'clubName'))
 	});
-	const orgSuffix = orgId.replace(/[^a-z0-9]/gi, '').slice(0, 8).toLowerCase();
-	const base = slugify(clubName?.value ?? '');
-	let slug = base || `org-${orgSuffix}`;
-	if (await isSlugTaken(slug, orgId)) slug = `${base}-${orgSuffix}`;
+	const slug = await pickFreeSlug(clubName?.value ?? '', orgId);
 
 	await db.insert(settings).values({ orgId, key: 'overlaySlug', value: slug }).onConflictDoNothing();
 	return slug;

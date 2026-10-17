@@ -2,21 +2,6 @@ import type { SSEEvent } from '$lib/types.js';
 
 type Listener = (event: SSEEvent) => void;
 
-class SSEEmitter {
-	private listeners = new Set<Listener>();
-
-	subscribe(listener: Listener): () => void {
-		this.listeners.add(listener);
-		return () => this.listeners.delete(listener);
-	}
-
-	emit(event: SSEEvent): void {
-		for (const listener of this.listeners) {
-			listener(event);
-		}
-	}
-}
-
 class MatchSSEEmitter {
 	private matchListeners = new Map<number, Set<Listener>>();
 
@@ -44,14 +29,9 @@ class MatchSSEEmitter {
 	}
 }
 
-// Legacy global emitter (for /control, /overlay)
-export const sseEmitter = new SSEEmitter();
-
 // Per-match emitter (for /matches/[matchId]/*)
 export const matchSSEEmitter = new MatchSSEEmitter();
 
-/** Emit to both per-match and legacy global listeners */
 export function emitAll(matchId: number, event: SSEEvent): void {
 	matchSSEEmitter.emit(matchId, event);
-	sseEmitter.emit(event);
 }

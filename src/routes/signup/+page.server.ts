@@ -22,6 +22,7 @@ import { settings } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import { isRateLimited } from '$lib/server/rate-limit';
+import { pickFreeSlug } from '$lib/server/overlay-slug';
 
 export const actions: Actions = {
 	default: async ({ request, getClientAddress, url }) => {
@@ -71,7 +72,7 @@ export const actions: Actions = {
 
 			const settingsRows: { orgId: string; key: string; value: string }[] = [
 				{ orgId: kcOrgId, key: 'kcOrgId', value: kcOrgId },
-				{ orgId: kcOrgId, key: 'overlaySlug', value: orgAlias }
+				{ orgId: kcOrgId, key: 'overlaySlug', value: await pickFreeSlug(orgAlias, kcOrgId) }
 			];
 
 			if (env.STRIPE_SECRET_KEY) {
