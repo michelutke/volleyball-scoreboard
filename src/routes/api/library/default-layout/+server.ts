@@ -3,6 +3,7 @@ import { settings } from '$lib/server/db/schema.js';
 import { json, error } from '@sveltejs/kit';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { scoreboardOptionsSchema } from '$lib/server/validation.js';
 import type { RequestHandler } from './$types.js';
 
 const KEY_LAYOUT = 'defaultScoreboardLayout';
@@ -10,7 +11,7 @@ const KEY_OPTIONS = 'defaultScoreboardOptions';
 
 const bodySchema = z.object({
 	layoutId: z.string().min(1).max(64),
-	options: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional()
+	options: scoreboardOptionsSchema.optional()
 });
 
 async function upsert(orgId: string, key: string, value: string) {
@@ -27,6 +28,7 @@ async function upsert(orgId: string, key: string, value: string) {
 export const PUT: RequestHandler = async ({ locals, request }) => {
 	const orgId = locals.orgId;
 	if (!orgId) error(401, 'Unauthorized');
+	if (!locals.isAdmin) return json({ error: 'Forbidden' }, { status: 403 });
 
 	const parsed = bodySchema.safeParse(await request.json().catch(() => null));
 	if (!parsed.success) error(400, 'Invalid body');

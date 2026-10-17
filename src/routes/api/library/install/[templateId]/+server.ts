@@ -7,6 +7,7 @@ import type { RequestHandler } from './$types.js';
 export const POST: RequestHandler = async ({ params, locals }) => {
 	const { orgId } = locals;
 	if (!orgId) return json({ error: 'Unauthorized' }, { status: 401 });
+	if (!locals.isAdmin) return json({ error: 'Forbidden' }, { status: 403 });
 
 	const templateId = parseInt(params.templateId);
 	if (isNaN(templateId)) return json({ error: 'Invalid template' }, { status: 400 });

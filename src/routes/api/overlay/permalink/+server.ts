@@ -40,6 +40,16 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
 	const body: { matchId: number | null } = await request.json();
 	const value = body.matchId != null ? String(body.matchId) : '';
 
+	if (value) {
+		const requestedMatchId = Number(value);
+		const ownedMatch = Number.isInteger(requestedMatchId)
+			? await db.query.matches.findFirst({
+					where: and(eq(matches.id, requestedMatchId), eq(matches.orgId, orgId))
+				})
+			: undefined;
+		if (!ownedMatch) return json({ error: 'Match not found' }, { status: 404 });
+	}
+
 	const previousRow = await db.query.settings.findFirst({
 		where: and(eq(settings.orgId, orgId), eq(settings.key, 'permalinkOverlayMatchId'))
 	});
