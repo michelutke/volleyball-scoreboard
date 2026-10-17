@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import { page } from '$app/state';
 	import type { MatchState, SSEEvent, Team } from '$lib/types.js';
 	import OverlayRenderer from '$lib/components/OverlayRenderer.svelte';
 
@@ -99,7 +100,7 @@
 </svelte:head>
 
 {#if match}
-	<div class="overlay">
+	<div class="overlay" class:safe={page.url.searchParams.get('safe') === '1'}>
 		<OverlayRenderer
 			{match}
 			{homeTimeoutsUsed}
@@ -114,15 +115,21 @@
 {/if}
 
 <style>
-	/* Brand safe areas (manual p26): 16:9 title safe 5 % (96, 54 at 1080p); 9:16 bug at 64, 240 */
+	/* Fixed anchor: the app lays the WebView out at a user-placed box, so the default must not
+	   depend on the viewport. Full-frame OBS sources opt into the brand safe areas with ?safe=1. */
 	.overlay {
 		position: fixed;
-		top: 5vh;
-		left: 5vw;
+		top: 30px;
+		left: 30px;
 		z-index: 9999;
 	}
+	/* Brand safe areas (manual p26): 16:9 title safe 5 % (96, 54 at 1080p); 9:16 bug at 64, 240 */
+	.overlay.safe {
+		top: 5vh;
+		left: 5vw;
+	}
 	@media (orientation: portrait) {
-		.overlay {
+		.overlay.safe {
 			top: 12.5vh;
 			left: 5.926vw;
 		}
