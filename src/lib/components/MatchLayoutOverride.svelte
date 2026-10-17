@@ -222,7 +222,7 @@
 		border-color: var(--k-text-mute);
 	}
 	.pick.active {
-		color: var(--paper);
+		color: var(--ink);
 		background: var(--pulse);
 		border-color: var(--pulse);
 	}
@@ -300,7 +300,7 @@
 		padding: 10px 22px;
 		border-radius: 999px;
 		background: var(--pulse);
-		color: var(--paper);
+		color: var(--ink);
 		border: none;
 		cursor: pointer;
 		transition: background var(--dur-fast) var(--ease-snap);

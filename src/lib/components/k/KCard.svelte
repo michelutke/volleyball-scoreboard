@@ -25,6 +25,7 @@
 
 <style>
 	.k-card {
+		border-radius: 0;
 		display: block;
 		background: var(--k-surface-alt);
 		border: 1px solid var(--k-line);

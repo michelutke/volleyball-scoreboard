@@ -449,14 +449,14 @@
 		font-size: 10px;
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
-		color: var(--paper);
+		color: var(--ink);
 		background: var(--pulse);
 		padding: 4px 10px;
 		align-self: flex-start;
 	}
 
 	.preview-frame {
-		background: #0a0a0a;
+		background: var(--ink);
 		padding: 24px 16px;
 		overflow-x: auto;
 		display: flex;
@@ -479,9 +479,9 @@
 	.select-btn {
 		font-family: var(--font-sans);
 		font-size: 13px;
-		font-weight: 600;
+		font-weight: var(--type-wght-medium);
 		padding: 10px 22px;
-		border-radius: 999px;
+		border-radius: 0;
 		background: transparent;
 		color: var(--k-text);
 		border: 1px solid var(--k-line);
@@ -497,7 +497,7 @@
 	.select-btn.active {
 		background: var(--pulse);
 		border-color: var(--pulse);
-		color: var(--paper);
+		color: var(--ink);
 	}
 
 	.custom-panel {
@@ -653,7 +653,7 @@
 	}
 	.overlay-btn.primary {
 		background: var(--pulse);
-		color: var(--paper);
+		color: var(--ink);
 		border-color: var(--pulse);
 	}
 	.overlay-btn.primary:hover {

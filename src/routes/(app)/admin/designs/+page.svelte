@@ -972,14 +972,14 @@ body{margin:0;background:transparent;}
 		font-size: 10px;
 		letter-spacing: 0.16em;
 		text-transform: uppercase;
-		color: var(--paper);
+		color: var(--ink);
 		background: var(--pulse);
 		padding: 4px 10px;
 		align-self: flex-start;
 	}
 
 	.layout-preview {
-		background: #0a0a0a;
+		background: var(--ink);
 		padding: 20px 16px;
 		overflow-x: auto;
 		display: flex;
@@ -1105,7 +1105,7 @@ body{margin:0;background:transparent;}
 		color: var(--k-text-dim);
 	}
 	.badge-default {
-		color: var(--paper);
+		color: var(--ink);
 		background: var(--pulse);
 		border-color: var(--pulse);
 	}
@@ -1273,13 +1273,13 @@ body{margin:0;background:transparent;}
 		overflow-x: auto;
 		padding: 16px;
 		background-image:
-			linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
-			linear-gradient(-45deg, #2a2a2a 25%, transparent 25%),
-			linear-gradient(45deg, transparent 75%, #2a2a2a 75%),
-			linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
+			linear-gradient(45deg, var(--grey-700) 25%, transparent 25%),
+			linear-gradient(-45deg, var(--grey-700) 25%, transparent 25%),
+			linear-gradient(45deg, transparent 75%, var(--grey-700) 75%),
+			linear-gradient(-45deg, transparent 75%, var(--grey-700) 75%);
 		background-size: 16px 16px;
 		background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
-		background-color: #1a1a1a;
+		background-color: var(--grey-900);
 		border: 1px solid var(--k-line);
 		font-size: 16px;
 		line-height: normal;
