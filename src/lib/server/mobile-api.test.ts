@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const verifyMobileTokenMock = vi.hoisted(() => vi.fn());
+const getBillingStatusMock = vi.hoisted(() => vi.fn());
+const envMock = vi.hoisted(() => ({ STRIPE_SECRET_KEY: undefined as string | undefined }));
 vi.mock('$lib/server/mobile-auth', () => ({ verifyMobileToken: verifyMobileTokenMock }));
+vi.mock('$lib/server/billing', () => ({ getBillingStatus: getBillingStatusMock }));
+vi.mock('$env/dynamic/private', () => ({ env: envMock }));
 
 const {
 	mobileJson,
@@ -34,23 +38,59 @@ describe('mobileJson', () => {
 });
 
 describe('authenticateMobile', () => {
-	beforeEach(() => verifyMobileTokenMock.mockReset());
+	const identity = { orgId: 'org-1', sub: 'user-1', roles: [] };
 
-	it('returns null without an Authorization header', async () => {
-		expect(await authenticateMobile(request({}))).toBeNull();
+	beforeEach(() => {
+		verifyMobileTokenMock.mockReset();
+		getBillingStatusMock.mockReset();
+		envMock.STRIPE_SECRET_KEY = undefined;
+	});
+
+	it('returns 401 without an Authorization header', async () => {
+		const result = await authenticateMobile(request({}));
+		expect((result as Response).status).toBe(401);
 		expect(verifyMobileTokenMock).not.toHaveBeenCalled();
 	});
 
-	it('returns null for a non-Bearer header', async () => {
-		expect(await authenticateMobile(request({ authorization: 'Basic abc' }))).toBeNull();
+	it('returns 401 for a non-Bearer header', async () => {
+		const result = await authenticateMobile(request({ authorization: 'Basic abc' }));
+		expect((result as Response).status).toBe(401);
 		expect(verifyMobileTokenMock).not.toHaveBeenCalled();
 	});
 
-	it('passes the bearer token to verifyMobileToken', async () => {
-		const identity = { orgId: 'org-1', sub: 'user-1', roles: [] };
+	it('returns 401 when the token fails verification', async () => {
+		verifyMobileTokenMock.mockResolvedValue(null);
+		const result = await authenticateMobile(request({ authorization: 'Bearer tok' }));
+		expect((result as Response).status).toBe(401);
+	});
+
+	it('passes the bearer token to verifyMobileToken and returns the identity', async () => {
 		verifyMobileTokenMock.mockResolvedValue(identity);
 		expect(await authenticateMobile(request({ authorization: 'Bearer tok' }))).toBe(identity);
 		expect(verifyMobileTokenMock).toHaveBeenCalledWith('tok');
+	});
+
+	it('skips the billing check when Stripe is not configured', async () => {
+		verifyMobileTokenMock.mockResolvedValue(identity);
+		expect(await authenticateMobile(request({ authorization: 'Bearer tok' }))).toBe(identity);
+		expect(getBillingStatusMock).not.toHaveBeenCalled();
+	});
+
+	it('returns 402 for an org with a blocked subscription', async () => {
+		envMock.STRIPE_SECRET_KEY = 'sk_test';
+		verifyMobileTokenMock.mockResolvedValue(identity);
+		getBillingStatusMock.mockResolvedValue('blocked');
+		const result = (await authenticateMobile(request({ authorization: 'Bearer tok' }))) as Response;
+		expect(getBillingStatusMock).toHaveBeenCalledWith('org-1');
+		expect(result.status).toBe(402);
+		expect(await result.json()).toEqual({ error: 'Abo inaktiv' });
+	});
+
+	it('returns the identity for an org with an allowed subscription', async () => {
+		envMock.STRIPE_SECRET_KEY = 'sk_test';
+		verifyMobileTokenMock.mockResolvedValue(identity);
+		getBillingStatusMock.mockResolvedValue('allowed');
+		expect(await authenticateMobile(request({ authorization: 'Bearer tok' }))).toBe(identity);
 	});
 });
 

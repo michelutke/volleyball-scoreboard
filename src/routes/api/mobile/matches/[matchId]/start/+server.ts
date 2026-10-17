@@ -4,14 +4,13 @@ import {
 	finishedConflict,
 	mobileJson,
 	notFound,
-	parseMatchId,
-	unauthorized
+	parseMatchId
 } from '$lib/server/mobile-api';
 import { getOrgMatch, startMatch, toMobileMatchItem } from '$lib/server/match-service';
 
 export const POST: RequestHandler = async ({ request, params }) => {
 	const identity = await authenticateMobile(request);
-	if (!identity) return unauthorized();
+	if (identity instanceof Response) return identity;
 	const matchId = parseMatchId(params.matchId);
 	if (matchId === null) return notFound();
 

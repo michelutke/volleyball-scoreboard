@@ -10,6 +10,11 @@ vi.mock('$lib/server/match-service', () => ({
 	getClubName: getClubNameMock
 }));
 
+const getBillingStatusMock = vi.hoisted(() => vi.fn());
+const envMock = vi.hoisted(() => ({ STRIPE_SECRET_KEY: 'sk_test' }));
+vi.mock('$lib/server/billing', () => ({ getBillingStatus: getBillingStatusMock }));
+vi.mock('$env/dynamic/private', () => ({ env: envMock }));
+
 const { GET } = await import('./+server.js');
 
 const IDENTITY = { orgId: 'org-1', sub: 'user-1', roles: [] };
@@ -25,6 +30,17 @@ describe('GET /api/mobile/matches', () => {
 		verifyMobileTokenMock.mockReset();
 		listMobileMatchesMock.mockReset();
 		getClubNameMock.mockReset();
+		getBillingStatusMock.mockReset();
+		getBillingStatusMock.mockResolvedValue('allowed');
+	});
+
+	it('returns 402 when the org subscription is blocked', async () => {
+		verifyMobileTokenMock.mockResolvedValue(IDENTITY);
+		getBillingStatusMock.mockResolvedValue('blocked');
+		const response = await GET(event({ authorization: 'Bearer good' }));
+		expect(response.status).toBe(402);
+		expect(await response.json()).toEqual({ error: 'Abo inaktiv' });
+		expect(listMobileMatchesMock).not.toHaveBeenCalled();
 	});
 
 	it('returns 401 without Authorization header', async () => {

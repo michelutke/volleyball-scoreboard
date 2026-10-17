@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getStripe } from '$lib/server/stripe';
-import { getOrgByStripeCustomer, upsertBillingSetting } from '$lib/server/billing';
+import { applySubscriptionStatus, getOrgByStripeCustomer, upsertBillingSetting, type SubscriptionStatus } from '$lib/server/billing';
 import { env } from '$env/dynamic/private';
 import type Stripe from 'stripe';
 
@@ -40,8 +40,8 @@ export const POST: RequestHandler = async ({ request }) => {
 		const customerId = resolveCustomerId(session.customer ?? null);
 		console.log('[webhook] checkout.session.completed', { orgId, customerId });
 		if (orgId && customerId) {
+			// The status comes from customer.subscription.* events; a checkout can be trial-less now.
 			await upsertBillingSetting(orgId, 'stripeCustomerId', customerId);
-			await upsertBillingSetting(orgId, 'subscriptionStatus', 'trialing');
 		} else {
 			console.warn('[webhook] checkout.session.completed: missing orgId or customerId, skipping');
 		}
@@ -58,8 +58,8 @@ export const POST: RequestHandler = async ({ request }) => {
 		console.log('[webhook]', event.type, { customerId, orgIdFromMeta, orgIdFromDb, orgId, status: sub.status });
 		if (orgId && customerId) {
 			await upsertBillingSetting(orgId, 'stripeCustomerId', customerId);
-			const status = event.type === 'customer.subscription.deleted' ? 'canceled' : sub.status;
-			await upsertBillingSetting(orgId, 'subscriptionStatus', status);
+			const status: SubscriptionStatus = event.type === 'customer.subscription.deleted' ? 'canceled' : sub.status;
+			await applySubscriptionStatus(orgId, status, event.created);
 		} else {
 			console.warn('[webhook]', event.type, ': missing orgId or customerId, skipping');
 		}
@@ -68,7 +68,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		const customerId = resolveCustomerId(invoice.customer ?? null);
 		if (customerId) {
 			const orgId = await getOrgByStripeCustomer(customerId);
-			if (orgId) await upsertBillingSetting(orgId, 'subscriptionStatus', 'past_due');
+			if (orgId) await applySubscriptionStatus(orgId, 'past_due', event.created);
 		}
 	}
 
