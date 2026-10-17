@@ -1,8 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import { db } from '$lib/server/db/index.js';
-import { settings } from '$lib/server/db/schema.js';
-import { and, eq } from 'drizzle-orm';
-import { listOrgMembersWithStatus, listUsersWithRole } from '$lib/server/keycloak-admin.js';
+import { getKcOrgId, listOrgMembersWithStatus, listUsersWithRole } from '$lib/server/keycloak-admin.js';
 import type { PageServerLoad } from './$types.js';
 
 type ActiveUserRow = { id: string; email: string; enabled: boolean; isAdmin: boolean };
@@ -11,18 +8,7 @@ type PendingInviteRow = { id: string; email: string };
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.isAdmin) redirect(303, '/teams');
 
-	const row = await db.query.settings.findFirst({
-		where: and(eq(settings.orgId, locals.orgId), eq(settings.key, 'kcOrgId'))
-	});
-	let kcOrgId = row?.value;
-
-	// fallback: try 'default' org (single-tenant self-hosted with stale session)
-	if (!kcOrgId && locals.orgId !== 'default') {
-		const fallback = await db.query.settings.findFirst({
-			where: and(eq(settings.orgId, 'default'), eq(settings.key, 'kcOrgId'))
-		});
-		kcOrgId = fallback?.value;
-	}
+	const kcOrgId = await getKcOrgId(locals.orgId);
 
 	if (!kcOrgId) {
 		return {

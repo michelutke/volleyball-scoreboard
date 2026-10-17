@@ -27,6 +27,7 @@ async function upsert(orgId: string, key: string, value: string) {
 export const PUT: RequestHandler = async ({ locals, request }) => {
 	const orgId = locals.orgId;
 	if (!orgId) error(401, 'Unauthorized');
+	if (!locals.isAdmin) return json({ error: 'Forbidden' }, { status: 403 });
 
 	const parsed = bodySchema.safeParse(await request.json().catch(() => null));
 	if (!parsed.success) error(400, 'Invalid body');
