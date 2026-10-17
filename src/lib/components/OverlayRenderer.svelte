@@ -75,7 +75,7 @@
 {#if customCode && templateId}
 	<iframe
 		bind:this={iframeEl}
-		src="/api/overlay-sandbox/{templateId}"
+		src="/api/overlay-sandbox/{templateId}?match={match.matchId}"
 		sandbox="allow-scripts"
 		title="Custom overlay"
 		onload={() => postToIframe(match)}

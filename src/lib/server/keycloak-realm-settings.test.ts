@@ -4,7 +4,8 @@ vi.mock('$env/dynamic/private', () => ({
 	env: {
 		KEYCLOAK_ADMIN_URL: 'https://kc.test',
 		KEYCLOAK_ADMIN_PASSWORD: 'secret',
-		KEYCLOAK_REALM: 'scoring'
+		KEYCLOAK_REALM: 'scoring',
+		DATABASE_URL: 'postgres://test:test@localhost:5432/test'
 	}
 }));
 

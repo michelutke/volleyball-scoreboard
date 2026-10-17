@@ -78,7 +78,7 @@ describe('loadMatchOverlayData', () => {
 		});
 		scoresFindFirstMock.mockResolvedValue({ currentSet: 2 });
 		timeoutsFindManyMock.mockResolvedValueOnce([{ id: 1 }]).mockResolvedValueOnce([]);
-		designTemplatesFindFirstMock.mockResolvedValue({ id: 5, customCode: '<div>custom</div>' });
+		designTemplatesFindFirstMock.mockResolvedValue({ id: 5, orgId: 'org-1', isPublic: false, customCode: '<div>custom</div>' });
 		settingsFindManyMock.mockResolvedValue([
 			{ key: 'defaultScoreboardLayout', value: 'classic' },
 			{ key: 'defaultScoreboardOptions', value: '{"foo":"bar"}' }
@@ -95,5 +95,30 @@ describe('loadMatchOverlayData', () => {
 			scoreboardLayout: 'classic',
 			scoreboardOptions: { foo: 'bar' }
 		});
+	});
+
+	it('never exposes another org\'s private custom code', async () => {
+		matchesFindFirstMock.mockResolvedValue({ id: 1, orgId: 'org-b', designTemplateId: 5 });
+		scoresFindFirstMock.mockResolvedValue({ currentSet: 1 });
+		timeoutsFindManyMock.mockResolvedValue([]);
+		designTemplatesFindFirstMock.mockResolvedValue({ id: 5, orgId: 'org-a', isPublic: false, customCode: '<secret/>' });
+		settingsFindManyMock.mockResolvedValue([]);
+		toMatchStateMock.mockReturnValue({ matchId: 1 });
+
+		const result = await loadMatchOverlayData(1);
+
+		expect(result.customCode).toBeNull();
+		expect(result.templateId).toBeNull();
+	});
+
+	it('still serves a public library template referenced by an older match', async () => {
+		matchesFindFirstMock.mockResolvedValue({ id: 1, orgId: 'org-b', designTemplateId: 5 });
+		scoresFindFirstMock.mockResolvedValue({ currentSet: 1 });
+		timeoutsFindManyMock.mockResolvedValue([]);
+		designTemplatesFindFirstMock.mockResolvedValue({ id: 5, orgId: 'org-a', isPublic: true, customCode: '<pub/>' });
+		settingsFindManyMock.mockResolvedValue([]);
+		toMatchStateMock.mockReturnValue({ matchId: 1 });
+
+		expect((await loadMatchOverlayData(1)).customCode).toBe('<pub/>');
 	});
 });

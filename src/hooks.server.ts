@@ -99,9 +99,8 @@ export const handle = sequence(authHandle, async ({ event, resolve }) => {
 		if (csp) {
 			response.headers.set('content-security-policy', csp.replace("frame-ancestors 'self'", 'frame-ancestors *'));
 		}
-	} else if (path.startsWith('/api/overlay-sandbox')) {
-		response.headers.delete('content-security-policy');
 	}
+	// /api/overlay-sandbox sets its own sandboxed CSP; it must not be stripped here.
 
 	// Allow form-action to KC issuer (signout redirects to KC logout)
 	if (env.KEYCLOAK_ISSUER) {

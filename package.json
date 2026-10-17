@@ -2,6 +2,13 @@
 	"name": "scoring",
 	"private": true,
 	"version": "0.0.1",
+	"license": "CC-BY-NC-SA-4.0",
+	"author": "Michel Utke",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/michelutke/volleyball-scoreboard.git"
+	},
+	"homepage": "https://github.com/michelutke/volleyball-scoreboard",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",

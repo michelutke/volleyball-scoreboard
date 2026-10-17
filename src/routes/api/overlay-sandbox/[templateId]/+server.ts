@@ -1,71 +1,38 @@
 import { db } from '$lib/server/db/index.js';
-import { designTemplates } from '$lib/server/db/schema.js';
+import { designTemplates, matches } from '$lib/server/db/schema.js';
+import { buildSandboxHtml, sandboxResponse } from '$lib/server/overlay-sandbox.js';
 import { eq } from 'drizzle-orm';
-import type { RequestHandler } from './$types.js';
+import type { RequestEvent, RequestHandler } from './$types.js';
 
-const MOCK_STATE = JSON.stringify({
-	type: 'matchState',
-	data: {
-		homeTeam: 'HEIM',
-		guestTeam: 'GAST',
-		homePoints: 14,
-		guestPoints: 10,
-		homeSets: 1,
-		guestSets: 0,
-		currentSet: 2,
-		setScores: [{ home: 25, guest: 21 }],
-		serviceTeam: 'home',
-		status: 'live',
-		homeJerseyColor: '#c0392b',
-		guestJerseyColor: '#1e6ab5',
-		homeTeamLogo: null,
-		guestTeamLogo: null,
-		timeout: { active: false, team: null },
-		isSetPoint: false,
-		isMatchPoint: false
-	}
-});
+type Template = typeof designTemplates.$inferSelect;
 
-export const GET: RequestHandler = async ({ params, url, locals }) => {
-	const templateId = parseInt(params.templateId);
+/**
+ * Public templates are open. Private ones are visible to their own org, and to anyone loading
+ * the public overlay of a match that uses the template (OBS and the app have no session).
+ * This route is a public path, so hooks do not resolve the session; do it here.
+ */
+async function canView(template: Template, { url, locals }: RequestEvent): Promise<boolean> {
+	if (template.isPublic) return true;
+	const session = locals.session ?? (await locals.auth());
+	if (session?.user?.orgId && session.user.orgId === template.orgId) return true;
+
+	const matchId = parseInt(url.searchParams.get('match') ?? '');
+	if (isNaN(matchId)) return false;
+	const match = await db.query.matches.findFirst({ where: eq(matches.id, matchId) });
+	return match?.designTemplateId === template.id && match.orgId === template.orgId;
+}
+
+export const GET: RequestHandler = async (event) => {
+	const templateId = parseInt(event.params.templateId);
 	if (isNaN(templateId)) return new Response('Not found', { status: 404 });
 
 	const template = await db.query.designTemplates.findFirst({
 		where: eq(designTemplates.id, templateId)
 	});
-	if (!template?.customCode) return new Response('Not found', { status: 404 });
-
-	// Only allow access to public templates or templates owned by the authenticated user's org
-	if (!template.isPublic && template.orgId !== locals.orgId) {
+	if (!template?.customCode || !(await canView(template, event))) {
 		return new Response('Not found', { status: 404 });
 	}
 
-	const isPreview = url.searchParams.has('preview');
-
-	const cssVars = `
-:root {
-  --overlay-bg: ${template.overlayBg};
-  --overlay-bg2: ${template.overlayBg2};
-  --overlay-text: ${template.overlayText};
-  --overlay-divider: ${template.overlayDivider};
-  --overlay-sats-bg: ${template.overlaySatsBg};
-  --overlay-set-score-bg: ${template.overlaySetScoreBg};
-  --score-color: ${template.scoreColor};
-  --score-color2: ${template.scoreColor2};
-}`.trim();
-
-	const previewScript = isPreview
-		? `<script>setTimeout(()=>window.dispatchEvent(new MessageEvent('message',{data:${MOCK_STATE}})),500)</script>`
-		: '';
-
-	const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${cssVars}</style>${previewScript}</head><body>${template.customCode}</body></html>`;
-
-	return new Response(html, {
-		headers: {
-			'Content-Type': 'text/html; charset=utf-8',
-			'Content-Security-Policy':
-				"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com; img-src data: blob: https:; connect-src 'none'; font-src data: https://fonts.gstatic.com;",
-			'X-Frame-Options': 'SAMEORIGIN'
-		}
-	});
+	const preview = event.url.searchParams.has('preview');
+	return sandboxResponse(buildSandboxHtml(template.customCode, template, preview));
 };

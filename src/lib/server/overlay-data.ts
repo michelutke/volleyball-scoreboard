@@ -57,6 +57,7 @@ export async function loadMatchOverlayData(matchId: number): Promise<MatchOverla
 		db.query.settings.findMany({ where: eq(settings.orgId, match.orgId) })
 	]);
 
+	const templateUsable = !!template && (template.orgId === match.orgId || template.isPublic);
 	const orgLayout = orgSettings.find((r) => r.key === 'defaultScoreboardLayout')?.value ?? null;
 	const orgOptionsRaw = orgSettings.find((r) => r.key === 'defaultScoreboardOptions')?.value ?? null;
 	let orgOptions: Record<string, unknown> | null = null;
@@ -71,8 +72,9 @@ export async function loadMatchOverlayData(matchId: number): Promise<MatchOverla
 	return {
 		match: toMatchState(match, score),
 		timeouts: { home: homeTimeouts.length, guest: guestTimeouts.length },
-		customCode: template?.customCode ?? null,
-		templateId: match.designTemplateId ?? null,
+		// Custom code only from the match's own org or a public template (never another org's private one)
+		customCode: templateUsable ? (template.customCode ?? null) : null,
+		templateId: templateUsable ? template.id : null,
 		scoreboardLayout: match.scoreboardLayout ?? orgLayout,
 		scoreboardOptions: (match.scoreboardOptions as Record<string, unknown> | null) ?? orgOptions
 	};

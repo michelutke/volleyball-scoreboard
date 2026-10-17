@@ -134,7 +134,8 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 
 	// Apply design template if selected
 	if (body.designTemplateId != null) {
-		await applyTemplateToMatch(body.designTemplateId, matchId);
+		const applied = await applyTemplateToMatch(body.designTemplateId, matchId, orgId);
+		if (!applied) return json({ error: 'Template not found' }, { status: 404 });
 	}
 
 	// Settings update (scorer-editable fields only: team names, jerseys, logos, scoreboard layout)

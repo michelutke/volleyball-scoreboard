@@ -1,3 +1,4 @@
+import { LRUCache } from 'lru-cache';
 import { db } from '$lib/server/db/index.js';
 import { settings } from '$lib/server/db/schema.js';
 import { decrypt } from '$lib/server/crypto.js';
@@ -6,25 +7,18 @@ import { and, eq } from 'drizzle-orm';
 const BASE_URL = 'https://api.volleyball.ch';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-interface CacheEntry<T> {
-	data: T;
-	timestamp: number;
-}
-
-const cache = new Map<string, CacheEntry<unknown>>();
+const cache = new LRUCache<string, object>({
+	max: 500,
+	ttl: CACHE_TTL
+});
 
 function getCached<T>(key: string): T | null {
-	const entry = cache.get(key);
-	if (!entry) return null;
-	if (Date.now() - entry.timestamp > CACHE_TTL) {
-		cache.delete(key);
-		return null;
-	}
-	return entry.data as T;
+	const val = cache.get(key);
+	return (val as T) ?? null;
 }
 
-function setCache<T>(key: string, data: T): void {
-	cache.set(key, { data, timestamp: Date.now() });
+function setCache(key: string, data: object): void {
+	cache.set(key, data);
 }
 
 async function getApiKey(orgId: string): Promise<string> {
