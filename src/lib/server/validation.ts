@@ -1,7 +1,26 @@
 import { z } from 'zod';
+import { SCOREBOARD_LAYOUTS } from '$lib/components/scoreboards/index.js';
 
 const teamEnum = z.enum(['home', 'guest']);
-const hexColor = z.string().regex(/^#[0-9a-fA-F]{3,8}$/);
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{3,8}$/;
+const hexColor = z.string().regex(HEX_COLOR_PATTERN);
+
+const COLOR_OPTION_KEYS = new Set(
+	SCOREBOARD_LAYOUTS.flatMap((layout) =>
+		layout.customizableOptions.filter((option) => option.type === 'color').map((option) => option.key)
+	)
+);
+
+export const scoreboardOptionsSchema = z
+	.record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
+	.superRefine((options, ctx) => {
+		for (const key of COLOR_OPTION_KEYS) {
+			const value = options[key];
+			if (value !== undefined && !(typeof value === 'string' && HEX_COLOR_PATTERN.test(value))) {
+				ctx.addIssue({ code: 'custom', path: [key], message: 'Invalid colour' });
+			}
+		}
+	});
 
 export const matchCreateSchema = z.object({
 	homeTeamName: z.string().max(100).optional(),
@@ -61,9 +80,7 @@ export const matchIdSettingsSchema = z.object({
 	guestTeamLogo: z.string().url().nullish(),
 	designTemplateId: z.number().int().nullish(),
 	scoreboardLayout: z.string().min(1).max(64).nullish(),
-	scoreboardOptions: z
-		.record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
-		.nullish()
+	scoreboardOptions: scoreboardOptionsSchema.nullish()
 });
 
 export const teamCreateSchema = z.object({
