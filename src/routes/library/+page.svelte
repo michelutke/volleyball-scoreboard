@@ -4,7 +4,7 @@
 	import type { PageData } from './$types.js';
 	import type { LibraryOverlay, MatchState } from '$lib/types.js';
 	import ScoreboardDisplay from '$lib/components/ScoreboardDisplay.svelte';
-	import { SCOREBOARD_LAYOUTS, type ScoreboardOptions } from '$lib/components/scoreboards/index.js';
+	import { SCOREBOARD_LAYOUTS, type ScoreboardOptions, DEFAULT_LAYOUT_ID } from '$lib/components/scoreboards/index.js';
 	import { reveal } from '$lib/motion.js';
 	import LandingNav from '$lib/components/landing/LandingNav.svelte';
 	import Nav from '$lib/components/Nav.svelte';
@@ -48,7 +48,7 @@
 		designTemplateId: null
 	};
 
-	let selectedLayoutId = $state<string>(untrack(() => data.orgLayoutId ?? 'classic'));
+	let selectedLayoutId = $state<string>(untrack(() => data.orgLayoutId ?? DEFAULT_LAYOUT_ID));
 	let layoutOptions = $state<Record<string, ScoreboardOptions>>({});
 
 	$effect(() => {
@@ -497,7 +497,7 @@
 	.select-btn.active {
 		background: var(--pulse);
 		border-color: var(--pulse);
-		color: var(--ink);
+		color: var(--paper);
 	}
 
 	.custom-panel {
@@ -653,7 +653,7 @@
 	}
 	.overlay-btn.primary {
 		background: var(--pulse);
-		color: var(--ink);
+		color: var(--paper);
 		border-color: var(--pulse);
 	}
 	.overlay-btn.primary:hover {

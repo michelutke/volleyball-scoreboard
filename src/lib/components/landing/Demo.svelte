@@ -251,7 +251,7 @@
 	.op:hover:not(:disabled) {
 		background: var(--pulse);
 		border-color: var(--pulse);
-		color: var(--ink);
+		color: var(--paper);
 	}
 	.op:disabled {
 		opacity: 0.3;

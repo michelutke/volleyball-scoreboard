@@ -96,7 +96,7 @@
 
 	.k-btn-primary {
 		background: var(--pulse);
-		color: var(--ink);
+		color: var(--paper);
 	}
 	.k-btn-primary:hover {
 		background: var(--pulse-deep);

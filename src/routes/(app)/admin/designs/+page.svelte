@@ -5,8 +5,7 @@
 	import ScoreboardDisplay from '$lib/components/ScoreboardDisplay.svelte';
 	import {
 		SCOREBOARD_LAYOUTS,
-		type ScoreboardOptions
-	} from '$lib/components/scoreboards/index.js';
+		type ScoreboardOptions, DEFAULT_LAYOUT_ID } from '$lib/components/scoreboards/index.js';
 	import { KButton, KField, KInput, KEmpty } from '$lib/components/k';
 	import { reveal } from '$lib/motion.js';
 
@@ -38,7 +37,7 @@
 	let feedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 
 	// === Scorely layouts (org default) ===
-	let selectedLayoutId = $state<string>(untrack(() => data.orgLayoutId ?? 'classic'));
+	let selectedLayoutId = $state<string>(untrack(() => data.orgLayoutId ?? DEFAULT_LAYOUT_ID));
 	let layoutOptions = $state<Record<string, ScoreboardOptions>>({});
 
 	$effect(() => {

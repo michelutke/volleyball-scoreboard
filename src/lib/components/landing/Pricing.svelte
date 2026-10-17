@@ -319,7 +319,7 @@
 
 	.cta-primary {
 		background: var(--pulse);
-		color: var(--ink);
+		color: var(--paper);
 		border-radius: 999px;
 		will-change: transform;
 	}

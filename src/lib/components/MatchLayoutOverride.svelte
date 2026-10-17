@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { DEFAULT_LAYOUT_ID } from '$lib/components/scoreboards/index.js';
 	import { untrack } from 'svelte';
 	import { SCOREBOARD_LAYOUTS, type ScoreboardOptions } from './scoreboards/index.js';
 
@@ -32,7 +33,7 @@
 		optionsByLayout = initial;
 	});
 
-	const effectiveLayoutId = $derived(selected ?? orgDefault ?? 'classic');
+	const effectiveLayoutId = $derived(selected ?? orgDefault ?? DEFAULT_LAYOUT_ID);
 	const activeLayout = $derived(
 		SCOREBOARD_LAYOUTS.find((l) => l.id === effectiveLayoutId) ?? SCOREBOARD_LAYOUTS[0]
 	);
@@ -78,7 +79,7 @@
 			{#if selected === null && orgDefault}
 				Verwendet Org-Default → <strong>{orgDefault}</strong>
 			{:else if selected === null}
-				Verwendet Fallback → <strong>classic</strong>
+				Verwendet Fallback → <strong>{DEFAULT_LAYOUT_ID}</strong>
 			{:else}
 				Override aktiv → <strong>{selected}</strong>
 			{/if}
@@ -300,7 +301,7 @@
 		padding: 10px 22px;
 		border-radius: 999px;
 		background: var(--pulse);
-		color: var(--ink);
+		color: var(--paper);
 		border: none;
 		cursor: pointer;
 		transition: background var(--dur-fast) var(--ease-snap);

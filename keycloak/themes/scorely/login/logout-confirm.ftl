@@ -39,7 +39,7 @@
         button[type="submit"] {
             width: 100%;
             background: #ff3d2e;
-            color: #0a0a0a;
+            color: #f5f3ee;
             font-size: 0.9375rem;
             font-weight: 680;
             font-family: inherit;

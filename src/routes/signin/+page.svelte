@@ -183,7 +183,7 @@
 	button[type='submit'] {
 		width: 100%;
 		background: var(--pulse);
-		color: var(--ink);
+		color: var(--paper);
 		font-size: 16px;
 		font-weight: var(--type-wght-medium);
 		font-family: inherit;

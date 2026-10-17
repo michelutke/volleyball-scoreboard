@@ -57,10 +57,14 @@ export const SCOREBOARD_LAYOUTS: ScoreboardLayout[] = [
 	}
 ];
 
-export const DEFAULT_LAYOUT_ID = 'classic';
+export const DEFAULT_LAYOUT_ID = 'kinetic';
 
 export function getLayout(id: string | null | undefined): ScoreboardLayout {
-	return SCOREBOARD_LAYOUTS.find((l) => l.id === id) ?? SCOREBOARD_LAYOUTS[0];
+	return (
+		SCOREBOARD_LAYOUTS.find((l) => l.id === id) ??
+		SCOREBOARD_LAYOUTS.find((l) => l.id === DEFAULT_LAYOUT_ID) ??
+		SCOREBOARD_LAYOUTS[0]
+	);
 }
 
 export { Classic, Kinetic };

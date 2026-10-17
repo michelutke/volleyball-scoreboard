@@ -354,7 +354,7 @@
 		margin-top: 16px;
 		padding: 14px 26px;
 		background: var(--pulse);
-		color: var(--ink);
+		color: var(--paper);
 		text-decoration: none;
 		font-weight: var(--type-wght-medium);
 		font-size: 16px;

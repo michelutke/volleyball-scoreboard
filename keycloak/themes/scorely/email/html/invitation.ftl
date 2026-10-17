@@ -25,7 +25,7 @@
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
                 <tr>
                   <td align="center" bgcolor="#ff3d2e" style="background:#ff3d2e;border-radius:999px;">
-                    <a href="${link}" style="display:block;padding:14px 24px;font-family:Inter,system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;font-weight:700;color:#0a0a0a;text-decoration:none;">Einladung annehmen</a>
+                    <a href="${link}" style="display:block;padding:14px 24px;font-family:Inter,system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;font-weight:700;color:#f5f3ee;text-decoration:none;">Einladung annehmen</a>
                   </td>
                 </tr>
               </table>

@@ -123,7 +123,7 @@
 		align-items: center;
 		gap: 10px;
 		background: var(--pulse);
-		color: var(--ink);
+		color: var(--paper);
 		text-decoration: none;
 		font-weight: 600;
 		font-size: 16px;

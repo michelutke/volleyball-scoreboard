@@ -147,7 +147,7 @@
 
 	.cta-primary {
 		background: var(--pulse);
-		color: var(--ink);
+		color: var(--paper);
 		font-weight: var(--type-wght-bold);
 		will-change: transform;
 		transition: background var(--dur-fast) var(--ease-snap);
