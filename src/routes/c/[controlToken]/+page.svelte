@@ -250,6 +250,7 @@
 						<button onclick={() => addPoint(t.team)} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
 						<button onclick={() => removePoint(t.team)} disabled={loading || !!activeTimeout} class="btn-action">&minus; Punkt</button>
 						<button onclick={() => callTimeout(t.team)} disabled={matchTimeouts[t.team] >= 2 || !!activeTimeout} class="btn-action">Timeout</button>
+						<button onclick={() => { if (match?.serviceTeam !== t.team) switchService(); }} disabled={match?.serviceTeam === t.team} class="btn-action" aria-pressed={match?.serviceTeam === t.team}>Aufschlag</button>
 						{#if t.team === 'home'}
 							<button onclick={undo} disabled={loading} class="btn-action">Rückgängig</button>
 						{:else}

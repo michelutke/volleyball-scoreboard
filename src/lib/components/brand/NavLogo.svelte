@@ -37,20 +37,22 @@
 		return Number.isFinite(n) ? n : 1;
 	}
 
+	let squashFrame = 0;
+
 	function runSquash() {
 		if (motionScale() === 0) return;
 		const start = performance.now();
 		const tick = (now: number) => {
 			const t = now - start;
 			squashT = t < SQUASH_MS ? t : null;
-			if (squashT !== null) requestAnimationFrame(tick);
+			if (squashT !== null) squashFrame = requestAnimationFrame(tick);
 		};
-		requestAnimationFrame(tick);
+		squashFrame = requestAnimationFrame(tick);
 	}
 
 	$effect(() => {
 		let landed = false;
-		return scroll((_: number, info: { y: { current: number } }) => {
+		const stopScroll = scroll((_: number, info: { y: { current: number } }) => {
 			const p = Math.min(1, Math.max(0, info.y.current / SCROLL_RANGE));
 			reduced = motionScale() < 1;
 			progress = p;
@@ -61,6 +63,10 @@
 				landed = false;
 			}
 		});
+		return () => {
+			stopScroll();
+			cancelAnimationFrame(squashFrame);
+		};
 	});
 
 	function squashAt([px, py]: readonly [number, number]): string {
