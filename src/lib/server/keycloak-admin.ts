@@ -2,6 +2,7 @@ import { env } from '$env/dynamic/private';
 import { db } from '$lib/server/db';
 import { settings } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
+import { isUuid } from './validation';
 
 export interface KcUser {
 	id: string;
@@ -74,7 +75,8 @@ async function kcFetch(path: string, init?: RequestInit): Promise<Response> {
 }
 
 export async function listOrgMembers(kcOrgId: string): Promise<KcUser[]> {
-	const res = await kcFetch(`/organizations/${kcOrgId}/members`);
+	// The members endpoint is paginated (Keycloak default page size 10)
+	const res = await kcFetch(`/organizations/${encodeURIComponent(kcOrgId)}/members?max=200`);
 	if (!res.ok) {
 		throw new Error(`Failed to list org members: ${res.status}`);
 	}
@@ -145,14 +147,14 @@ export async function createOrganization(name: string): Promise<string> {
 }
 
 export async function deleteOrganization(kcOrgId: string): Promise<void> {
-	const res = await kcFetch(`/organizations/${kcOrgId}`, { method: 'DELETE' });
+	const res = await kcFetch(`/organizations/${encodeURIComponent(kcOrgId)}`, { method: 'DELETE' });
 	if (!res.ok && res.status !== 404) {
 		throw new Error(`deleteOrganization ${res.status}: ${await kcErrorBody(res)}`);
 	}
 }
 
 export async function addToOrg(userId: string, kcOrgId: string): Promise<void> {
-	const res = await kcFetch(`/organizations/${kcOrgId}/members`, {
+	const res = await kcFetch(`/organizations/${encodeURIComponent(kcOrgId)}/members`, {
 		method: 'POST',
 		body: JSON.stringify(userId)
 	});
@@ -168,7 +170,7 @@ export async function assignAdminRole(userId: string): Promise<void> {
 	}
 	const role: { id: string; name: string } = await rolesRes.json();
 
-	const res = await kcFetch(`/users/${userId}/role-mappings/realm`, {
+	const res = await kcFetch(`/users/${encodeURIComponent(userId)}/role-mappings/realm`, {
 		method: 'POST',
 		body: JSON.stringify([role])
 	});
@@ -178,7 +180,7 @@ export async function assignAdminRole(userId: string): Promise<void> {
 }
 
 export async function listUsersWithRole(roleName: string): Promise<KcUser[]> {
-	const res = await kcFetch(`/roles/${roleName}/users`);
+	const res = await kcFetch(`/roles/${encodeURIComponent(roleName)}/users`);
 	if (!res.ok) {
 		return [];
 	}
@@ -189,7 +191,7 @@ export async function revokeAdminRole(userId: string): Promise<void> {
 	const rolesRes = await kcFetch('/roles/admin');
 	if (!rolesRes.ok) throw new Error(`Failed to get admin role: ${rolesRes.status}`);
 	const role: { id: string; name: string } = await rolesRes.json();
-	const res = await kcFetch(`/users/${userId}/role-mappings/realm`, {
+	const res = await kcFetch(`/users/${encodeURIComponent(userId)}/role-mappings/realm`, {
 		method: 'DELETE',
 		body: JSON.stringify([role])
 	});
@@ -197,7 +199,7 @@ export async function revokeAdminRole(userId: string): Promise<void> {
 }
 
 export async function setUserPassword(userId: string, password: string): Promise<void> {
-	const res = await kcFetch(`/users/${userId}/reset-password`, {
+	const res = await kcFetch(`/users/${encodeURIComponent(userId)}/reset-password`, {
 		method: 'PUT',
 		body: JSON.stringify({ type: 'password', temporary: false, value: password })
 	});
@@ -205,7 +207,7 @@ export async function setUserPassword(userId: string, password: string): Promise
 }
 
 export async function sendSetPasswordEmail(userId: string): Promise<void> {
-	const res = await kcFetch(`/users/${userId}/execute-actions-email`, {
+	const res = await kcFetch(`/users/${encodeURIComponent(userId)}/execute-actions-email`, {
 		method: 'PUT',
 		body: JSON.stringify(['UPDATE_PASSWORD'])
 	});
@@ -215,7 +217,7 @@ export async function sendSetPasswordEmail(userId: string): Promise<void> {
 }
 
 export async function removeFromOrg(userId: string, kcOrgId: string): Promise<void> {
-	const res = await kcFetch(`/organizations/${kcOrgId}/members/${userId}`, {
+	const res = await kcFetch(`/organizations/${encodeURIComponent(kcOrgId)}/members/${encodeURIComponent(userId)}`, {
 		method: 'DELETE'
 	});
 	if (!res.ok && res.status !== 404) {
@@ -224,14 +226,14 @@ export async function removeFromOrg(userId: string, kcOrgId: string): Promise<vo
 }
 
 export async function deleteUser(userId: string): Promise<void> {
-	const res = await kcFetch(`/users/${userId}`, { method: 'DELETE' });
+	const res = await kcFetch(`/users/${encodeURIComponent(userId)}`, { method: 'DELETE' });
 	if (!res.ok && res.status !== 404) {
 		throw new Error(`deleteUser ${res.status}: ${await kcErrorBody(res)}`);
 	}
 }
 
 export async function disableUser(userId: string): Promise<void> {
-	const res = await kcFetch(`/users/${userId}`, {
+	const res = await kcFetch(`/users/${encodeURIComponent(userId)}`, {
 		method: 'PUT',
 		body: JSON.stringify({ enabled: false })
 	});
@@ -245,11 +247,7 @@ export async function getKcOrgId(orgId: string): Promise<string | null> {
 		where: and(eq(settings.orgId, orgId), eq(settings.key, 'kcOrgId'))
 	});
 	if (row?.value) return row.value;
-	if (orgId === 'default') return null;
-	const fallback = await db.query.settings.findFirst({
-		where: and(eq(settings.orgId, 'default'), eq(settings.key, 'kcOrgId'))
-	});
-	return fallback?.value ?? null;
+	return isUuid(orgId) ? orgId : null;
 }
 
 export async function bootstrapKcOrgId(): Promise<void> {
@@ -337,7 +335,7 @@ export async function ensureOrganizationMapper(): Promise<void> {
 		if (clients.length === 0) return;
 		const uuid = clients[0].id;
 
-		const mappersUrl = `${base}/clients/${uuid}/protocol-mappers/models`;
+		const mappersUrl = `${base}/clients/${encodeURIComponent(uuid)}/protocol-mappers/models`;
 		const mappersRes = await fetch(mappersUrl, { headers });
 		if (!mappersRes.ok) { console.warn('[keycloak] ensureOrganizationMapper: mappers lookup failed', mappersRes.status); return; }
 		const mappers: { id: string; name: string; protocolMapper: string; config: Record<string, string> }[] = await mappersRes.json();
@@ -345,7 +343,7 @@ export async function ensureOrganizationMapper(): Promise<void> {
 		// delete hardcoded org_id mapper if present — it assigns a static org UUID to all users
 		const hardcoded = mappers.find((m) => m.protocolMapper === 'oidc-hardcoded-claim-mapper' && m.name === 'org_id');
 		if (hardcoded) {
-			const delRes = await fetch(`${mappersUrl}/${hardcoded.id}`, { method: 'DELETE', headers });
+			const delRes = await fetch(`${mappersUrl}/${encodeURIComponent(hardcoded.id)}`, { method: 'DELETE', headers });
 			if (delRes.ok) console.log('[keycloak] deleted hardcoded org_id mapper');
 			else console.warn('[keycloak] failed to delete hardcoded org_id mapper:', delRes.status);
 		}
@@ -365,7 +363,7 @@ export async function ensureOrganizationMapper(): Promise<void> {
 				console.log('[keycloak] organization mapper already configured correctly');
 				return;
 			}
-			const updateRes = await fetch(`${mappersUrl}/${existing.id}`, {
+			const updateRes = await fetch(`${mappersUrl}/${encodeURIComponent(existing.id)}`, {
 				method: 'PUT', headers,
 				body: JSON.stringify({ ...existing, config: { ...existing.config, ...desiredConfig } })
 			});
@@ -439,7 +437,7 @@ export async function ensureDirectAccessGrants(): Promise<void> {
 			console.log('[keycloak] direct access grants already enabled');
 			return;
 		}
-		const res = await fetch(`${base}/clients/${client.id}`, {
+		const res = await fetch(`${base}/clients/${encodeURIComponent(client.id)}`, {
 			method: 'PUT', headers,
 			body: JSON.stringify({ ...client, directAccessGrantsEnabled: true })
 		});
@@ -498,7 +496,7 @@ export async function getKcOrgIdByScanningMembers(userId: string): Promise<strin
 		if (!orgsRes.ok) return undefined;
 		const orgs: { id: string }[] = await orgsRes.json();
 		for (const org of orgs) {
-			const membersRes = await kcFetch(`/organizations/${org.id}/members?max=200`);
+			const membersRes = await kcFetch(`/organizations/${encodeURIComponent(org.id)}/members?max=200`);
 			if (!membersRes.ok) continue;
 			const members: { id: string }[] = await membersRes.json();
 			if (members.some((m) => m.id === userId)) return org.id;
@@ -509,36 +507,64 @@ export async function getKcOrgIdByScanningMembers(userId: string): Promise<strin
 	}
 }
 
-export async function getKcOrgIdForUser(userId: string): Promise<string | undefined> {
+/** Returns null when neither the service account nor master admin could look up the user's organizations. */
+export async function listKcOrgIdsForUser(userId: string): Promise<string[] | null> {
 	// try service account first; fall back to master admin (service account may lack view-users)
-	const res = await kcFetch(`/users/${userId}/organizations`);
+	const res = await kcFetch(`/users/${encodeURIComponent(userId)}/organizations`);
 	if (res.ok) {
 		const orgs: { id: string }[] = await res.json();
-		return orgs[0]?.id;
+		return orgs.map((o) => o.id);
 	}
 	console.warn('[keycloak] getKcOrgIdForUser SA failed:', res.status, 'userId:', userId, '— trying master admin');
 	const masterToken = await getMasterAdminToken();
-	if (!masterToken) return undefined;
+	if (!masterToken) return listKcOrgIdsByScanningMembers(userId);
 	const realm = env.KEYCLOAK_REALM ?? 'master';
-	const fallback = await fetch(`${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}/users/${userId}/organizations`, {
+	const fallback = await fetch(`${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}/users/${encodeURIComponent(userId)}/organizations`, {
 		headers: { Authorization: `Bearer ${masterToken}` }
 	});
 	if (!fallback.ok) {
 		console.warn('[keycloak] getKcOrgIdForUser master fallback failed:', fallback.status, 'userId:', userId);
-		return undefined;
+		return listKcOrgIdsByScanningMembers(userId);
 	}
 	const orgs: { id: string }[] = await fallback.json();
-	return orgs[0]?.id;
+	return orgs.map((o) => o.id);
 }
 
-export async function inviteUserByEmail(email: string, kcOrgId: string): Promise<string> {
-	let userId: string;
+/** Service-account-only fallback: every org containing the user, or null if the scan itself failed. */
+async function listKcOrgIdsByScanningMembers(userId: string): Promise<string[] | null> {
+	try {
+		const orgsRes = await kcFetch('/organizations?max=200');
+		if (!orgsRes.ok) return null;
+		const orgs: { id: string }[] = await orgsRes.json();
+		const found: string[] = [];
+		for (const org of orgs) {
+			const membersRes = await kcFetch(`/organizations/${encodeURIComponent(org.id)}/members?max=200`);
+			if (!membersRes.ok) return null;
+			const members: { id: string }[] = await membersRes.json();
+			if (members.some((m) => m.id === userId)) found.push(org.id);
+		}
+		return found;
+	} catch {
+		return null;
+	}
+}
+
+export async function getKcOrgIdForUser(userId: string): Promise<string | undefined> {
+	const orgIds = await listKcOrgIdsForUser(userId);
+	return orgIds?.[0];
+}
+
+/**
+ * Returns null when the email belongs to a user who is a member of any organization; such users
+ * are never pulled into another org. A user without any org (left over after removal) is reused.
+ */
+export async function inviteUserByEmail(email: string, kcOrgId: string): Promise<string | null> {
 	const existing = await getUserByEmail(email);
 	if (existing) {
-		userId = existing.id;
-	} else {
-		userId = await createUser(email);
+		const orgIds = await listKcOrgIdsForUser(existing.id);
+		if (orgIds === null || orgIds.length > 0) return null;
 	}
+	const userId = existing?.id ?? (await createUser(email));
 	await addToOrg(userId, kcOrgId);
 	try {
 		await sendSetPasswordEmail(userId);
@@ -564,7 +590,7 @@ export async function listOrgMembersWithStatus(kcOrgId: string): Promise<KcUserW
 	const enriched = await Promise.all(
 		members.map(async (m) => {
 			try {
-				const res = await fetch(`${getBaseUrl()}/users/${m.id}`, {
+				const res = await fetch(`${getBaseUrl()}/users/${encodeURIComponent(m.id)}`, {
 					headers: { Authorization: `Bearer ${token}` }
 				});
 				const user = res.ok ? await res.json() : {};
@@ -599,7 +625,7 @@ export async function syncClientRedirectUri(origin: string): Promise<void> {
 		const client = clients[0];
 		const uri = `${origin}/*`;
 		if (client.redirectUris.includes(uri)) return;
-		await kcFetch(`/clients/${client.id}`, {
+		await kcFetch(`/clients/${encodeURIComponent(client.id)}`, {
 			method: 'PUT',
 			body: JSON.stringify({
 				...client,
