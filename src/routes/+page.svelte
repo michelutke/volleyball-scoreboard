@@ -7,24 +7,22 @@
 	import HowItWorks from '$lib/components/landing/HowItWorks.svelte';
 	import Pricing from '$lib/components/landing/Pricing.svelte';
 	import Faq from '$lib/components/landing/Faq.svelte';
-	import Demo from '$lib/components/landing/Demo.svelte';
+	import Pattern from '$lib/components/brand/Pattern.svelte';
 	import LandingFooter from '$lib/components/landing/LandingFooter.svelte';
 
 	let { data }: { data: PageData } = $props();
 
-	// Initialize from localStorage, fallback to 'de'
 	let lang = $state<Lang>('de');
-	// NOTE: cannot read localStorage during SSR — use onMount pattern or just 'de' default
-	// For SSR-safe init, just default to 'de'; client can toggle
 </script>
 
 <div class="landing">
 	<LandingNav {lang} onLangToggle={() => { lang = lang === 'de' ? 'en' : 'de'; }} />
 	<main>
 		<Hero {lang} />
-		<Demo {lang} />
-		<Features {lang} />
+		<Pattern name="wave" d={12} fg="var(--k-text)" bg="var(--k-surface)" class="band-desktop" />
+		<Pattern name="wave" d={6} fg="var(--k-text)" bg="var(--k-surface)" class="band-mobile" />
 		<HowItWorks {lang} />
+		<Features {lang} />
 		<Pricing {lang} price={data.price} />
 		<Faq {lang} />
 	</main>
@@ -32,9 +30,25 @@
 </div>
 
 <style>
+	/* Pattern density steps down with the type scale: quiet on phones (manual p24) */
+	:global(.band-desktop) {
+		display: none !important;
+	}
+	@media (min-width: 768px) {
+		:global(.band-desktop) {
+			display: block !important;
+		}
+		:global(.band-mobile) {
+			display: none !important;
+		}
+	}
+
 	.landing {
 		min-height: 100vh;
-		background: radial-gradient(ellipse at 20% 0%, #3d0000 0%, #0a0a0a 55%);
-		color: var(--color-text-primary);
+		background: var(--k-surface);
+		color: var(--k-text);
+	}
+	:global(body:has(.landing)) {
+		background: var(--k-surface);
 	}
 </style>

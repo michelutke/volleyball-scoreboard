@@ -1,7 +1,12 @@
 <script lang="ts">
 	import '../app.css';
-	import { generateAccentPalette, ACCENT_CSS_PROPS, getStoredTheme, getEffectiveTheme } from '$lib/theme.js';
-	import type { ThemeMode } from '$lib/theme.js';
+	import {
+		getStoredTheme,
+		getEffectiveTheme,
+		getStoredMotion,
+		getEffectiveMotion
+	} from '$lib/theme.js';
+	import type { ThemeMode, MotionMode } from '$lib/theme.js';
 	import type { LayoutData } from './$types.js';
 	import type { Snippet } from 'svelte';
 
@@ -9,6 +14,8 @@
 
 	let themeMode = $state<ThemeMode>('system');
 	let effectiveTheme = $state<'light' | 'dark'>('dark');
+	let motionMode = $state<MotionMode>('system');
+	let effectiveMotion = $state<'full' | 'damped' | 'static'>('full');
 
 	$effect(() => {
 		themeMode = getStoredTheme();
@@ -31,36 +38,38 @@
 		}
 	});
 
-	const palette = $derived(data.accentColor ? generateAccentPalette(data.accentColor, effectiveTheme) : null);
-
-	const accentStyle = $derived(
-		palette
-			? `:root { ${ACCENT_CSS_PROPS.map(([prop, key]) => `${prop}: ${palette[key]}`).join('; ')}; }`
-			: ''
-	);
-
 	$effect(() => {
 		document.documentElement.dataset.theme = effectiveTheme;
 	});
 
 	$effect(() => {
-		const style = document.documentElement.style;
-		if (palette) {
-			for (const [prop, key] of ACCENT_CSS_PROPS) {
-				style.setProperty(prop, palette[key]);
-			}
+		motionMode = getStoredMotion();
+		function onMotionChange(e: Event) {
+			motionMode = (e as CustomEvent<MotionMode>).detail;
+		}
+		window.addEventListener('motionchange', onMotionChange);
+		return () => window.removeEventListener('motionchange', onMotionChange);
+	});
+
+	$effect(() => {
+		effectiveMotion = getEffectiveMotion(motionMode);
+		if (motionMode === 'system') {
+			const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+			const handler = () => {
+				effectiveMotion = mq.matches ? 'damped' : 'full';
+			};
+			mq.addEventListener('change', handler);
+			return () => mq.removeEventListener('change', handler);
+		}
+	});
+
+	$effect(() => {
+		if (motionMode === 'system') {
+			document.documentElement.removeAttribute('data-motion');
 		} else {
-			for (const [prop] of ACCENT_CSS_PROPS) {
-				style.removeProperty(prop);
-			}
+			document.documentElement.dataset.motion = effectiveMotion;
 		}
 	});
 </script>
-
-<svelte:head>
-	{#if accentStyle}
-		{@html `<style>${accentStyle}</style>`}
-	{/if}
-</svelte:head>
 
 {@render children()}

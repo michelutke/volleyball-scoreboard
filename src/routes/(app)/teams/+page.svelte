@@ -2,6 +2,9 @@
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { PageData } from './$types.js';
+	import { KSection, KButton, KEmpty, KInput, KField } from '$lib/components/k';
+	import Star from 'lucide-svelte/icons/star';
+	import Pin from 'lucide-svelte/icons/pin';
 
 	let { data }: { data: PageData } = $props();
 
@@ -65,87 +68,249 @@
 	}
 </script>
 
-<div class="min-h-screen bg-bg-base p-4">
-	<div class="max-w-2xl mx-auto">
-		<div class="flex items-center justify-between mb-6">
-			<div>
-				<h1 class="text-2xl font-bold text-text-primary">{data.clubName ?? 'Teams'}</h1>
-				<p class="text-text-secondary text-sm">Teams verwalten</p>
-			</div>
-			<button
-				onclick={() => { showCreate = !showCreate; }}
-				class="bg-accent-mid hover:bg-accent-dark text-white font-semibold rounded-lg px-4 py-2 text-sm"
+<div class="page">
+	<KSection
+		kicker="Verein / Club"
+		title={data.clubName ?? 'Teams'}
+		subtitle="Teams verwalten, Favoriten setzen, anpinnen für die ganze Org."
+	>
+		{#snippet actions()}
+			<KButton variant="primary" size="md" onclick={() => (showCreate = !showCreate)}>
+				+ Team
+			</KButton>
+		{/snippet}
+
+		{#if showCreate}
+			<form
+				class="create-form"
+				onsubmit={(e) => {
+					e.preventDefault();
+					createTeam();
+				}}
 			>
-				+ Team erstellen
-			</button>
-		</div>
+				<KField label="Teamname" for="newTeamName">
+					<KInput id="newTeamName" type="text" bind:value={newTeamName} placeholder="z.B. VBC Thun U17" autofocus />
+				</KField>
+				<div class="form-actions">
+					<KButton variant="primary" disabled={creating}>
+						{creating ? '...' : 'Erstellen'}
+					</KButton>
+					<KButton variant="ghost" onclick={() => (showCreate = false)}>
+						Abbrechen
+					</KButton>
+				</div>
+			</form>
+		{/if}
 
 		{#if data.teams.length === 0}
-			<div class="bg-bg-panel-alt rounded-xl p-8 text-center">
-				<p class="text-text-secondary mb-4">Noch keine Teams vorhanden</p>
-				<p class="text-text-tertiary text-sm mb-4">Teams werden automatisch von Swiss Volley synchronisiert.</p>
-			</div>
+			<KEmpty
+				numeral="00"
+				title="Noch keine Teams"
+				body="Teams werden automatisch von Swiss Volley synchronisiert oder können manuell erstellt werden."
+			/>
 		{:else}
-			<div class="space-y-2">
-				{#each data.teams as team}
-					<div class="flex items-center gap-2">
-						<a
-							href="/teams/{team.id}"
-							class="flex-1 flex items-center justify-between bg-bg-panel-alt hover:bg-bg-panel-hover rounded-xl p-4 transition-colors"
-						>
-							<div>
-								<span class="text-text-primary font-medium">{team.name}</span>
-								{#if team.swissVolleyTeamId}
-									<span class="ml-2 text-xs bg-accent-deepest/30 text-accent px-2 py-0.5 rounded">SV</span>
-								{/if}
-								{#if isPinned(team.id)}
-									<span class="ml-2 text-xs bg-accent-deepest/30 text-accent px-2 py-0.5 rounded">📌 Gepinnt</span>
-								{/if}
-							</div>
-							<span class="text-text-tertiary">&rarr;</span>
+			<ul class="team-list">
+				{#each data.teams as team, i}
+					<li class="team-row">
+						<a href="/teams/{team.id}" class="row-link">
+							<span class="row-bar" aria-hidden="true"></span>
+							<span class="row-num k-mono">{String(i + 1).padStart(2, '0')}</span>
+							<span class="row-body">
+								<span class="row-name">{team.name}</span>
+								<span class="row-tags">
+									{#if team.swissVolleyTeamId}
+										<span class="tag">SV</span>
+									{/if}
+									{#if isPinned(team.id)}
+										<span class="tag tag-pinned">Pinned</span>
+									{/if}
+								</span>
+							</span>
+							<span class="row-arrow" aria-hidden="true">→</span>
 						</a>
 						<button
+							class="row-act"
+							class:on={isFav(team.id)}
 							onclick={() => toggleFav(team.id)}
-							class="p-2 rounded-lg text-lg {isFav(team.id) ? 'text-yellow-400' : 'text-text-tertiary hover:text-text-secondary'}"
-							title={isFav(team.id) ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
+							title={isFav(team.id) ? 'Aus Favoriten entfernen' : 'Zu Favoriten'}
+							aria-label="Favorit"
 						>
-							{isFav(team.id) ? '★' : '☆'}
+							<Star size="18" strokeWidth="1.5" fill={isFav(team.id) ? 'currentColor' : 'none'} />
 						</button>
 						{#if page.data.isAdmin}
 							<button
+								class="row-act"
+								class:on={isPinned(team.id)}
 								onclick={() => togglePin(team.id)}
-								class="p-2 rounded-lg text-lg {isPinned(team.id) ? 'text-accent' : 'text-text-tertiary hover:text-text-secondary'}"
 								title={isPinned(team.id) ? 'Pinning entfernen' : 'Für alle pinnen'}
+								aria-label="Pin"
 							>
-								📌
+								<Pin size="18" strokeWidth="1.5" fill={isPinned(team.id) ? 'currentColor' : 'none'} />
 							</button>
 						{/if}
-					</div>
+					</li>
 				{/each}
-			</div>
+			</ul>
 		{/if}
 
-		{#if showCreate}
-			<div class="mt-4">
-				<form onsubmit={(e) => { e.preventDefault(); createTeam(); }} class="bg-bg-panel-alt rounded-xl p-4 flex gap-2">
-					<input
-						type="text"
-						bind:value={newTeamName}
-						placeholder="Teamname"
-						class="flex-1 bg-bg-base border border-border-subtle rounded-lg px-4 py-2 text-text-primary placeholder-text-tertiary focus:outline-none focus:border-accent"
-					/>
-					<button type="submit" disabled={creating} class="bg-accent-mid hover:bg-accent-dark disabled:opacity-50 text-white font-semibold rounded-lg px-4 py-2">
-						{creating ? '...' : 'Erstellen'}
-					</button>
-					<button type="button" onclick={() => { showCreate = false; }} class="text-text-secondary hover:text-text-primary px-2">
-						&times;
-					</button>
-				</form>
-			</div>
-		{/if}
-
-		<div class="mt-6 pt-4 border-t border-border-default">
-			<a href="/control" class="text-sm text-text-tertiary hover:text-text-primary">Legacy Control Panel &rarr;</a>
+		<div class="footnote">
+			<a href="/control" class="legacy-link k-mono">Legacy Control Panel →</a>
 		</div>
-	</div>
+	</KSection>
 </div>
+
+<style>
+	.page {
+		min-height: 100vh;
+		background: var(--k-surface);
+		color: var(--k-text);
+	}
+
+	.create-form {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		padding: 24px;
+		background: var(--k-surface-alt);
+		border: 1px solid var(--k-line);
+	}
+
+	.form-actions {
+		display: flex;
+		gap: 8px;
+	}
+
+	.team-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		border-top: 1px solid var(--k-line);
+	}
+
+	.team-row {
+		display: flex;
+		align-items: stretch;
+		border-bottom: 1px solid var(--k-line);
+	}
+
+	.row-link {
+		position: relative;
+		flex: 1;
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		padding: 18px 16px;
+		text-decoration: none;
+		color: var(--k-text);
+		transition: background var(--dur-fast) var(--ease-snap);
+	}
+	.row-link:hover {
+		background: color-mix(in srgb, var(--k-text) 3%, transparent);
+	}
+	.row-link:hover .row-bar {
+		transform: scaleX(1);
+	}
+	.row-link:hover .row-body {
+		transform: translateX(4px);
+	}
+	.row-link:hover .row-arrow {
+		transform: translateX(4px);
+		color: var(--pulse);
+	}
+
+	.row-bar {
+		position: absolute;
+		left: 0;
+		top: 0;
+		bottom: 0;
+		width: 3px;
+		background: var(--pulse);
+		transform: scaleX(0);
+		transform-origin: left;
+		transition: transform var(--dur-mid) var(--ease-snap);
+	}
+
+	.row-num {
+		font-size: 11px;
+		letter-spacing: 0.1em;
+		color: var(--k-text-dim);
+		min-width: 32px;
+	}
+
+	.row-body {
+		flex: 1;
+		display: flex;
+		align-items: baseline;
+		gap: 12px;
+		flex-wrap: wrap;
+		transition: transform var(--dur-mid) var(--ease-snap);
+	}
+
+	.row-name {
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-medium);
+		font-size: 16px;
+		letter-spacing: -0.01em;
+	}
+
+	.row-tags {
+		display: inline-flex;
+		gap: 6px;
+	}
+
+	.tag {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		padding: 2px 6px;
+		border: 1px solid var(--k-line);
+		color: var(--k-text-dim);
+	}
+	.tag-pinned {
+		color: var(--cool);
+		border-color: var(--cool);
+	}
+
+	.row-arrow {
+		color: var(--k-text-dim);
+		font-family: var(--font-mono);
+		transition: transform var(--dur-mid) var(--ease-snap),
+			color var(--dur-fast) var(--ease-snap);
+	}
+
+	.row-act {
+		background: transparent;
+		border: none;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--k-text-dim);
+		padding: 0 14px;
+		cursor: pointer;
+		transition: color var(--dur-fast) var(--ease-snap);
+		border-left: 1px solid var(--k-line);
+	}
+	.row-act:hover {
+		color: var(--k-text);
+	}
+	.row-act.on {
+		color: var(--pulse);
+	}
+
+	.footnote {
+		margin-top: 32px;
+		padding-top: 20px;
+		border-top: 1px solid var(--k-line);
+	}
+
+	.legacy-link {
+		font-size: 11px;
+		letter-spacing: 0.1em;
+		color: var(--k-text-dim);
+		text-decoration: none;
+	}
+	.legacy-link:hover {
+		color: var(--k-text);
+	}
+</style>

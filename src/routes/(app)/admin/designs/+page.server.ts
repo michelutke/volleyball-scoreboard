@@ -8,7 +8,7 @@ import type { PageServerLoad } from './$types.js';
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.isAdmin) redirect(303, '/teams');
 
-	const [templates, libraryRows] = await Promise.all([
+	const [templates, libraryRows, orgSettings] = await Promise.all([
 		db.query.designTemplates.findMany({
 			where: eq(designTemplates.orgId, locals.orgId),
 			orderBy: designTemplates.createdAt
@@ -30,7 +30,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 				and(eq(settings.orgId, designTemplates.orgId), eq(settings.key, 'clubName'))
 			)
 			.where(and(eq(designTemplates.isPublic, true), isNotNull(designTemplates.customCode)))
-			.orderBy(designTemplates.createdAt)
+			.orderBy(designTemplates.createdAt),
+		db.query.settings.findMany({ where: eq(settings.orgId, locals.orgId) })
 	]);
 
 	const library: LibraryOverlay[] = libraryRows.map((r) => ({
@@ -44,5 +45,17 @@ export const load: PageServerLoad = async ({ locals }) => {
 		overlayText: r.overlayText
 	}));
 
-	return { templates, library };
+	const layoutRow = orgSettings.find((r) => r.key === 'defaultScoreboardLayout');
+	const optsRow = orgSettings.find((r) => r.key === 'defaultScoreboardOptions');
+	const orgLayoutId = layoutRow?.value ?? null;
+	let orgLayoutOptions: Record<string, unknown> | null = null;
+	if (optsRow?.value) {
+		try {
+			orgLayoutOptions = JSON.parse(optsRow.value);
+		} catch {
+			orgLayoutOptions = null;
+		}
+	}
+
+	return { templates, library, orgLayoutId, orgLayoutOptions };
 };

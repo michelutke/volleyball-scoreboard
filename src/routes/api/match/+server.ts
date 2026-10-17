@@ -4,6 +4,8 @@ import { matches, scores } from '$lib/server/db/schema.js';
 import { emitAll } from '$lib/server/sse.js';
 import { toMatchState } from '$lib/server/match-state.js';
 import { addPoint, removePoint, resetMatch, isMatchOver } from '$lib/volleyball.js';
+import { matchCreateSchema, matchActionSchema, matchSettingsSchema } from '$lib/server/validation.js';
+import { statusChange } from '$lib/server/match-service';
 import { and, eq, desc } from 'drizzle-orm';
 import type { MatchState } from '$lib/types.js';
 import type { RequestHandler } from './$types.js';
@@ -13,8 +15,11 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const matchId = url.searchParams.get('id');
 
 	if (matchId) {
+		const id = parseInt(matchId);
+		if (isNaN(id)) return json({ error: 'Invalid match id' }, { status: 400 });
+
 		const match = await db.query.matches.findFirst({
-			where: and(eq(matches.orgId, orgId), eq(matches.id, parseInt(matchId)))
+			where: and(eq(matches.orgId, orgId), eq(matches.id, id))
 		});
 		if (!match) return json({ error: 'Match not found' }, { status: 404 });
 
@@ -36,7 +41,10 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const { orgId } = locals;
-	const body = await request.json();
+	const raw = await request.json();
+	const parsed = matchCreateSchema.safeParse(raw);
+	if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+	const body = parsed.data;
 
 	const [match] = await db
 		.insert(matches)
@@ -64,10 +72,15 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 export const PUT: RequestHandler = async ({ request, locals }) => {
 	const { orgId } = locals;
-	const body = await request.json();
-	const matchId = body.matchId as number;
+	const raw = await request.json();
 
-	if (body.action) {
+	if (raw.action) {
+		const parsed = matchActionSchema.safeParse(raw);
+		if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+		const body = parsed.data;
+		const matchId = body.matchId;
+
+		// Score actions
 		const currentScore = await db.query.scores.findFirst({
 			where: eq(scores.matchId, matchId),
 			orderBy: desc(scores.createdAt)
@@ -84,10 +97,10 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
 		let newState: MatchState;
 		switch (body.action) {
 			case 'addPoint':
-				newState = addPoint(state, body.team);
+				newState = addPoint(state, body.team!);
 				break;
 			case 'removePoint':
-				newState = removePoint(state, body.team);
+				newState = removePoint(state, body.team!);
 				break;
 			case 'reset':
 				newState = resetMatch(state);
@@ -106,6 +119,7 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
 				else if (body.team === 'guest' && state.guestSets > 0) newState.guestSets--;
 				break;
 			case 'undo': {
+				// Get all score records for this match
 				const allScores = await db.query.scores.findMany({
 					where: eq(scores.matchId, matchId),
 					orderBy: desc(scores.createdAt)
@@ -113,12 +127,15 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
 				if (allScores.length <= 1) {
 					return json({ error: 'Nothing to undo' }, { status: 400 });
 				}
+				// Delete the latest record
 				await db.delete(scores).where(eq(scores.id, allScores[0].id));
+				// Reconstruct state from previous record
 				const previousScore = allScores[1];
 				const undoState = toMatchState(match, previousScore);
+				// Update match status if needed (e.g. finished -> live)
 				const correctStatus = isMatchOver(undoState.homeSets, undoState.guestSets) ? 'finished' : 'live';
 				if (correctStatus !== match.status) {
-					await db.update(matches).set({ status: correctStatus, updatedAt: new Date() }).where(eq(matches.id, matchId));
+					await db.update(matches).set(statusChange(correctStatus)).where(eq(matches.id, matchId));
 					undoState.status = correctStatus;
 				}
 				emitAll(matchId, { type: 'score', data: undoState });
@@ -128,10 +145,12 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
 				return json({ error: 'Unknown action' }, { status: 400 });
 		}
 
+		// Update match status
 		if (newState.status !== match.status) {
-			await db.update(matches).set({ status: newState.status, updatedAt: new Date() }).where(eq(matches.id, matchId));
+			await db.update(matches).set(statusChange(newState.status)).where(eq(matches.id, matchId));
 		}
 
+		// Insert new score record
 		await db.insert(scores).values({
 			matchId,
 			homePoints: newState.homePoints,
@@ -146,6 +165,12 @@ export const PUT: RequestHandler = async ({ request, locals }) => {
 		emitAll(matchId, { type: 'score', data: newState });
 		return json(newState);
 	}
+
+	// Update match settings (team names, colors)
+	const settingsParsed = matchSettingsSchema.safeParse(raw);
+	if (!settingsParsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+	const body = settingsParsed.data;
+	const matchId = body.matchId;
 
 	const settingsFields = ['homeTeamName', 'guestTeamName', 'homeJerseyColor', 'guestJerseyColor', 'showJerseyColors', 'showSetScores'] as const;
 	const updateData: Record<string, unknown> = { updatedAt: new Date() };
@@ -172,7 +197,9 @@ export const DELETE: RequestHandler = async ({ url, locals }) => {
 	const { orgId } = locals;
 	const matchId = url.searchParams.get('id');
 	if (!matchId) return json({ error: 'Missing id' }, { status: 400 });
+	const id = parseInt(matchId);
+	if (isNaN(id)) return json({ error: 'Invalid match id' }, { status: 400 });
 
-	await db.delete(matches).where(and(eq(matches.orgId, orgId), eq(matches.id, parseInt(matchId))));
+	await db.delete(matches).where(and(eq(matches.orgId, orgId), eq(matches.id, id)));
 	return json({ ok: true });
 };

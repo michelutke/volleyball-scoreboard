@@ -33,19 +33,21 @@
 
 <LandingNav {lang} onLangToggle={() => { lang = lang === 'de' ? 'en' : 'de'; }} basePath="/" />
 
+<div class="page-k">
 <main class="mx-auto max-w-3xl px-4 py-24 md:px-8">
-	<h1 class="mb-2 text-3xl font-bold text-[var(--color-text-primary)]">Impressum</h1>
-	<p class="mb-10 text-sm text-[var(--color-text-tertiary)]">Stand: März 2026</p>
+	<p class="kicker k-mono">Impressum / Imprint</p>
+	<h1 class="page-title k-display">Impressum</h1>
+	<p class="mb-10 text-sm" style="color: var(--k-text-dim);">Stand: März 2026</p>
 
 	<div class="space-y-10 text-[var(--color-text-secondary)] leading-relaxed">
 
 		<section>
-			<h2 class="mb-3 text-xl font-semibold text-[var(--color-text-primary)]">Angaben gemäss Art. 3 lit. s UWG</h2>
+			<h2 class="mb-3 text-xl font-bold text-[var(--color-text-primary)]">Angaben gemäss Art. 3 lit. s UWG</h2>
 			<address class="not-italic space-y-1">
 				<p class="font-medium text-[var(--color-text-primary)]">Michel Utke</p>
 				<p>
 					E-Mail:
-					<a href="mailto:contact@scorely.ch" class="underline hover:text-[var(--color-accent-mid)]">
+					<a href="mailto:contact@scorely.ch" class="underline hover:text-[var(--color-link)]">
 						contact@scorely.ch
 					</a>
 				</p>
@@ -53,14 +55,14 @@
 		</section>
 
 		<section>
-			<h2 class="mb-3 text-xl font-semibold text-[var(--color-text-primary)]">Swiss Volley Manager API</h2>
+			<h2 class="mb-3 text-xl font-bold text-[var(--color-text-primary)]">Swiss Volley Manager API</h2>
 			<p>
 				Scorely nutzt die öffentlich dokumentierte
 				<a
 					href="https://swissvolley.docs.apiary.io/"
 					target="_blank"
 					rel="noopener noreferrer"
-					class="underline hover:text-[var(--color-accent-mid)]"
+					class="underline hover:text-[var(--color-link)]"
 				>
 					Swiss Volley Manager API
 				</a>
@@ -71,7 +73,7 @@
 		</section>
 
 		<section>
-			<h2 class="mb-3 text-xl font-semibold text-[var(--color-text-primary)]">Open Source</h2>
+			<h2 class="mb-3 text-xl font-bold text-[var(--color-text-primary)]">Open Source</h2>
 			<p>
 				Scorely ist ein Open-Source-Projekt und steht auf GitHub zur freien Verfügung.
 				Der Quellcode ist unter der MIT-Lizenz veröffentlicht.
@@ -80,28 +82,28 @@
 				href="https://github.com/michelutke/volleyball-scoreboard"
 				target="_blank"
 				rel="noopener noreferrer"
-				class="mt-3 inline-block rounded-lg border border-[var(--color-border-subtle)] px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-accent-mid)] hover:text-[var(--color-accent-mid)]"
+				class="mt-3 inline-block border border-[var(--color-border-subtle)] px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-link)] hover:text-[var(--color-link)]"
 			>
 				github.com/michelutke/volleyball-scoreboard →
 			</a>
 		</section>
 
 		<section>
-			<h2 class="mb-3 text-xl font-semibold text-[var(--color-text-primary)]">Verwendete Open-Source-Bibliotheken</h2>
+			<h2 class="mb-3 text-xl font-bold text-[var(--color-text-primary)]">Verwendete Open-Source-Bibliotheken</h2>
 			<p class="mb-4">
 				Scorely baut auf folgenden quelloffenen Bibliotheken auf. Alle Lizenzen sind vollständig eingehalten.
 			</p>
 
 			<button
 				onclick={toggleLicenses}
-				class="flex items-center gap-2 rounded-lg border border-[var(--color-border-subtle)] px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-accent-mid)] hover:text-[var(--color-accent-mid)]"
+				class="flex items-center gap-2 border border-[var(--color-border-subtle)] px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:border-[var(--color-link)] hover:text-[var(--color-link)]"
 			>
 				{licensesOpen ? '▾' : '▸'}
 				Lizenzen anzeigen
 			</button>
 
 			{#if licensesOpen}
-				<div class="mt-4 overflow-hidden rounded-xl border border-[var(--color-border-subtle)]">
+				<div class="mt-4 overflow-hidden border border-[var(--color-border-subtle)]">
 					{#if Object.keys(licenses).length === 0}
 						<p class="p-4 text-sm text-[var(--color-text-tertiary)]">Lizenzdaten werden geladen…</p>
 					{:else}
@@ -121,7 +123,7 @@
 													href={info.repository}
 													target="_blank"
 													rel="noopener noreferrer"
-													class="underline hover:text-[var(--color-accent-mid)]"
+													class="underline hover:text-[var(--color-link)]"
 												>{pkg}</a>
 											{:else}
 												{pkg}
@@ -138,7 +140,7 @@
 		</section>
 
 		<section>
-			<h2 class="mb-3 text-xl font-semibold text-[var(--color-text-primary)]">Haftungsausschluss</h2>
+			<h2 class="mb-3 text-xl font-bold text-[var(--color-text-primary)]">Haftungsausschluss</h2>
 			<p>
 				Die Inhalte dieser Website wurden sorgfältig erstellt. Für die Richtigkeit, Vollständigkeit
 				und Aktualität der Inhalte wird jedoch keine Gewähr übernommen. Für externe Verlinkungen
@@ -148,5 +150,30 @@
 
 	</div>
 </main>
+</div>
 
 <LandingFooter {lang} />
+
+<style>
+	.page-k {
+		background: var(--k-surface);
+		color: var(--k-text);
+		min-height: 100vh;
+	}
+	.kicker {
+		font-size: 11px;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
+		margin: 0 0 12px;
+	}
+	.page-title {
+		font-family: var(--font-display);
+		font-weight: var(--type-wght-display);
+		font-size: clamp(40px, 7vw, 72px);
+		line-height: 0.95;
+		letter-spacing: -0.03em;
+		margin: 0 0 8px;
+		color: var(--k-text);
+	}
+</style>

@@ -4,15 +4,15 @@ import { settings, matches, scores, timeouts, designTemplates } from '$lib/serve
 import { toMatchState } from '$lib/server/match-state.js';
 import { getUpcomingGames } from '$lib/server/swiss-volley.js';
 import { eq, desc, asc, and } from 'drizzle-orm';
+import { ensureOverlaySlug } from '$lib/server/overlay-slug';
+import { getOrgMatch } from '$lib/server/match-service';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const matchId = parseInt(params.matchId);
 	const { orgId } = locals;
 
-	let match = await db.query.matches.findFirst({
-		where: eq(matches.id, matchId)
-	});
+	let match = await getOrgMatch(orgId, matchId);
 	if (!match) error(404, 'Match not found');
 
 	// One-time logo fetch: only if both logos are missing and match has a SV ID
@@ -40,7 +40,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	});
 	if (!score) error(404, 'Score not found');
 
-	const [homeTimeouts, guestTimeouts, permalinkRow, scoreHistory, timeoutHistory, orgDesignTemplates] = await Promise.all([
+	const [homeTimeouts, guestTimeouts, permalinkRow, scoreHistory, timeoutHistory, orgDesignTemplates, overlaySlug] = await Promise.all([
 		db.query.timeouts.findMany({
 			where: and(eq(timeouts.matchId, matchId), eq(timeouts.team, 'home'), eq(timeouts.set, score.currentSet))
 		}),
@@ -61,10 +61,16 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		db.query.designTemplates.findMany({
 			where: eq(designTemplates.orgId, orgId),
 			orderBy: designTemplates.createdAt
-		})
+		}),
+		ensureOverlaySlug(orgId)
 	]);
 
 	const permalinkOverlayMatchId = permalinkRow?.value ? parseInt(permalinkRow.value) : null;
+
+	const orgSettingsRows = await db.query.settings.findMany({
+		where: eq(settings.orgId, orgId)
+	});
+	const orgDefaultLayout = orgSettingsRows.find((r) => r.key === 'defaultScoreboardLayout')?.value ?? null;
 
 	return {
 		activeMatch: toMatchState(match, score),
@@ -73,7 +79,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		timeoutHistory,
 		teamId: match.teamId,
 		permalinkOverlayMatchId,
+		overlaySlug,
 		controlToken: match.controlToken ?? null,
-		designTemplates: orgDesignTemplates
+		designTemplates: orgDesignTemplates,
+		scoreboardLayout: match.scoreboardLayout ?? null,
+		scoreboardOptions: (match.scoreboardOptions as Record<string, string | number | boolean> | null) ?? null,
+		orgDefaultLayout
 	};
 };

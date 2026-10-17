@@ -5,6 +5,7 @@ import type { HandleServerError } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { bootstrapKcOrgId, ensureOrganizationMapper, ensureDirectAccessGrants, ensureRealmSettings, syncClientRedirectUri } from '$lib/server/keycloak-admin';
 import { getBillingStatus } from '$lib/server/billing';
+import { isRateLimited } from '$lib/server/rate-limit.js';
 
 export async function init() {
 	await bootstrapKcOrgId();
@@ -18,11 +19,15 @@ export const handleError: HandleServerError = ({ error, event }) => {
 	console.error('[500]', event.url.pathname, error);
 };
 
-const PUBLIC_PATHS = ['/', '/auth', '/api/health', '/signin', '/signout', '/signup', '/privacy', '/imprint', '/about', '/api/billing/webhook', '/api/auth/auto-login', '/library', '/api/overlay-sandbox'];
+const PUBLIC_PATHS = ['/', '/auth', '/api/health', '/signin', '/signout', '/signup', '/privacy', '/imprint', '/about', '/api/billing/webhook', '/api/auth/auto-login', '/library', '/api/overlay-sandbox', '/api/image-proxy'];
 const OVERLAY_PATTERN = /^\/matches\/[^/]+\/overlay/;
 const LEGACY_OVERLAY = /^\/overlay($|\/)/;
 const SHARE_CONTROL = /^\/(c|api\/c)\//;
 const BILLING_EXEMPT = /^\/(billing|api\/billing)($|\/)(?!webhook)/;
+// Bearer-token-authenticated routes: skip session auth, but stay rate-limited and no-store like other private API routes.
+const MOBILE_API_PATTERN = /^\/api\/mobile(\/|$)/;
+// Read-only score stream consumed by the public overlay pages (OBS, mobile WebView).
+const MATCH_STREAM_PATTERN = /^\/api\/matches\/[^/]+\/stream$/;
 
 const isOverlay = (path: string): boolean =>
 	OVERLAY_PATTERN.test(path) || LEGACY_OVERLAY.test(path);
@@ -31,19 +36,7 @@ const securityHeaders: Record<string, string> = {
 	'X-Content-Type-Options': 'nosniff',
 	'Referrer-Policy': 'strict-origin-when-cross-origin',
 	'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-	'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-	'Content-Security-Policy': [
-		"default-src 'self'",
-		"script-src 'self' https://js.stripe.com",
-		"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-		"font-src 'self' https://fonts.gstatic.com data:",
-		"img-src 'self' https: data: blob:",
-		"connect-src 'self' https://api.stripe.com",
-		"frame-src 'self' https://js.stripe.com",
-		"frame-ancestors 'self'",
-		"base-uri 'self'",
-		"form-action 'self'"
-	].join('; ')
+	'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
 };
 
 export const handle = sequence(authHandle, async ({ event, resolve }) => {
@@ -51,9 +44,10 @@ export const handle = sequence(authHandle, async ({ event, resolve }) => {
 	const isPublic =
 		PUBLIC_PATHS.some((p) => (p === '/' ? path === '/' : path.startsWith(p))) ||
 		isOverlay(path) ||
+		MATCH_STREAM_PATTERN.test(path) ||
 		SHARE_CONTROL.test(path);
 
-	if (!isPublic) {
+	if (!isPublic && !MOBILE_API_PATTERN.test(path)) {
 		const session = await event.locals.auth();
 		if (!session) redirect(307, `/signin?callbackUrl=${encodeURIComponent(event.url.pathname)}`);
 
@@ -78,18 +72,42 @@ export const handle = sequence(authHandle, async ({ event, resolve }) => {
 		}
 	}
 
+	if (path.startsWith('/api/') && !isPublic) {
+		if (isRateLimited(`api:${event.getClientAddress()}`, { maxAttempts: 100, windowMs: 60 * 1000 })) {
+			return new Response(JSON.stringify({ error: 'Too many requests' }), {
+				status: 429,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+	}
+
 	const response = await resolve(event);
 
 	for (const [header, value] of Object.entries(securityHeaders)) {
-		if (header === 'Content-Security-Policy' && isOverlay(path)) {
-			// Overlays are embedded in OBS — allow framing from anywhere
-			const overlayCSP = value.replace("frame-ancestors 'self'", 'frame-ancestors *');
-			response.headers.set(header, overlayCSP);
-		} else if (header === 'Content-Security-Policy' && path.startsWith('/api/overlay-sandbox')) {
-			// Sandbox endpoint sets its own CSP — skip global
-			continue;
-		} else {
-			response.headers.set(header, value);
+		response.headers.set(header, value);
+	}
+
+	response.headers.delete('X-Powered-By');
+	if (!isPublic) {
+		response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+		response.headers.set('Pragma', 'no-cache');
+	}
+
+	// CSP is set by SvelteKit via svelte.config.js (with nonces) — only override per-route
+	if (isOverlay(path)) {
+		const csp = response.headers.get('content-security-policy');
+		if (csp) {
+			response.headers.set('content-security-policy', csp.replace("frame-ancestors 'self'", 'frame-ancestors *'));
+		}
+	}
+	// /api/overlay-sandbox sets its own sandboxed CSP; it must not be stripped here.
+
+	// Allow form-action to KC issuer (signout redirects to KC logout)
+	if (env.KEYCLOAK_ISSUER) {
+		const csp = response.headers.get('content-security-policy');
+		if (csp) {
+			const kcOrigin = new URL(env.KEYCLOAK_ISSUER).origin;
+			response.headers.set('content-security-policy', csp.replace("form-action 'self'", `form-action 'self' ${kcOrigin}`));
 		}
 	}
 

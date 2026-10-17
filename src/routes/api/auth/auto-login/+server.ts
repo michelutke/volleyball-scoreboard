@@ -3,8 +3,13 @@ import type { RequestHandler } from './$types';
 import { serverCredentialsSignIn } from '../../../../auth';
 import { verifyAndActivateSession } from '$lib/server/billing';
 import { env } from '$env/dynamic/private';
+import { isRateLimited } from '$lib/server/rate-limit.js';
 
 export const POST: RequestHandler = async (event) => {
+	if (isRateLimited(`auto-login:${event.getClientAddress()}`, { maxAttempts: 5, windowMs: 15 * 60 * 1000 })) {
+		return json({ ok: false, error: 'Too many attempts' }, { status: 429 });
+	}
+
 	const { email, password, sessionId } = (await event.request.json()) as {
 		email: string;
 		password: string;

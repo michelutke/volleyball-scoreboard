@@ -4,6 +4,7 @@
 	import ScoreboardDisplay from '$lib/components/ScoreboardDisplay.svelte';
 	import type { Lang } from '$lib/i18n/landing.js';
 	import { t } from '$lib/i18n/landing.js';
+	import { reveal } from '$lib/motion.js';
 
 	interface Props {
 		lang: Lang;
@@ -14,35 +15,35 @@
 	const INITIAL: MatchState = {
 		matchId: 0,
 		homeTeamName: 'VBC Thun',
-		guestTeamName: 'VBC Scorely',
+		guestTeamName: 'Spiez',
 		homeTeamLogo: null,
 		guestTeamLogo: null,
-		homePoints: 23,
+		homePoints: 24,
 		guestPoints: 22,
 		homeSets: 1,
 		guestSets: 1,
 		currentSet: 3,
 		setScores: [
-			{ home: 25, guest: 23 },
-			{ home: 22, guest: 25 }
+			{ home: 25, guest: 21 },
+			{ home: 23, guest: 25 }
 		],
 		serviceTeam: 'home',
 		showSetScores: true,
 		showJerseyColors: true,
 		status: 'live',
-		homeJerseyColor: '#cc0000',
-		guestJerseyColor: '#1e6ab5',
-		overlayBg: '#0f172a',
-		overlayBg2: '#1e293b',
-		overlayBgGradient: true,
-		overlayText: '#ffffff',
-		overlayRounded: true,
-		overlayDivider: '#334155',
-		overlaySatsBg: '#1e293b',
-		overlaySetScoreBg: '#1e293b',
-		scoreColor: '#0ea5e9',
-		scoreColor2: '#0284c7',
-		scoreColorGradient: true,
+		homeJerseyColor: 'var(--pulse)',
+		guestJerseyColor: 'var(--cool)',
+		overlayBg: 'var(--ink)',
+		overlayBg2: 'var(--grey-900)',
+		overlayBgGradient: false,
+		overlayText: 'var(--paper)',
+		overlayRounded: false,
+		overlayDivider: 'var(--grey-700)',
+		overlaySatsBg: 'var(--grey-700)',
+		overlaySetScoreBg: 'var(--grey-850)',
+		scoreColor: 'var(--paper)',
+		scoreColor2: 'var(--paper)',
+		scoreColorGradient: false,
 		designTemplateId: null
 	};
 
@@ -98,147 +99,265 @@
 
 	const tr = $derived(t[lang].demo);
 	const matchWon = $derived(match.status === 'finished');
+	const winnerName = $derived(match.homeSets > match.guestSets ? match.homeTeamName : match.guestTeamName);
 </script>
 
-<section id="demo" class="px-4 py-20 md:px-8" style="background: var(--color-bg-elevated);">
-	<div class="mx-auto max-w-5xl">
-		<!-- Header -->
-		<div class="mb-10 text-center">
-			<h2
-				class="mb-3 text-3xl font-bold"
-				style="color: var(--color-text-primary); font-family: 'Montserrat', sans-serif;"
-			>
-				{tr.title}
-			</h2>
-			<p class="text-base" style="color: var(--color-text-secondary);">{tr.subtitle}</p>
-		</div>
+<div id="demo" class="demo">
+	<p class="label k-mono">{tr.obsLabel}</p>
 
-		<!-- OBS Preview Frame -->
-		<div class="mb-8 overflow-hidden rounded-2xl border" style="border-color: var(--color-border-subtle); background: #050d1a;">
-			<div class="flex items-center gap-2 border-b px-4 py-2 text-xs"
-				style="border-color: var(--color-border-subtle); color: var(--color-text-tertiary);">
-				<span class="h-3 w-3 rounded-full bg-red-500/60"></span>
-				<span class="h-3 w-3 rounded-full bg-yellow-500/60"></span>
-				<span class="h-3 w-3 rounded-full bg-green-500/60"></span>
-				<span class="ml-2">{tr.obsLabel}</span>
+	<div class="panel">
+		<div class="stage">
+			<div class="bug-wrap">
+				<ScoreboardDisplay
+					{match}
+					homeTimeoutsUsed={homeTimeouts}
+					guestTimeoutsUsed={guestTimeouts}
+					{timeoutTeam}
+					layoutId="kinetic"
+				/>
 			</div>
-			<div class="flex items-center justify-center overflow-x-auto p-8 py-12">
-				<div class="shrink-0">
-					<ScoreboardDisplay
-						{match}
-						homeTimeoutsUsed={homeTimeouts}
-						guestTimeoutsUsed={guestTimeouts}
-						{timeoutTeam}
-					/>
+
+			{#if !matchWon}
+				<div class="side">
+					{#each ['home', 'guest'] as const as team}
+						<div class="side-cell">
+							<button
+								class="op op-minus"
+								onclick={() => doRemovePoint(team)}
+								disabled={(team === 'home' ? match.homePoints : match.guestPoints) === 0}
+								aria-label={tr.undo}
+							>−</button>
+							<button class="op op-plus" onclick={() => doAddPoint(team)} aria-label="+">+</button>
+							<span class="hint k-mono">{tr.point}</span>
+						</div>
+					{/each}
 				</div>
-			</div>
+			{/if}
 		</div>
 
-		<!-- Control Panel -->
 		{#if matchWon}
-			<div class="mb-6 rounded-xl border px-6 py-5 text-center"
-				style="border-color: var(--color-accent-border); background: var(--color-bg-panel-alt);">
-				<p class="text-xl font-bold" style="color: var(--color-text-primary);">
-					🏆 {match.homeSets > match.guestSets ? 'VBC Thun' : 'VBC Scorely'} — {tr.matchWon}
+			<div class="winner" use:reveal>
+				<p class="winner-title">{winnerName} {tr.matchWon}</p>
+				<p class="winner-score k-mono k-tabular">
+					{match.homeSets}{@render colon()}{match.guestSets}
 				</p>
-				<p class="mt-1 text-sm" style="color: var(--color-text-secondary);">
-					{match.homeSets}:{match.guestSets}
-				</p>
-				<button
-					onclick={doReset}
-					class="mt-4 rounded-lg px-5 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
-					style="background: var(--color-accent-mid); color: white;"
-				>
-					{tr.reset}
-				</button>
+				<button class="reset-btn" onclick={doReset}>{tr.reset}</button>
 			</div>
 		{:else}
-			<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-				<!-- Home Team Control -->
-				<div class="rounded-xl border p-5"
-					style="border-color: var(--color-border-subtle); background: var(--color-bg-panel-alt);">
-					<div class="mb-4 flex items-center gap-3">
-						<div class="h-5 w-5 rounded-full shadow-sm" style="background: {match.homeJerseyColor};"></div>
-						<span class="font-semibold" style="color: var(--color-text-primary);">VBC Thun</span>
-						<span class="ml-auto text-xs px-2 py-0.5 rounded"
-							style="background: var(--color-bg-elevated); color: var(--color-text-secondary);">
-							{tr.set} {match.currentSet}
-						</span>
-					</div>
-					<div class="mb-4 flex items-center justify-between gap-3">
-						<button
-							onclick={() => doRemovePoint('home')}
-							disabled={match.homePoints === 0}
-							class="h-12 w-12 rounded-lg text-2xl font-bold transition-all hover:opacity-80 disabled:opacity-30"
-							style="background: var(--color-bg-elevated); color: var(--color-text-primary);"
-						>−</button>
-						<span class="text-5xl font-extrabold tabular-nums" style="color: var(--color-text-primary);"
-							>{match.homePoints}</span
-						>
-						<button
-							onclick={() => doAddPoint('home')}
-							class="h-12 w-12 rounded-lg text-2xl font-bold transition-all hover:opacity-90"
-							style="background: var(--color-accent-mid); color: white;"
-						>+</button>
-					</div>
-					<button
-						onclick={() => doTimeout('home')}
-						disabled={homeTimeouts >= 2}
-						class="w-full rounded-lg py-2 text-sm font-medium transition-all hover:opacity-80 disabled:opacity-30"
-						style="background: {timeoutTeam === 'home' ? 'rgba(234,179,8,0.2)' : 'var(--color-bg-elevated)'}; color: var(--color-text-secondary); border: 1px solid var(--color-border-subtle);"
-					>
-						⏱ {tr.timeout} ({homeTimeouts}/2)
+			<div class="foot">
+				<p class="hint-line">{tr.hint}</p>
+				<div class="tools">
+					<button class="tool k-mono" class:on={timeoutTeam === 'home'} onclick={() => doTimeout('home')} disabled={homeTimeouts >= 2}>
+						{tr.timeout} {match.homeTeamName} <span>{homeTimeouts}/2</span>
 					</button>
-				</div>
-
-				<!-- Guest Team Control -->
-				<div class="rounded-xl border p-5"
-					style="border-color: var(--color-border-subtle); background: var(--color-bg-panel-alt);">
-					<div class="mb-4 flex items-center gap-3">
-						<div class="h-5 w-5 rounded-full shadow-sm" style="background: {match.guestJerseyColor};"></div>
-						<span class="font-semibold" style="color: var(--color-text-primary);">VBC Scorely</span>
-						<span class="ml-auto text-xs px-2 py-0.5 rounded"
-							style="background: var(--color-bg-elevated); color: var(--color-text-secondary);">
-							{tr.sets}: {match.homeSets}:{match.guestSets}
-						</span>
-					</div>
-					<div class="mb-4 flex items-center justify-between gap-3">
-						<button
-							onclick={() => doRemovePoint('guest')}
-							disabled={match.guestPoints === 0}
-							class="h-12 w-12 rounded-lg text-2xl font-bold transition-all hover:opacity-80 disabled:opacity-30"
-							style="background: var(--color-bg-elevated); color: var(--color-text-primary);"
-						>−</button>
-						<span class="text-5xl font-extrabold tabular-nums" style="color: var(--color-text-primary);"
-							>{match.guestPoints}</span
-						>
-						<button
-							onclick={() => doAddPoint('guest')}
-							class="h-12 w-12 rounded-lg text-2xl font-bold transition-all hover:opacity-90"
-							style="background: var(--color-accent-mid); color: white;"
-						>+</button>
-					</div>
-					<button
-						onclick={() => doTimeout('guest')}
-						disabled={guestTimeouts >= 2}
-						class="w-full rounded-lg py-2 text-sm font-medium transition-all hover:opacity-80 disabled:opacity-30"
-						style="background: {timeoutTeam === 'guest' ? 'rgba(234,179,8,0.2)' : 'var(--color-bg-elevated)'}; color: var(--color-text-secondary); border: 1px solid var(--color-border-subtle);"
-					>
-						⏱ {tr.timeout} ({guestTimeouts}/2)
+					<button class="tool k-mono" class:on={timeoutTeam === 'guest'} onclick={() => doTimeout('guest')} disabled={guestTimeouts >= 2}>
+						{tr.timeout} {match.guestTeamName} <span>{guestTimeouts}/2</span>
 					</button>
+					<button class="tool k-mono" onclick={doReset}>{tr.reset}</button>
 				</div>
-			</div>
-
-			<div class="mt-4 text-center">
-				<button
-					onclick={doReset}
-					class="text-sm transition-colors hover:opacity-80"
-					style="color: var(--color-text-tertiary);"
-				>
-					{tr.reset}
-				</button>
 			</div>
 		{/if}
-
 	</div>
-</section>
+
+	<p class="label k-mono">{tr.svBadge}</p>
+</div>
+
+{#snippet colon()}
+	<svg class="colon" viewBox="75.4 44.4 49.2 111.2" aria-hidden="true">
+		<circle cx="100" cy="69" r="24.6" fill="var(--pulse)" />
+		<circle cx="100" cy="131" r="24.6" fill="var(--pulse)" />
+	</svg>
+{/snippet}
+
+<style>
+	.demo {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		min-width: 0;
+	}
+
+	.label {
+		font-size: 10px;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--k-text-dim);
+		margin: 0;
+	}
+
+	.panel {
+		background: var(--k-surface-alt);
+		border: 1px solid var(--k-line);
+		padding: 16px;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		min-width: 0;
+	}
+
+	.stage {
+		display: flex;
+		align-items: flex-start;
+		gap: 12px;
+		min-width: 0;
+	}
+
+	.bug-wrap {
+		flex: 1;
+		display: flex;
+		min-width: 0;
+		overflow: hidden;
+	}
+	.bug-wrap :global(.bug) {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.side {
+		display: flex;
+		flex-direction: column;
+	}
+	.side-cell {
+		height: 64px;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.op {
+		width: 44px;
+		height: 44px;
+		border: 1px solid var(--k-text);
+		border-radius: 0;
+		background: transparent;
+		color: var(--k-text);
+		font-family: var(--font-mono);
+		font-size: 22px;
+		font-weight: var(--type-wght-bold);
+		line-height: 1;
+		cursor: pointer;
+		transition: background var(--dur-fast) var(--ease-snap),
+			color var(--dur-fast) var(--ease-snap);
+	}
+	.op-minus {
+		display: none;
+		border-color: var(--k-line);
+		color: var(--k-text-mute);
+	}
+	.op-plus {
+		background: var(--k-text);
+		color: var(--k-surface);
+	}
+	.op:hover:not(:disabled) {
+		background: var(--pulse);
+		border-color: var(--pulse);
+		color: var(--paper);
+	}
+	.op:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
+
+	.hint {
+		display: none;
+		font-size: 10px;
+		letter-spacing: 0.1em;
+		color: var(--k-text-dim);
+		white-space: nowrap;
+	}
+
+	.foot {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+	.hint-line {
+		font-size: 13px;
+		color: var(--k-text-mute);
+		margin: 0;
+	}
+	.tools {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.tool {
+		font-size: 11px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		padding: 8px 12px;
+		border: 1px solid var(--k-line);
+		border-radius: 0;
+		background: transparent;
+		color: var(--k-text-mute);
+		cursor: pointer;
+		transition: color var(--dur-fast) var(--ease-snap),
+			border-color var(--dur-fast) var(--ease-snap),
+			background var(--dur-fast) var(--ease-snap);
+	}
+	.tool:hover:not(:disabled) {
+		color: var(--k-text);
+		border-color: var(--k-text-mute);
+	}
+	.tool.on {
+		color: var(--ink);
+		border-color: var(--color-warning);
+		background: var(--color-warning);
+	}
+	.tool:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+
+	.winner {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 12px;
+		padding: 16px 0 0;
+		border-top: 1px solid var(--k-line);
+	}
+	.winner-title {
+		font-weight: var(--type-wght-display);
+		font-size: 20px;
+		margin: 0;
+	}
+	.winner-score {
+		display: inline-flex;
+		align-items: center;
+		font-size: 39px;
+		font-weight: 700;
+		line-height: 1;
+		margin: 0;
+	}
+	.colon {
+		height: 0.467em;
+		margin-inline: 0.215em;
+	}
+	.reset-btn {
+		background: transparent;
+		color: var(--k-text);
+		border: 1px solid var(--k-text);
+		border-radius: 0;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		padding: 10px 16px;
+		cursor: pointer;
+	}
+	.reset-btn:hover {
+		background: var(--k-text);
+		color: var(--k-surface);
+	}
+
+	@media (min-width: 640px) {
+		.op-minus,
+		.hint {
+			display: inline-block;
+		}
+		.panel {
+			padding: 24px;
+		}
+	}
+</style>

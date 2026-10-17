@@ -5,6 +5,8 @@ import { matchSSEEmitter } from '$lib/server/sse.js';
 import { toMatchState } from '$lib/server/match-state.js';
 import { applyTemplateToMatch } from '$lib/server/design-template.js';
 import { addPoint, removePoint, resetMatch, isMatchOver } from '$lib/volleyball.js';
+import { matchIdActionSchema, matchIdSettingsSchema } from '$lib/server/validation.js';
+import { renewControlToken, statusChange } from '$lib/server/match-service';
 import { and, eq, desc } from 'drizzle-orm';
 import type { MatchState } from '$lib/types.js';
 import type { RequestHandler } from './$types.js';
@@ -30,9 +32,13 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
 	const { orgId } = locals;
 	const matchId = parseInt(params.matchId);
-	const body = await request.json();
+	const raw = await request.json();
 
-	if (body.action) {
+	if (raw.action) {
+		const parsed = matchIdActionSchema.safeParse(raw);
+		if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+		const body = parsed.data;
+
 		const currentScore = await db.query.scores.findFirst({
 			where: eq(scores.matchId, matchId),
 			orderBy: desc(scores.createdAt)
@@ -49,10 +55,10 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		let newState: MatchState;
 		switch (body.action) {
 			case 'addPoint':
-				newState = addPoint(state, body.team);
+				newState = addPoint(state, body.team!);
 				break;
 			case 'removePoint':
-				newState = removePoint(state, body.team);
+				newState = removePoint(state, body.team!);
 				break;
 			case 'reset':
 				newState = resetMatch(state);
@@ -71,10 +77,14 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 				else if (body.team === 'guest' && state.guestSets > 0) newState.guestSets--;
 				break;
 			case 'generateControlToken': {
-			const token = crypto.randomUUID();
-			await db.update(matches).set({ controlToken: token, updatedAt: new Date() }).where(and(eq(matches.orgId, orgId), eq(matches.id, matchId)));
-			return json({ controlToken: token });
-		}
+				const result = await renewControlToken(orgId, matchId);
+				if (!result.ok) {
+					return result.reason === 'finished'
+						? json({ error: 'Match is finished' }, { status: 409 })
+						: json({ error: 'Match not found' }, { status: 404 });
+				}
+				return json({ controlToken: result.token });
+			}
 		case 'undo': {
 				const allScores = await db.query.scores.findMany({
 					where: eq(scores.matchId, matchId),
@@ -88,7 +98,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 				const undoState = toMatchState(match, previousScore);
 				const correctStatus = isMatchOver(undoState.homeSets, undoState.guestSets) ? 'finished' : 'live';
 				if (correctStatus !== match.status) {
-					await db.update(matches).set({ status: correctStatus, updatedAt: new Date() }).where(eq(matches.id, matchId));
+					await db.update(matches).set(statusChange(correctStatus)).where(eq(matches.id, matchId));
 					undoState.status = correctStatus;
 				}
 				matchSSEEmitter.emit(matchId, { type: 'score', data: undoState });
@@ -99,7 +109,7 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		}
 
 		if (newState.status !== match.status) {
-			await db.update(matches).set({ status: newState.status, updatedAt: new Date() }).where(eq(matches.id, matchId));
+			await db.update(matches).set(statusChange(newState.status)).where(eq(matches.id, matchId));
 		}
 
 		await db.insert(scores).values({
@@ -117,13 +127,18 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		return json(newState);
 	}
 
+	// Settings update
+	const settingsParsed = matchIdSettingsSchema.safeParse(raw);
+	if (!settingsParsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+	const body = settingsParsed.data;
+
 	// Apply design template if selected
-	if (body.designTemplateId !== undefined) {
+	if (body.designTemplateId != null) {
 		await applyTemplateToMatch(body.designTemplateId, matchId, orgId);
 	}
 
-	// Settings update (scorer-editable fields only: team names, jerseys, logos)
-	const settingsFields = ['homeTeamName', 'guestTeamName', 'homeJerseyColor', 'guestJerseyColor', 'showJerseyColors', 'showSetScores', 'homeTeamLogo', 'guestTeamLogo'] as const;
+	// Settings update (scorer-editable fields only: team names, jerseys, logos, scoreboard layout)
+	const settingsFields = ['homeTeamName', 'guestTeamName', 'homeJerseyColor', 'guestJerseyColor', 'showJerseyColors', 'showSetScores', 'homeTeamLogo', 'guestTeamLogo', 'scoreboardLayout', 'scoreboardOptions'] as const;
 	const updateData: Record<string, unknown> = { updatedAt: new Date() };
 	for (const field of settingsFields) {
 		if (body[field] !== undefined) updateData[field] = body[field];
@@ -143,5 +158,8 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 
 	const state = toMatchState(match, score);
 	matchSSEEmitter.emit(matchId, { type: 'match', data: state });
+	if (body.designTemplateId != null || body.scoreboardLayout !== undefined || body.scoreboardOptions !== undefined) {
+		matchSSEEmitter.emit(matchId, { type: 'design' });
+	}
 	return json(state);
 };

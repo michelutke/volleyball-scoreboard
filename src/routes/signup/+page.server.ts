@@ -41,7 +41,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Alle Felder sind erforderlich' });
 		}
 		if (!/^[a-z0-9._-]{3,30}$/.test(username)) {
-			return fail(400, { error: 'Benutzername: 3–30 Zeichen, nur Buchstaben, Zahlen, ., _, -' });
+			return fail(400, { error: 'Benutzername: 3 bis 30 Zeichen, nur Buchstaben, Zahlen, ., _, -' });
 		}
 		if (password.length < 8) {
 			return fail(400, { error: 'Passwort muss mindestens 8 Zeichen haben' });
@@ -62,7 +62,7 @@ export const actions: Actions = {
 		try {
 			userId = await createUser(email, { firstName, lastName, username });
 			await setUserPassword(userId, password);
-			const randomId = Math.random().toString(36).slice(2, 8).toUpperCase();
+			const randomId = crypto.randomUUID().slice(0, 8).toUpperCase();
 			const orgName = `${username}-${randomId}`;
 			const orgAlias = orgName.toLowerCase();
 			kcOrgId = await createOrganization(orgName);

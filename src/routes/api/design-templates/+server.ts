@@ -3,6 +3,7 @@ import { db } from '$lib/server/db/index.js';
 import { designTemplates } from '$lib/server/db/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { templateColorFields } from '$lib/server/design-template.js';
+import { designTemplateCreateSchema } from '$lib/server/validation.js';
 import type { RequestHandler } from './$types.js';
 
 export const GET: RequestHandler = async ({ locals }) => {
@@ -18,8 +19,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const { orgId, isAdmin } = locals;
 	if (!isAdmin) return json({ error: 'Forbidden' }, { status: 403 });
 
-	const body = await request.json();
-	if (!body.name?.trim()) return json({ error: 'Name is required' }, { status: 400 });
+	const raw = await request.json();
+	const parsed = designTemplateCreateSchema.safeParse(raw);
+	if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+	const body = parsed.data;
 
 	const values: Record<string, unknown> = {
 		orgId,

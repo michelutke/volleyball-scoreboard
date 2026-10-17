@@ -271,12 +271,17 @@ export async function bootstrapKcOrgId(): Promise<void> {
 	}
 }
 
+let masterTokenCache: { token: string; expiresAt: number } | null = null;
+let masterTokenFailed = false;
+
 async function getMasterAdminToken(): Promise<string | null> {
 	if (!env.KEYCLOAK_ADMIN_URL) return null;
 	if (!env.KEYCLOAK_ADMIN_PASSWORD) {
 		console.warn('[keycloak] KEYCLOAK_ADMIN_PASSWORD not set — skipping master admin auth');
 		return null;
 	}
+	if (masterTokenFailed) return null;
+	if (masterTokenCache && Date.now() < masterTokenCache.expiresAt) return masterTokenCache.token;
 	try {
 		const res = await fetch(`${env.KEYCLOAK_ADMIN_URL}/realms/master/protocol/openid-connect/token`, {
 			method: 'POST',
@@ -288,10 +293,16 @@ async function getMasterAdminToken(): Promise<string | null> {
 				password: env.KEYCLOAK_ADMIN_PASSWORD
 			})
 		});
-		if (!res.ok) return null;
-		const data: { access_token: string } = await res.json();
+		if (!res.ok) {
+			console.warn('[keycloak] master admin auth failed:', res.status, '— will not retry this startup');
+			masterTokenFailed = true;
+			return null;
+		}
+		const data: { access_token: string; expires_in: number } = await res.json();
+		masterTokenCache = { token: data.access_token, expiresAt: Date.now() + (data.expires_in - 60) * 1000 };
 		return data.access_token;
 	} catch {
+		masterTokenFailed = true;
 		return null;
 	}
 }
@@ -300,7 +311,7 @@ export async function ensureOrganizationMapper(): Promise<void> {
 	if (!env.KEYCLOAK_ADMIN_URL) return;
 	try {
 		const clientId = env.KEYCLOAK_CLIENT_ID ?? 'scoring-app';
-		const realm = env.KEYCLOAK_REALM ?? 'scoring';
+		const realm = env.KEYCLOAK_REALM ?? 'master';
 		const base = `${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}`;
 
 		// service account may lack manage-clients — try it first, fall back to master admin
@@ -388,14 +399,23 @@ export async function ensureRealmSettings(): Promise<void> {
 			console.warn('[keycloak] ensureRealmSettings: no master admin token');
 			return;
 		}
-		const realm = env.KEYCLOAK_REALM ?? 'scoring';
+		const realm = env.KEYCLOAK_REALM ?? 'master';
 		const res = await fetch(`${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}`, {
 			method: 'PUT',
 			headers: { Authorization: `Bearer ${masterToken}`, 'Content-Type': 'application/json' },
-			body: JSON.stringify({ registrationEmailAsUsername: false })
+			// realm.json only applies on first import, so settings the app relies on are patched here.
+			// resetPasswordAllowed backs the "Passwort vergessen?" link on /signin; German first for
+			// Keycloak's built in pages (password reset, info, error).
+			body: JSON.stringify({
+				registrationEmailAsUsername: false,
+				resetPasswordAllowed: true,
+				internationalizationEnabled: true,
+				supportedLocales: ['de', 'en'],
+				defaultLocale: 'de'
+			})
 		});
 		if (!res.ok) console.warn('[keycloak] ensureRealmSettings failed:', res.status);
-		else console.log('[keycloak] realm settings ensured: registrationEmailAsUsername=false');
+		else console.log('[keycloak] realm settings ensured: registrationEmailAsUsername=false, resetPasswordAllowed=true, defaultLocale=de');
 	} catch (e) {
 		console.warn('[keycloak] ensureRealmSettings failed (non-fatal):', e);
 	}
@@ -403,30 +423,12 @@ export async function ensureRealmSettings(): Promise<void> {
 
 export async function ensureDirectAccessGrants(): Promise<void> {
 	if (!env.KEYCLOAK_ADMIN_URL) return;
-	if (!env.KEYCLOAK_ADMIN_PASSWORD) {
-		console.warn('[keycloak] ensureDirectAccessGrants: KEYCLOAK_ADMIN_PASSWORD not set — skipping');
-		return;
-	}
 	try {
-		const masterTokenRes = await fetch(`${env.KEYCLOAK_ADMIN_URL}/realms/master/protocol/openid-connect/token`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-			body: new URLSearchParams({
-				grant_type: 'password',
-				client_id: 'admin-cli',
-				username: env.KEYCLOAK_ADMIN_USERNAME ?? 'admin',
-				password: env.KEYCLOAK_ADMIN_PASSWORD
-			})
-		});
-		if (!masterTokenRes.ok) {
-			const body = await masterTokenRes.text();
-			console.warn('[keycloak] ensureDirectAccessGrants: master token failed:', masterTokenRes.status, body);
-			return;
-		}
-		const { access_token } = await masterTokenRes.json() as { access_token: string };
+		const masterToken = await getMasterAdminToken();
+		if (!masterToken) return;
 		const realm = env.KEYCLOAK_REALM ?? 'scoring';
 		const base = `${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}`;
-		const headers = { Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json' };
+		const headers = { Authorization: `Bearer ${masterToken}`, 'Content-Type': 'application/json' };
 		const clientId = env.KEYCLOAK_CLIENT_ID ?? 'scoring-app';
 		const searchRes = await fetch(`${base}/clients?clientId=${encodeURIComponent(clientId)}`, { headers });
 		if (!searchRes.ok) return;
@@ -467,10 +469,21 @@ export async function getKcOrgIdFromAlias(alias: string): Promise<string | undef
 		}
 		// KC may not support ?exact=true — fall back to unfiltered search
 		const res2 = await kcFetch(`/organizations?search=${encodeURIComponent(alias)}`);
-		if (!res2.ok) return undefined;
-		const orgs: { id: string; alias: string }[] = await res2.json();
+		if (res2.ok) {
+			const orgs: { id: string; alias: string }[] = await res2.json();
+			const match = orgs.find((o) => o.alias === alias);
+			if (match) return match.id;
+		}
+		// ?search= matches name/domain only; alias differs from name for most orgs. List and match alias.
+		const all = await kcFetch('/organizations?max=200');
+		if (!all.ok) {
+			console.warn('[keycloak] getKcOrgIdFromAlias: listing organizations failed:', all.status);
+			return undefined;
+		}
+		const orgs: { id: string; alias: string }[] = await all.json();
 		return orgs.find((o) => o.alias === alias)?.id;
-	} catch {
+	} catch (e) {
+		console.warn('[keycloak] getKcOrgIdFromAlias failed:', e);
 		return undefined;
 	}
 }
@@ -506,7 +519,7 @@ export async function getKcOrgIdForUser(userId: string): Promise<string | undefi
 	console.warn('[keycloak] getKcOrgIdForUser SA failed:', res.status, 'userId:', userId, '— trying master admin');
 	const masterToken = await getMasterAdminToken();
 	if (!masterToken) return undefined;
-	const realm = env.KEYCLOAK_REALM ?? 'scoring';
+	const realm = env.KEYCLOAK_REALM ?? 'master';
 	const fallback = await fetch(`${env.KEYCLOAK_ADMIN_URL}/admin/realms/${realm}/users/${userId}/organizations`, {
 		headers: { Authorization: `Bearer ${masterToken}` }
 	});

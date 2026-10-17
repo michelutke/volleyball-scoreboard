@@ -9,7 +9,7 @@ export interface AccentPalette {
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
-export const DEFAULT_ACCENT = '#38bdf8';
+export const DEFAULT_ACCENT = '#ff3d2e';
 
 function hexToHsl(hex: string): [number, number, number] {
 	const r = parseInt(hex.slice(1, 3), 16) / 255;
@@ -41,14 +41,26 @@ function hslToHex(h: number, s: number, l: number): string {
 	return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
 }
 
-export const ACCENT_CSS_PROPS: readonly (readonly [string, keyof AccentPalette])[] = [
-	['--color-accent', 'accent'],
-	['--color-accent-mid', 'accentMid'],
-	['--color-accent-dark', 'accentDark'],
-	['--color-accent-deep', 'accentDeep'],
-	['--color-accent-deepest', 'accentDeepest'],
-	['--color-accent-border', 'accentBorder']
+/**
+ * Club accent custom properties. The club colour is only allowed in club overlays and
+ * club badges, never in the Scorely UI chrome, so it lives in its own `--club-accent*`
+ * namespace and is scoped to the scoreboard wrapper instead of the document root.
+ */
+export const CLUB_ACCENT_CSS_PROPS: readonly (readonly [string, keyof AccentPalette])[] = [
+	['--club-accent', 'accent'],
+	['--club-accent-mid', 'accentMid'],
+	['--club-accent-dark', 'accentDark'],
+	['--club-accent-deep', 'accentDeep'],
+	['--club-accent-deepest', 'accentDeepest'],
+	['--club-accent-border', 'accentBorder']
 ];
+
+/** Inline style string with the club accent palette, for club overlay and badge wrappers. */
+export function clubAccentStyle(hex: string | null | undefined, mode: 'light' | 'dark' = 'dark'): string {
+	if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return '';
+	const palette = generateAccentPalette(hex, mode);
+	return CLUB_ACCENT_CSS_PROPS.map(([prop, key]) => `${prop}: ${palette[key]}`).join('; ');
+}
 
 export function generateAccentPalette(hex: string, mode: 'light' | 'dark' = 'dark'): AccentPalette {
 	const [h, s] = hexToHsl(hex);
@@ -72,14 +84,54 @@ export function generateAccentPalette(hex: string, mode: 'light' | 'dark' = 'dar
 	};
 }
 
+export type MotionMode = 'full' | 'damped' | 'static' | 'system';
+
+export const THEME_COOKIE = 'scoring-theme';
+export const MOTION_COOKIE = 'scoring-motion';
+
+function readCookie(name: string): string | null {
+	if (typeof document === 'undefined') return null;
+	const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+	return match ? decodeURIComponent(match[1]) : null;
+}
+
+function writeCookie(name: string, value: string): void {
+	if (typeof document === 'undefined') return;
+	const oneYear = 60 * 60 * 24 * 365;
+	const secure = location.protocol === 'https:' ? '; Secure' : '';
+	document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${oneYear}; SameSite=Lax${secure}`;
+}
+
 export function getStoredTheme(): ThemeMode {
+	const fromCookie = readCookie(THEME_COOKIE) as ThemeMode | null;
+	if (fromCookie === 'light' || fromCookie === 'dark' || fromCookie === 'system') return fromCookie;
 	if (typeof localStorage === 'undefined') return 'system';
 	return (localStorage.getItem('theme') as ThemeMode) ?? 'system';
 }
 
 export function setStoredTheme(mode: ThemeMode): void {
 	localStorage.setItem('theme', mode);
+	writeCookie(THEME_COOKIE, mode);
 	window.dispatchEvent(new CustomEvent('themechange', { detail: mode }));
+}
+
+export function getStoredMotion(): MotionMode {
+	const fromCookie = readCookie(MOTION_COOKIE) as MotionMode | null;
+	if (fromCookie === 'full' || fromCookie === 'damped' || fromCookie === 'static' || fromCookie === 'system') {
+		return fromCookie;
+	}
+	return 'system';
+}
+
+export function setStoredMotion(mode: MotionMode): void {
+	writeCookie(MOTION_COOKIE, mode);
+	window.dispatchEvent(new CustomEvent('motionchange', { detail: mode }));
+}
+
+export function getEffectiveMotion(mode: MotionMode): 'full' | 'damped' | 'static' {
+	if (mode === 'full' || mode === 'damped' || mode === 'static') return mode;
+	if (typeof window === 'undefined') return 'full';
+	return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'damped' : 'full';
 }
 
 export function getEffectiveTheme(mode: ThemeMode): 'light' | 'dark' {

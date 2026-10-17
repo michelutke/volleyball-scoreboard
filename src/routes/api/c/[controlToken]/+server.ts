@@ -4,18 +4,22 @@ import { matches, scores } from '$lib/server/db/schema.js';
 import { matchSSEEmitter } from '$lib/server/sse.js';
 import { toMatchState } from '$lib/server/match-state.js';
 import { addPoint, removePoint, resetMatch, isMatchOver } from '$lib/volleyball.js';
+import { controlActionSchema } from '$lib/server/validation.js';
+import { getGuestMatch, statusChange } from '$lib/server/match-service';
 import { eq, desc } from 'drizzle-orm';
 import type { MatchState } from '$lib/types.js';
 import type { RequestHandler } from './$types.js';
 
 export const PUT: RequestHandler = async ({ params, request }) => {
 	const { controlToken } = params;
-	const body = await request.json();
+	const raw = await request.json();
+	const parsed = controlActionSchema.safeParse(raw);
+	if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+	const body = parsed.data;
 
-	const match = await db.query.matches.findFirst({
-		where: eq(matches.controlToken, controlToken)
-	});
+	const match = await getGuestMatch(controlToken);
 	if (!match) return json({ error: 'Match not found' }, { status: 404 });
+	if (match === 'expired') return json({ error: 'Link expired' }, { status: 410 });
 
 	const matchId = match.id;
 
@@ -23,17 +27,17 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 		where: eq(scores.matchId, matchId),
 		orderBy: desc(scores.createdAt)
 	});
-	if (!currentScore) return json({ error: 'Score not found' }, { status: 404 });
+	if (!currentScore) return json({ error: 'Match not started' }, { status: 409 });
 
 	const state = toMatchState(match, currentScore);
 
 	let newState: MatchState;
 	switch (body.action) {
 		case 'addPoint':
-			newState = addPoint(state, body.team);
+			newState = addPoint(state, body.team!);
 			break;
 		case 'removePoint':
-			newState = removePoint(state, body.team);
+			newState = removePoint(state, body.team!);
 			break;
 		case 'reset':
 			newState = resetMatch(state);
@@ -64,7 +68,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 			const undoState = toMatchState(match, previousScore);
 			const correctStatus = isMatchOver(undoState.homeSets, undoState.guestSets) ? 'finished' : 'live';
 			if (correctStatus !== match.status) {
-				await db.update(matches).set({ status: correctStatus, updatedAt: new Date() }).where(eq(matches.id, matchId));
+				await db.update(matches).set(statusChange(correctStatus)).where(eq(matches.id, matchId));
 				undoState.status = correctStatus;
 			}
 			matchSSEEmitter.emit(matchId, { type: 'score', data: undoState });
@@ -75,7 +79,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 	}
 
 	if (newState.status !== match.status) {
-		await db.update(matches).set({ status: newState.status, updatedAt: new Date() }).where(eq(matches.id, matchId));
+		await db.update(matches).set(statusChange(newState.status)).where(eq(matches.id, matchId));
 	}
 
 	await db.insert(scores).values({

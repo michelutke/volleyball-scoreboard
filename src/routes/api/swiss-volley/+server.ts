@@ -23,7 +23,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 				return json({ error: 'Unknown action' }, { status: 400 });
 		}
 	} catch (err) {
-		const message = err instanceof Error ? err.message : 'Unknown error';
-		return json({ error: message }, { status: 500 });
+		console.error('[swiss-volley] request failed:', err);
+		return json({ error: 'Swiss Volley Abfrage fehlgeschlagen' }, { status: 500 });
 	}
 };

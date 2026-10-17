@@ -2,14 +2,19 @@ import { json } from '@sveltejs/kit';
 import { db } from '$lib/server/db/index.js';
 import { matches, timeouts, scores } from '$lib/server/db/schema.js';
 import { emitAll } from '$lib/server/sse.js';
+import { timeoutSchema } from '$lib/server/validation.js';
 import { eq, and, desc } from 'drizzle-orm';
 import type { RequestHandler } from './$types.js';
 
-export const POST: RequestHandler = async ({ request }) => {
-	const { matchId, team } = await request.json();
+export const POST: RequestHandler = async ({ request, locals }) => {
+	const { orgId } = locals;
+	const raw = await request.json();
+	const parsed = timeoutSchema.safeParse(raw);
+	if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+	const { matchId, team } = parsed.data;
 
 	const match = await db.query.matches.findFirst({
-		where: eq(matches.id, matchId)
+		where: and(eq(matches.orgId, orgId), eq(matches.id, matchId))
 	});
 	if (!match) return json({ error: 'Match not found' }, { status: 404 });
 
@@ -44,11 +49,15 @@ export const POST: RequestHandler = async ({ request }) => {
 	return json({ ok: true, timeoutsUsed: usedTimeouts.length + 1 });
 };
 
-export const DELETE: RequestHandler = async ({ request }) => {
-	const { matchId, team } = await request.json();
+export const DELETE: RequestHandler = async ({ request, locals }) => {
+	const { orgId } = locals;
+	const raw = await request.json();
+	const parsed = timeoutSchema.safeParse(raw);
+	if (!parsed.success) return json({ error: 'Invalid input' }, { status: 400 });
+	const { matchId, team } = parsed.data;
 
 	const match = await db.query.matches.findFirst({
-		where: eq(matches.id, matchId)
+		where: and(eq(matches.orgId, orgId), eq(matches.id, matchId))
 	});
 	if (!match) return json({ error: 'Match not found' }, { status: 404 });
 

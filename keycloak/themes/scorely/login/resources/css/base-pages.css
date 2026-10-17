@@ -1,0 +1,104 @@
+/* Brand styles for Keycloak base templates (template.ftl layout), scoped by data-page-id */
+
+body[data-page-id] > div {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#kc-header { margin-bottom: 2rem; }
+#kc-header-wrapper {
+    width: 96px;
+    height: 101px;
+    background: url('../img/lockup-stacked-on-ink.svg') center / contain no-repeat;
+    font-size: 0;
+    color: transparent;
+}
+
+body[data-page-id] header,
+#kc-content,
+#kc-content-wrapper { width: 100%; }
+
+#kc-page-title {
+    font-size: 1.5625rem;
+    font-weight: 780;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    margin-bottom: 1.25rem;
+    text-align: center;
+}
+
+#kc-locale { display: none; }
+
+#kc-content-wrapper [class^='alert-'] {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--grey-700);
+    background: var(--grey-900);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+#kc-content-wrapper .alert-success { color: var(--paper); }
+
+#kc-content-wrapper form {
+    width: 100%;
+    max-width: none;
+    align-items: stretch;
+    gap: 1rem;
+}
+
+#kc-content-wrapper label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--grey-300);
+}
+
+#kc-content-wrapper input[type='text'],
+#kc-content-wrapper input[type='email'],
+#kc-content-wrapper input[type='password'] {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--grey-900);
+    border: 1px solid var(--grey-700);
+    border-radius: 0;
+    color: var(--paper);
+    font: inherit;
+    font-size: 1rem;
+}
+#kc-content-wrapper input:focus-visible { outline: 2px solid var(--cool); outline-offset: 0; }
+
+#kc-content-wrapper input[type='submit'] {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 999px;
+    background: var(--pulse);
+    color: var(--paper);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 680;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+#kc-content-wrapper input[type='submit']:hover { background: var(--pulse-soft); }
+#kc-content-wrapper input[type='submit']:active { background: var(--pulse-deep); }
+
+#kc-form-options { text-align: center; margin-bottom: 1rem; font-size: 0.875rem; }
+#kc-form-buttons { width: 100%; }
+
+#kc-content-wrapper a { color: var(--cool); text-decoration: none; }
+#kc-content-wrapper a:hover { color: var(--cool-soft); text-decoration: underline; }
+
+#kc-info { margin-top: 1.5rem; text-align: center; font-size: 0.875rem; line-height: 1.5; color: var(--grey-300); }
+#kc-content-wrapper p,
+.instruction { line-height: 1.5; color: var(--grey-300); text-align: center; }
+
+[id^='input-error'] { display: block; margin-top: 0.375rem; font-size: 0.8125rem; color: var(--error); }

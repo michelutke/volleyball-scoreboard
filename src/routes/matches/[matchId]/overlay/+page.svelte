@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { MatchState, SSEEvent, Team } from '$lib/types.js';
-	import ScoreboardDisplay from '$lib/components/ScoreboardDisplay.svelte';
+	import OverlayRenderer from '$lib/components/OverlayRenderer.svelte';
 
 	let { data } = $props();
 
@@ -39,7 +40,6 @@
 
 	let timeoutTeam = $state<Team | null>(null);
 	let timeoutTimer = $state<ReturnType<typeof setTimeout> | null>(null);
-	let iframeEl = $state<HTMLIFrameElement | null>(null);
 
 	function startTimeout(team: Team) {
 		if (timeoutTimer) clearTimeout(timeoutTimer);
@@ -50,57 +50,20 @@
 		}, 30000);
 	}
 
-	function buildOverlayData(m: MatchState, ht: number, gt: number, tt: Team | null) {
-		const homeMax = m.homeSets;
-		const guestMax = m.guestSets;
-		const totalSets = homeMax + guestMax;
-		const isMatchPoint =
-			m.status === 'live' &&
-			((m.homePoints >= 14 && m.homePoints > m.guestPoints && m.homeSets === 2) ||
-				(m.guestPoints >= 14 && m.guestPoints > m.homePoints && m.guestSets === 2));
-		const isSetPoint =
-			!isMatchPoint &&
-			m.status === 'live' &&
-			((m.homePoints >= 24 && m.homePoints > m.guestPoints) ||
-				(m.guestPoints >= 24 && m.guestPoints > m.homePoints) ||
-				(m.currentSet === 5 && ((m.homePoints >= 14 && m.homePoints > m.guestPoints) || (m.guestPoints >= 14 && m.guestPoints > m.homePoints))));
-
-		return {
-			homeTeam: m.homeTeamName,
-			guestTeam: m.guestTeamName,
-			homePoints: m.homePoints,
-			guestPoints: m.guestPoints,
-			homeSets: m.homeSets,
-			guestSets: m.guestSets,
-			currentSet: m.currentSet,
-			setScores: m.setScores.map((s) => ({ home: s.home, guest: s.guest })),
-			serviceTeam: m.serviceTeam,
-			status: m.status,
-			homeJerseyColor: m.homeJerseyColor,
-			guestJerseyColor: m.guestJerseyColor,
-			homeTeamLogo: m.homeTeamLogo,
-			guestTeamLogo: m.guestTeamLogo,
-			timeout: { active: tt !== null, team: tt },
-			isSetPoint,
-			isMatchPoint
-		};
-	}
-
-	function postToIframe(m: MatchState) {
-		if (!iframeEl?.contentWindow) return;
-		iframeEl.contentWindow.postMessage(
-			{ type: 'matchState', data: buildOverlayData(m, homeTimeoutsUsed, guestTimeoutsUsed, timeoutTeam) },
-			'*'
-		);
-	}
-
 	onMount(() => {
 		const es = new EventSource(`/api/matches/${matchId}/stream`);
 
 		es.onmessage = (event) => {
 			const parsed: SSEEvent = JSON.parse(event.data);
 
+			if (parsed.type === 'design') {
+				invalidateAll();
+			}
+
 			if (parsed.type === 'score' || parsed.type === 'match') {
+				if (parsed.type === 'match' && parsed.data.designTemplateId !== data.templateId) {
+					invalidateAll();
+				}
 				const newSet = parsed.data.currentSet;
 				if (newSet !== prevSet) {
 					homeTimeoutsUsed = 0;
@@ -108,7 +71,6 @@
 					prevSet = newSet;
 				}
 				match = parsed.data;
-				if (data.customCode && match) postToIframe(match);
 			}
 
 			if (parsed.type === 'timeout') {
@@ -123,7 +85,6 @@
 					if (parsed.data.team === 'home') homeTimeoutsUsed++;
 					else guestTimeoutsUsed++;
 				}
-				if (data.customCode && match) postToIframe(match);
 			}
 		};
 
@@ -135,9 +96,9 @@
 </script>
 
 <svelte:head>
-	<title>Overlay — Match #{matchId}</title>
+	<title>Overlay · Match #{matchId}</title>
 	<style>
-		body {
+		html, body {
 			background: transparent !important;
 			margin: 0;
 			overflow: hidden;
@@ -147,22 +108,16 @@
 
 {#if match}
 	<div class="overlay" style={overlayStyle}>
-		{#if data.customCode && data.templateId}
-			<iframe
-				bind:this={iframeEl}
-				src="/api/overlay-sandbox/{data.templateId}"
-				sandbox="allow-scripts"
-				title="Custom overlay"
-				onload={() => { if (match) postToIframe(match); }}
-			></iframe>
-		{:else}
-			<ScoreboardDisplay
-				{match}
-				{homeTimeoutsUsed}
-				{guestTimeoutsUsed}
-				{timeoutTeam}
-			/>
-		{/if}
+		<OverlayRenderer
+			{match}
+			{homeTimeoutsUsed}
+			{guestTimeoutsUsed}
+			{timeoutTeam}
+			customCode={data.customCode}
+			templateId={data.templateId}
+			layoutId={data.scoreboardLayout}
+			options={(data.scoreboardOptions ?? {}) as Record<string, string | number | boolean>}
+		/>
 	</div>
 {/if}
 
@@ -170,11 +125,5 @@
 	.overlay {
 		position: fixed;
 		z-index: 9999;
-	}
-	iframe {
-		border: none;
-		background: transparent;
-		width: 100vw;
-		height: 100vh;
 	}
 </style>
