@@ -11,4 +11,9 @@ describe('getLayout', () => {
 	it('keeps an explicitly chosen Classic club layout', () => {
 		expect(getLayout('classic').id).toBe('classic');
 	});
+
+	it('offers the pause layouts as additional choices', () => {
+		expect(getLayout('drawer').id).toBe('drawer');
+		expect(getLayout('colon').id).toBe('colon');
+	});
 });
