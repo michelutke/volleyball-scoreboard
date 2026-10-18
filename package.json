@@ -40,15 +40,18 @@
 	"dependencies": {
 		"@auth/sveltekit": "^1.11.3",
 		"@fontsource-variable/inter": "^5.2.8",
+		"@resvg/resvg-js": "2.6.2",
 		"@stripe/stripe-js": "^8.11.0",
 		"@sveltejs/adapter-node": "^5.5.7",
 		"drizzle-orm": "^0.45.4",
 		"jose": "^6.2.3",
+		"jpeg-js": "0.4.4",
 		"lru-cache": "^11.2.7",
 		"lucide-svelte": "^1.0.1",
 		"motion": "^12.38.0",
 		"postgres": "^3.4.9",
 		"qrcode": "^1.5.4",
+		"satori": "0.62.0",
 		"stripe": "^20.4.1",
 		"zod": "^4.3.6"
 	},

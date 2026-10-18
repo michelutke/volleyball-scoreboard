@@ -1,4 +1,10 @@
-import { pgTable, primaryKey, serial, text, integer, boolean, timestamp, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, primaryKey, serial, text, integer, boolean, timestamp, jsonb, customType } from 'drizzle-orm/pg-core';
+
+const bytea = customType<{ data: Uint8Array<ArrayBuffer>; driverData: Buffer }>({
+	dataType: () => 'bytea',
+	toDriver: (value) => Buffer.from(value),
+	fromDriver: (value) => new Uint8Array(value)
+});
 
 export const settings = pgTable('settings', {
 	orgId: text('org_id').notNull().default('default'),
@@ -98,3 +104,11 @@ export const timeouts = pgTable('timeouts', {
 	set: integer('set').notNull(),
 	createdAt: timestamp('created_at').notNull().defaultNow()
 });
+
+export const orgImages = pgTable('org_images', {
+	orgId: text('org_id').notNull(),
+	kind: text('kind', { enum: ['thumbnail_photo', 'club_logo'] }).notNull(),
+	contentType: text('content_type').notNull(),
+	data: bytea('data').notNull(),
+	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+}, (t) => [primaryKey({ columns: [t.orgId, t.kind] })]);
