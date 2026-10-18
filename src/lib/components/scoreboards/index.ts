@@ -2,6 +2,8 @@ import type { Component } from 'svelte';
 import type { MatchState, Team } from '$lib/types.js';
 import Classic from './Classic.svelte';
 import Kinetic from './Kinetic.svelte';
+import Drawer from './Drawer.svelte';
+import Colon from './Colon.svelte';
 
 export interface ScoreboardProps {
 	match: MatchState;
@@ -54,6 +56,22 @@ export const SCOREBOARD_LAYOUTS: ScoreboardLayout[] = [
 			{ key: 'accentCool', label: 'Cool accent', type: 'color', default: '#1d4ed8' },
 			{ key: 'showLogos', label: 'Team-Logos', type: 'boolean', default: false }
 		]
+	},
+	{
+		id: 'drawer',
+		name: 'Drawer',
+		description: 'Set point and timeout inline with the team · Scorely drawer slides out below only when the game pauses.',
+		component: Drawer as unknown as Component<ScoreboardProps>,
+		supportsThemes: ['dark'],
+		customizableOptions: []
+	},
+	{
+		id: 'colon',
+		name: 'Colon',
+		description: 'Mirrored strip around the score colon · in a pause the colon turns into the Scorely mark.',
+		component: Colon as unknown as Component<ScoreboardProps>,
+		supportsThemes: ['dark'],
+		customizableOptions: []
 	}
 ];
 
@@ -67,4 +85,4 @@ export function getLayout(id: string | null | undefined): ScoreboardLayout {
 	);
 }
 
-export { Classic, Kinetic };
+export { Classic, Kinetic, Drawer, Colon };
