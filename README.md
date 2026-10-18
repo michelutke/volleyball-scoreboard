@@ -9,6 +9,7 @@ Real-time volleyball scoring app with OBS overlay, built for VBC Thun.
 - Live match scoring with set/point tracking and undo
 - OBS overlay (browser source) with real-time SSE updates
 - Service indicator, jersey colors, timeout display
+- Scoreboard layouts in the Bibliothek (Classic, Kinetic, Drawer, Colon), see [docs/scoreboard-layouts.md](docs/scoreboard-layouts.md)
 - Swiss Volley API integration (team/match sync)
 - Keycloak OIDC authentication + multi-tenancy
 - User management (invite scorers by email)
