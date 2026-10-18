@@ -1,6 +1,6 @@
 # Mobile Match API
 
-Endpoints used by the Scorely Live app to list a club's matches, start one, and hand out the guest scorer link. Added in PR #149.
+Endpoints used by the Scorely Live app to list a club's matches, start one, hand out the guest scorer link and fetch the stream thumbnail. Added in PR #149 (thumbnails: see below).
 
 ## Authentication
 
@@ -14,7 +14,7 @@ Every request needs `Authorization: Bearer <access token>` from Keycloak. The to
 
 ## Endpoints
 
-POST bodies are empty. Do not send `application/x-www-form-urlencoded`, `multipart/form-data` or `text/plain`, because SvelteKit's CSRF protection blocks form content types.
+POST bodies are empty, except the thumbnail override (see Thumbnail). Do not send `application/x-www-form-urlencoded`, `multipart/form-data` or `text/plain`, because SvelteKit's CSRF protection blocks form content types.
 
 | Endpoint | Success (always 200) | Errors |
 |---|---|---|
@@ -22,6 +22,8 @@ POST bodies are empty. Do not send `application/x-www-form-urlencoded`, `multipa
 | `POST /api/mobile/matches/{id}/start` | `MatchItem` | 401, 404, 409 |
 | `POST /api/mobile/matches/{id}/share` | `{ controlUrl, overlayUrl }` | 401, 404, 409 |
 | `POST /api/mobile/matches/{id}/share/renew` | `{ controlUrl, overlayUrl }` | 401, 404, 409 |
+| `GET /api/mobile/matches/{id}/thumbnail` | `image/jpeg`, 1280 x 720 | 401, 402, 404 |
+| `POST /api/mobile/matches/{id}/thumbnail` | `image/jpeg`, 1280 x 720 | 400, 401, 402, 404, 413 |
 
 - 404 `{ "error": "Match not found" }`: missing match, malformed id, or a match of another org.
 - 409 `{ "error": "Match is finished" }`: start, share or renew on a finished match.
@@ -59,6 +61,18 @@ POST bodies are empty. Do not send `application/x-www-form-urlencoded`, `multipa
 - Renew always replaces the token, so the old link stops working.
 - `controlUrl` is `{origin}/c/{token}`, `overlayUrl` is `{origin}/matches/{id}/overlay`.
 
+### Thumbnail
+
+Branded 1280 x 720 JPEG (quality 85, well under YouTube's 2 MB limit) for the YouTube broadcast of a match. Layout is the fixed Scorely template. The club fills three slots in the web settings (`/settings`, section "Stream-Thumbnail"): background photo, club logo and the club colour (`accentColor`). Team names, date, time and venue come from the match (Swiss time).
+
+- `GET` renders the match with the club's slots. No photo and no logo gives the plain ink template with the Scorely mark.
+- `POST` takes the raw bytes of one override photo as body (`Content-Type: image/jpeg` or `image/png`, up to 5 MB) and returns the JPEG rendered with that photo instead of the club photo. The photo is not stored. The type is detected from the magic bytes, the header is not trusted.
+- 400 `{ "error": ... }`: empty body or not a JPEG or PNG (SVG and WebP are rejected). 413: larger than 5 MB.
+- 404 `{ "error": "Match not found" }`: unknown or malformed id, or a match of another org. 402: subscription inactive (same as every mobile route).
+- Responses carry `Cache-Control: no-store`. Renders are cached in memory by input hash (32 entries).
+
+Web side (session auth, org scoped): `PUT`, `GET` and `DELETE /api/settings/images/{thumbnail_photo|club_logo}` (writes are admin only, stored in `org_images`) and `GET /api/settings/thumbnail-preview` (JPEG with the club's slots and the next upcoming match, or a sample match). Behind adapter-node the request body limit is `BODY_SIZE_LIMIT` (set to 6M in the Dockerfile so 5 MB images fit).
+
 ## Guest link lifecycle
 
 - The guest scorer page `/c/{token}` and its API `/api/c/{token}` (score and timeout) work while the match is not finished.
@@ -73,7 +87,10 @@ POST bodies are empty. Do not send `application/x-www-form-urlencoded`, `multipa
 | `src/lib/server/match-service.ts` | Org-scoped lookup, list, start, ensure and renew control token, `statusChange`, `getGuestMatch` |
 | `src/lib/server/mobile-api.ts` | Bearer auth helper, `mobileJson`, error responses, `parseMatchId`, share URLs |
 | `src/lib/server/mobile-auth.ts` | Keycloak token verification, `azp` check, org id and roles |
-| `src/routes/api/mobile/matches/**` | The four endpoints |
+| `src/routes/api/mobile/matches/**` | The mobile endpoints |
+| `src/lib/server/thumbnail/render.ts` | Satori and resvg renderer for the thumbnail template, fonts and brand SVGs under `fonts/` and `assets/` |
+| `src/lib/server/thumbnail/service.ts` | Loads the club slots and match data, calls the renderer |
+| `src/lib/server/org-images.ts` | Image kinds, upload validation (size, magic bytes) and `org_images` storage |
 | `src/routes/c/[controlToken]/+error.svelte` | Expired and not started pages for guests |
 
 ## Related security fixes (same PR)
