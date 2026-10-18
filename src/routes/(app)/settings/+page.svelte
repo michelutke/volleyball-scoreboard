@@ -16,6 +16,53 @@
 	let error = $state('');
 	let showApiKeyInfo = $state(false);
 
+	type ImageKind = 'thumbnail_photo' | 'club_logo';
+	const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+	const IMAGE_SLOTS: { kind: ImageKind; label: string; hint: string }[] = [
+		{ kind: 'thumbnail_photo', label: 'Hintergrundfoto', hint: 'Halle oder Team, Querformat, JPEG oder PNG bis 5 MB' },
+		{ kind: 'club_logo', label: 'Vereinslogo', hint: 'Quadratisch oder frei, JPEG oder PNG bis 5 MB' }
+	];
+
+	let hasImage = $state<Record<ImageKind, boolean>>({
+		thumbnail_photo: untrack(() => data.imageKinds?.thumbnail_photo ?? false),
+		club_logo: untrack(() => data.imageKinds?.club_logo ?? false)
+	});
+	let imageVersion = $state(Date.now());
+	let imageBusy = $state(false);
+	let imageError = $state('');
+	let fileInputs: Partial<Record<ImageKind, HTMLInputElement>> = {};
+
+	async function sendImage(kind: ImageKind, init: RequestInit, present: boolean) {
+		imageBusy = true;
+		imageError = '';
+		try {
+			const res = await fetch(`/api/settings/images/${kind}`, init);
+			if (!res.ok) {
+				const body = await res.json().catch(() => null);
+				throw new Error(body?.error ?? 'Speichern fehlgeschlagen');
+			}
+			hasImage[kind] = present;
+			imageVersion = Date.now();
+		} catch (e) {
+			imageError = e instanceof Error ? e.message : 'Unbekannter Fehler';
+		} finally {
+			imageBusy = false;
+		}
+	}
+
+	async function uploadImage(kind: ImageKind, input: HTMLInputElement) {
+		const file = input.files?.[0];
+		input.value = '';
+		if (!file) return;
+		if (file.size > MAX_IMAGE_BYTES) {
+			imageError = 'Bild ist zu gross (max. 5 MB).';
+			return;
+		}
+		await sendImage(kind, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file }, true);
+	}
+
+	const removeImage = (kind: ImageKind) => sendImage(kind, { method: 'DELETE' }, false);
+
 	async function submit() {
 		if (!clubName.trim()) {
 			error = 'Vereinsname ist erforderlich';
@@ -119,7 +166,8 @@
 
 			{#if isEdit}
 				<div class="panel">
-					<h2 class="panel-label k-mono">Clubfarbe (nur für Club-Overlays)</h2>
+					<h2 class="panel-label k-mono">Clubfarbe</h2>
+					<span class="hint">Färbt Club-Overlays und den Balken im Stream-Thumbnail. Gilt nach dem Speichern.</span>
 					<div class="color-row">
 						<input id="accentColor" type="color" bind:value={accentColor} class="color-swatch" />
 						<span class="color-hex k-mono">{accentColor}</span>
@@ -128,6 +176,73 @@
 								Standard
 							</KButton>
 						{/if}
+					</div>
+				</div>
+
+				<div class="panel">
+					<h2 class="panel-label k-mono">Stream-Thumbnail</h2>
+					<span class="hint">
+						Wird für YouTube-Streams automatisch aus Spieldaten, Foto, Logo und Clubfarbe erstellt.
+					</span>
+					{#if imageError}
+						<div class="banner-error" role="alert">{imageError}</div>
+					{/if}
+					{#if data.isAdmin}
+						{#each IMAGE_SLOTS as slot (slot.kind)}
+							<div class="slot">
+								<div class="slot-thumb">
+									{#if hasImage[slot.kind]}
+										<img src="/api/settings/images/{slot.kind}?v={imageVersion}" alt={slot.label} />
+									{:else}
+										<span class="k-mono">Kein Bild</span>
+									{/if}
+								</div>
+								<div class="slot-body">
+									<span class="slot-label">{slot.label}</span>
+									<span class="hint">{slot.hint}</span>
+									<div class="slot-actions">
+										<KButton
+											type="button"
+											variant="secondary"
+											size="sm"
+											disabled={imageBusy}
+											onclick={() => fileInputs[slot.kind]?.click()}
+										>
+											{hasImage[slot.kind] ? 'Ersetzen' : 'Hochladen'}
+										</KButton>
+										{#if hasImage[slot.kind]}
+											<KButton type="button" variant="ghost" size="sm" disabled={imageBusy} onclick={() => removeImage(slot.kind)}>
+												Entfernen
+											</KButton>
+										{/if}
+										<input
+											bind:this={fileInputs[slot.kind]}
+											type="file"
+											accept="image/jpeg,image/png"
+											class="file-input"
+											onchange={(e) => uploadImage(slot.kind, e.currentTarget)}
+										/>
+									</div>
+								</div>
+							</div>
+						{/each}
+					{/if}
+					<img
+						class="preview"
+						src="/api/settings/thumbnail-preview?v={imageVersion}"
+						alt="Vorschau des Stream-Thumbnails"
+						width="1280"
+						height="720"
+					/>
+					<div class="slot-actions">
+						<KButton
+							href="/api/settings/thumbnail-preview?v={imageVersion}"
+							download="stream-thumbnail.jpg"
+							variant="secondary"
+							size="sm"
+						>
+							Herunterladen
+						</KButton>
 					</div>
 				</div>
 			{/if}
@@ -241,5 +356,60 @@
 	.color-hex {
 		font-size: 13px;
 		color: var(--k-text-mute);
+	}
+
+	.slot {
+		display: flex;
+		gap: 16px;
+		align-items: center;
+	}
+
+	.slot-thumb {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		width: 128px;
+		height: 72px;
+		background: var(--k-surface);
+		border: 1px solid var(--k-line);
+		font-size: 11px;
+		color: var(--k-text-dim);
+	}
+	.slot-thumb img {
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+	}
+
+	.slot-body {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		min-width: 0;
+	}
+
+	.slot-label {
+		font-size: 14px;
+		font-weight: var(--type-wght-medium);
+	}
+
+	.slot-actions {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+	}
+
+	.file-input {
+		display: none;
+	}
+
+	.preview {
+		display: block;
+		width: 100%;
+		height: auto;
+		aspect-ratio: 16 / 9;
+		background: var(--ink);
+		border: 1px solid var(--k-line);
 	}
 </style>
