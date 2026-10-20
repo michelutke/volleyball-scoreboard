@@ -8,6 +8,10 @@ export function mobileJson(body: unknown, status = 200): Response {
 	return json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 }
 
+export function jpegResponse(bytes: Uint8Array<ArrayBuffer>): Response {
+	return new Response(bytes, { headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-store' } });
+}
+
 export function unauthorized(): Response {
 	return mobileJson({ error: 'Unauthorized' }, 401);
 }

@@ -34,22 +34,33 @@ const LOCKUP_WIDTH = Math.round((LOCKUP_HEIGHT * 762.39) / 240);
 const DATE_LINE_FONT_SIZE = 34;
 const DATE_LINE_HEIGHT = 40;
 const DATE_LINE_MAX_WIDTH = THUMBNAIL_WIDTH - 2 * MARGIN_X - LOCKUP_WIDTH - 24;
+const TITLE_WIDTH_BESIDE_LOCKUP = CONTENT_WIDTH - LOCKUP_WIDTH - 24;
 const TITLE_MAX_SIZE = 104;
 const TITLE_MIN_SIZE = 56;
 const TITLE_STEP = 4;
 const TITLE_GAP = 20;
+const DESCENDER_ROOM = 12;
 
 const EMBEDDABLE_TYPES = new Set(['image/jpeg', 'image/png']);
 
-export interface ThumbnailInput {
-	homeTeam: string;
-	guestTeam: string;
+interface ThumbnailSlots {
 	scheduledAt: Date | null;
-	venue: string | null;
 	clubColor?: string | null;
 	photo?: Uint8Array | null;
 	logo?: Uint8Array | null;
 }
+
+export interface MatchThumbnailInput extends ThumbnailSlots {
+	homeTeam: string;
+	guestTeam: string;
+	venue: string | null;
+}
+
+export interface HeadlineThumbnailInput extends ThumbnailSlots {
+	headline: string;
+}
+
+export type ThumbnailInput = MatchThumbnailInput | HeadlineThumbnailInput;
 
 function dataUrl(mime: string, bytes: Uint8Array | Buffer): string {
 	return `data:${mime};base64,${Buffer.from(bytes).toString('base64')}`;
@@ -114,7 +125,7 @@ export function formatMatchLine(scheduledAt: Date | null, venue: string | null):
 		const p = Object.fromEntries(ZURICH_PARTS.formatToParts(scheduledAt).map((x) => [x.type, x.value]));
 		parts.push(`${WEEKDAYS[p.weekday] ?? ''} ${p.day}.${p.month}.${p.year}`.trim(), `${p.hour}:${p.minute}`);
 	}
-	const place = venue?.trim();
+	const place = cleanText(venue ?? '');
 	if (place) parts.push(place.toLocaleUpperCase('de-CH'));
 	return parts.join(' · ');
 }
@@ -123,11 +134,18 @@ function normalizeColor(color: string | null | undefined): string {
 	return color && /^#[0-9a-fA-F]{6}$/.test(color) ? color : PULSE_RED;
 }
 
-function teamName(name: string): string {
-	return name.trim().replace(/\s+/g, ' ').toLocaleUpperCase('de-CH');
+const UNSUPPORTED_GLYPHS = /[\p{Extended_Pictographic}\u{FE0E}\u{FE0F}\u{200D}]/gu;
+
+/** Drops emoji (the typeface is Latin only) and collapses whitespace. */
+function cleanText(text: string): string {
+	return text.replace(UNSUPPORTED_GLYPHS, '').trim().replace(/\s+/g, ' ');
 }
 
-function titleRow(home: string, guest: string, size: number, constrained: boolean): Element {
+function teamName(name: string): string {
+	return cleanText(name).toLocaleUpperCase('de-CH');
+}
+
+function titleRow(home: string, guest: string, size: number, constrained: boolean, maxWidth: number): Element {
 	const name = (text: string): Element =>
 		el(
 			'div',
@@ -153,16 +171,37 @@ function titleRow(home: string, guest: string, size: number, constrained: boolea
 			flexDirection: 'row',
 			alignItems: 'baseline',
 			gap: Math.round(size * 0.3),
-			...(constrained ? { width: CONTENT_WIDTH } : {})
+			...(constrained ? { width: maxWidth } : {})
 		},
 		[name(home), vs, name(guest)],
 		{ 'data-title': true }
 	);
 }
 
-async function measureTitle(home: string, guest: string, size: number): Promise<number> {
+function headlineRow(text: string, size: number, constrained: boolean, maxWidth: number): Element {
+	return el(
+		'div',
+		{
+			fontFamily: 'Inter',
+			fontWeight: 800,
+			fontSize: size,
+			lineHeight: 1,
+			color: PAPER,
+			whiteSpace: 'nowrap',
+			...(constrained
+				? { width: maxWidth, overflow: 'hidden', textOverflow: 'ellipsis', paddingBottom: DESCENDER_ROOM, marginBottom: -DESCENDER_ROOM }
+				: {})
+		},
+		text,
+		{ 'data-title': true }
+	);
+}
+
+type RowBuilder = (size: number, constrained: boolean) => Element;
+
+async function measureTitle(row: RowBuilder, size: number): Promise<number> {
 	let width = Infinity;
-	await satori(titleRow(home, guest, size, false) as never, {
+	await satori(el('div', {}, row(size, false)) as never, {
 		width: 8000,
 		height: size * 2,
 		fonts: FONTS,
@@ -173,11 +212,27 @@ async function measureTitle(home: string, guest: string, size: number): Promise<
 	return width;
 }
 
-async function fitTitle(home: string, guest: string): Promise<Element> {
+async function fitTitleSize(row: RowBuilder, maxWidth: number): Promise<{ size: number; constrained: boolean }> {
 	for (let size = TITLE_MAX_SIZE; size >= TITLE_MIN_SIZE; size -= TITLE_STEP) {
-		if ((await measureTitle(home, guest, size)) <= CONTENT_WIDTH) return titleRow(home, guest, size, false);
+		if ((await measureTitle(row, size)) <= maxWidth) return { size, constrained: false };
 	}
-	return titleRow(home, guest, TITLE_MIN_SIZE, true);
+	return { size: TITLE_MIN_SIZE, constrained: true };
+}
+
+function dateLine(input: ThumbnailInput): string {
+	return formatMatchLine(input.scheduledAt, 'venue' in input ? input.venue : null);
+}
+
+/** Without a date line the title shares its band with the lockup and must stay left of it. */
+function titleBuilder(input: ThumbnailInput): { row: RowBuilder; maxWidth: number } {
+	const maxWidth = dateLine(input) ? CONTENT_WIDTH : TITLE_WIDTH_BESIDE_LOCKUP;
+	if ('headline' in input) {
+		const text = cleanText(input.headline);
+		return { row: (size, constrained) => headlineRow(text, size, constrained, maxWidth), maxWidth };
+	}
+	const home = teamName(input.homeTeam);
+	const guest = teamName(input.guestTeam);
+	return { row: (size, constrained) => titleRow(home, guest, size, constrained, maxWidth), maxWidth };
 }
 
 function livePill(): Element {
@@ -213,8 +268,10 @@ function logoSquare(logoUrl: string | null): Element {
 async function buildTree(input: ThumbnailInput): Promise<Element> {
 	const photoUrl = embeddableImage(input.photo);
 	const logoUrl = embeddableImage(input.logo);
-	const matchLine = formatMatchLine(input.scheduledAt, input.venue);
-	const title = await fitTitle(teamName(input.homeTeam), teamName(input.guestTeam));
+	const matchLine = dateLine(input);
+	const { row, maxWidth } = titleBuilder(input);
+	const fit = await fitTitleSize(row, maxWidth);
+	const title = row(fit.size, fit.constrained);
 
 	const children: Element[] = [];
 	if (photoUrl) {
@@ -311,10 +368,8 @@ function cacheKey(input: ThumbnailInput): string {
 	return createHash('sha256')
 		.update(
 			JSON.stringify([
-				input.homeTeam,
-				input.guestTeam,
+				'headline' in input ? ['headline', input.headline] : ['match', input.homeTeam, input.guestTeam, input.venue],
 				input.scheduledAt?.getTime() ?? null,
-				input.venue,
 				normalizeColor(input.clubColor),
 				sha256(input.photo),
 				sha256(input.logo)
@@ -323,7 +378,13 @@ function cacheKey(input: ThumbnailInput): string {
 		.digest('hex');
 }
 
-/** 1280 x 720 JPEG of the Scorely stream thumbnail template. Team names and venue are rendered as text only. */
+/** Font size in px the headline or team names get: 104 down to 56 in 4 px steps, whichever fits first. */
+export async function titleFontSize(input: ThumbnailInput): Promise<number> {
+	const { row, maxWidth } = titleBuilder(input);
+	return (await fitTitleSize(row, maxWidth)).size;
+}
+
+/** 1280 x 720 JPEG of the Scorely stream thumbnail template. Team names, headline and venue are rendered as text only. */
 export async function renderThumbnail(input: ThumbnailInput): Promise<Uint8Array<ArrayBuffer>> {
 	const key = cacheKey(input);
 	const hit = cache.get(key);

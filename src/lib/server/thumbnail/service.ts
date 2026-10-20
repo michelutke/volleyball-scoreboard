@@ -58,6 +58,21 @@ export async function renderMatchThumbnail(
 	});
 }
 
+/** Renders the club thumbnail for a stream without a match: the title is the headline, no venue. */
+export async function renderTitledThumbnail(
+	orgId: string,
+	stream: { title: string; scheduledAt: Date | null },
+	overridePhoto?: Uint8Array
+): Promise<Uint8Array<ArrayBuffer>> {
+	const slots = await loadClubSlots(orgId);
+	return renderThumbnail({
+		headline: stream.title,
+		scheduledAt: stream.scheduledAt,
+		...slots,
+		photo: overridePhoto ?? slots.photo
+	});
+}
+
 /** Preview of the club slots: the next upcoming match of the org, or a sample match. */
 export async function renderPreviewThumbnail(orgId: string, now: Date = new Date()): Promise<Uint8Array<ArrayBuffer>> {
 	const next = await db.query.matches.findFirst({

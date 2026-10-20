@@ -24,6 +24,8 @@ POST bodies are empty, except the thumbnail override (see Thumbnail). Do not sen
 | `POST /api/mobile/matches/{id}/share/renew` | `{ controlUrl, overlayUrl }` | 401, 404, 409 |
 | `GET /api/mobile/matches/{id}/thumbnail` | `image/jpeg`, 1280 x 720 | 401, 402, 404 |
 | `POST /api/mobile/matches/{id}/thumbnail` | `image/jpeg`, 1280 x 720 | 400, 401, 402, 404, 413 |
+| `GET /api/mobile/thumbnail?title=...&scheduledAt=...` | `image/jpeg`, 1280 x 720 | 400, 401, 402 |
+| `POST /api/mobile/thumbnail?title=...&scheduledAt=...` | `image/jpeg`, 1280 x 720 | 400, 401, 402, 413 |
 
 - 404 `{ "error": "Match not found" }`: missing match, malformed id, or a match of another org.
 - 409 `{ "error": "Match is finished" }`: start, share or renew on a finished match.
@@ -71,6 +73,16 @@ Branded 1280 x 720 JPEG (quality 85, well under YouTube's 2 MB limit) for the Yo
 - 404 `{ "error": "Match not found" }`: unknown or malformed id, or a match of another org. 402: subscription inactive (same as every mobile route).
 - Responses carry `Cache-Control: no-store`. Renders are cached in memory by input hash (32 entries).
 
+#### Thumbnail without a match (planning a stream)
+
+`GET` and `POST /api/mobile/thumbnail` render the same club template for a broadcast that has no Scorely match yet. The stream title replaces `HOME vs GUEST` as the headline, with the same sizes and shrink steps (104 px down to 56 px in 4 px steps), single line, case as typed, ellipsis when even 56 px does not fit. The date line shows the planned date and time in Swiss time (`SA 24.10.2026 · 17:30`), never a venue.
+
+- Query `title` (required): zero-width and other format characters are removed, then trimmed, 1 to 100 code points, else 400. The thumbnail typeface covers Latin script only: emoji are dropped from titles, team names and venues when rendering.
+- With no date line (no `scheduledAt`, and for matches no date and venue) the title must stay left of the Scorely lockup, so it fits and ellipsizes against a narrower width (947 px instead of 1136 px).
+- Query `scheduledAt` (optional): ISO 8601 date and time with `Z` or an offset, e.g. `2026-10-24T15:30:00Z`. Invalid (including no time zone or an empty value) gives 400. Without it the date line is omitted.
+- `POST` takes the raw bytes of one override photo as body, exactly like the match endpoint (JPEG or PNG, up to 5 MB, 24 MP, not stored): 400 for an invalid image, 413 above 5 MB.
+- Club slots, auth, 401/402, `Cache-Control: no-store` and the render cache are shared with the match endpoint. There is no 404.
+
 Web side (session auth, org scoped): `PUT`, `GET` and `DELETE /api/settings/images/{thumbnail_photo|club_logo}` (writes are admin only, stored in `org_images`) and `GET /api/settings/thumbnail-preview` (JPEG with the club's slots and the next upcoming match, or a sample match). Behind adapter-node the request body limit is `BODY_SIZE_LIMIT` (set to 6M in the Dockerfile so 5 MB images fit).
 
 ## Guest link lifecycle
@@ -88,8 +100,9 @@ Web side (session auth, org scoped): `PUT`, `GET` and `DELETE /api/settings/imag
 | `src/lib/server/mobile-api.ts` | Bearer auth helper, `mobileJson`, error responses, `parseMatchId`, share URLs |
 | `src/lib/server/mobile-auth.ts` | Keycloak token verification, `azp` check, org id and roles |
 | `src/routes/api/mobile/matches/**` | The mobile endpoints |
+| `src/routes/api/mobile/thumbnail/+server.ts` | Thumbnail for a title and planned start without a match |
 | `src/lib/server/thumbnail/render.ts` | Satori and resvg renderer for the thumbnail template, fonts and brand SVGs under `fonts/` and `assets/` |
-| `src/lib/server/thumbnail/service.ts` | Loads the club slots and match data, calls the renderer |
+| `src/lib/server/thumbnail/service.ts` | Loads the club slots and match or title data, calls the renderer |
 | `src/lib/server/org-images.ts` | Image kinds, upload validation (size, magic bytes) and `org_images` storage |
 | `src/routes/c/[controlToken]/+error.svelte` | Expired and not started pages for guests |
 

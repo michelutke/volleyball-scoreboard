@@ -1,6 +1,7 @@
 import type { RequestHandler } from './$types.js';
 import {
 	authenticateMobile,
+	jpegResponse,
 	mobileJson,
 	notFound,
 	parseMatchId
@@ -8,10 +9,6 @@ import {
 import { getOrgMatch } from '$lib/server/match-service';
 import { ImageUploadError, readImageUpload } from '$lib/server/org-images';
 import { renderMatchThumbnail } from '$lib/server/thumbnail/service';
-
-function jpegResponse(bytes: Uint8Array<ArrayBuffer>): Response {
-	return new Response(bytes, { headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-store' } });
-}
 
 export const GET: RequestHandler = async ({ request, params }) => {
 	const identity = await authenticateMobile(request);
