@@ -430,7 +430,7 @@
 <div class="page">
 	<div class="wrap">
 		<header class="head">
-			<p class="kicker k-mono">Admin · Designs</p>
+			<p class="kicker k-mono">Admin</p>
 			<h1 class="title k-display">Overlay-Designs</h1>
 			<p class="sub">
 				Scoreboard-Layout, eigene Templates und Community-Bibliothek — alles für deine Org an einem Ort.
@@ -447,7 +447,7 @@
 		<!-- Section 01: Scorely layouts -->
 		<section class="section">
 			<div class="section-head">
-				<p class="section-kicker k-mono">01 · Scorely Layouts</p>
+				<p class="section-kicker k-mono">01 / Scorely Layouts</p>
 				<h2 class="section-title">Scoreboard-Stil</h2>
 				<p class="section-sub">Wähle das Layout, das im Overlay deiner Org genutzt wird.</p>
 			</div>
@@ -536,7 +536,7 @@
 		<!-- Section 02: Eigene Designs -->
 		<section class="section">
 			<div class="section-head">
-				<p class="section-kicker k-mono">02 · Eigene Designs</p>
+				<p class="section-kicker k-mono">02 / Eigene Designs</p>
 				<h2 class="section-title">Custom-Templates</h2>
 				<p class="section-sub">Eigene Overlay-Templates für deine Org — auch mit Custom-Code.</p>
 			</div>
@@ -589,7 +589,7 @@
 		<!-- Section 03: Community library -->
 		<section class="section">
 			<div class="section-head">
-				<p class="section-kicker k-mono">03 · Community-Bibliothek</p>
+				<p class="section-kicker k-mono">03 / Community-Bibliothek</p>
 				<h2 class="section-title">Geteilte Designs</h2>
 				<p class="section-sub">Von anderen Vereinen veröffentlichte Custom-Overlays — installierbar mit einem Klick.</p>
 			</div>

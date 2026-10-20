@@ -11,6 +11,7 @@
 
 	const translations = {
 		de: {
+			kicker: 'Bereit zu scoren',
 			tagline: 'Linie isch drin',
 			company: 'Sport in motion.',
 			cta: 'Kostenlos testen →',
@@ -23,6 +24,7 @@
 			]
 		},
 		en: {
+			kicker: 'Ready to score',
 			tagline: 'Ball is in',
 			company: 'Sport in motion.',
 			cta: 'Try for free →',
@@ -42,7 +44,7 @@
 <footer class="footer">
 	<div class="inner">
 		<div class="closer" use:reveal>
-			<p class="kicker k-mono">Bereit zu scoren · Ready to score</p>
+			<p class="kicker k-mono">{tr.kicker}</p>
 			<h2 class="big-mark k-display">{tr.tagline}<span class="ball"></span></h2>
 			<p class="subline">{tr.subline}</p>
 			<a href="/signup" class="cta" use:press>

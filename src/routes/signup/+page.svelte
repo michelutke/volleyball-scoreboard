@@ -70,7 +70,7 @@
 		<Logo variant="stacked" class="logo" />
 		{#if step === 'checkout'}
 			<header class="head">
-				<p class="kicker k-mono">Schritt 02 · Zahlung</p>
+				<p class="kicker k-mono">Schritt 02 / Zahlung</p>
 				<h1 class="title k-display">Zahlungsdetails</h1>
 				<p class="sub">3 Tage kostenlos. Erst danach wird abgebucht. Jederzeit kündbar.</p>
 			</header>
@@ -83,7 +83,7 @@
 			</div>
 		{:else}
 			<header class="head">
-				<p class="kicker k-mono">Schritt 01 · Konto</p>
+				<p class="kicker k-mono">Schritt 01 / Konto</p>
 				<h1 class="title k-display">Konto erstellen.</h1>
 				<p class="sub">3 Tage kostenlos testen. Keine Kreditkarte für den Start nötig.</p>
 			</header>

@@ -15,7 +15,7 @@
 <section id="features" class="features">
 	<div class="inner">
 		<header class="head">
-			<p class="overline k-mono">Funktionen · Features</p>
+			<p class="overline k-mono">{lang === 'de' ? 'Funktionen' : 'Features'}</p>
 			<h2 class="title k-display" use:reveal>
 				{t[lang].features.title}
 			</h2>

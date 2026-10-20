@@ -28,7 +28,7 @@
 					'Hosting inklusive'
 				],
 				cta: '3 Tage kostenlos testen',
-				note: 'Keine Kreditkarte · Jederzeit kündbar',
+				note: 'Keine Kreditkarte, jederzeit kündbar',
 				badge: 'Empfohlen'
 			},
 			selfHosted: {
@@ -61,7 +61,7 @@
 					'Hosting included'
 				],
 				cta: 'Try free for 3 days',
-				note: 'No credit card · Cancel anytime',
+				note: 'No credit card, cancel anytime',
 				badge: 'Recommended'
 			},
 			selfHosted: {

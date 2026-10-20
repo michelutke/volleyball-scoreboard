@@ -143,7 +143,7 @@
 </script>
 
 <svelte:head>
-	<title>Bibliothek · Scorely</title>
+	<title>Scorely Bibliothek</title>
 </svelte:head>
 
 {#if data.isLoggedIn}
@@ -155,7 +155,7 @@
 <div class="page" class:compact={data.isLoggedIn}>
 	<header class="hero">
 		<div class="hero-inner">
-			<p class="overline k-mono">Bibliothek · Library</p>
+			<p class="overline k-mono">{lang === 'de' ? 'Bibliothek' : 'Library'}</p>
 			<h1 class="title k-display" use:reveal={{ y: 32 }}>Scoreboards & Overlays.</h1>
 			<p class="subtitle">
 				Wähle einen Scoreboard-Stil oder installiere ein Community-Overlay. Anpassbar pro Verein und pro Match.
@@ -165,7 +165,7 @@
 
 	<section class="layouts">
 		<div class="section-head">
-			<p class="kicker k-mono">01 · Scoreboard Layouts</p>
+			<p class="kicker k-mono">01 / Scoreboard Layouts</p>
 			<h2 class="sec-title">Stil wählen</h2>
 		</div>
 
@@ -261,7 +261,7 @@
 
 	<section class="overlays">
 		<div class="section-head">
-			<p class="kicker k-mono">02 · Community Overlays</p>
+			<p class="kicker k-mono">02 / Community Overlays</p>
 			<h2 class="sec-title">Custom-Overlays</h2>
 			<p class="sec-sub">Community-erstellte Designs zum Installieren und Anpassen.</p>
 		</div>

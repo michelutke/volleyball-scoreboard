@@ -129,7 +129,7 @@
 							aria-label="Anleitung anzeigen"
 						>ℹ</button>
 						<span class="hint">
-							{data.swissVolleyApiKeySet ? 'API-Key ist konfiguriert' : 'Optional · Mannschaften automatisch aus Swiss Volley importieren'}
+							{data.swissVolleyApiKeySet ? 'API-Key ist konfiguriert' : 'Optional: Mannschaften automatisch aus Swiss Volley importieren'}
 						</span>
 					</div>
 					{#if showApiKeyInfo}

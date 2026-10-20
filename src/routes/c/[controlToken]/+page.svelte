@@ -210,14 +210,14 @@
 </script>
 
 <svelte:head>
-	<title>Scoring · Geteilter Zugriff</title>
+	<title>Geteilter Scoring-Zugriff</title>
 </svelte:head>
 
 <div class="control">
 	<header class="bar">
 		<div class="bar-id">
 			<Logo variant="mark" heavy class="bar-mark" />
-			<span class="k-mono kicker">SCORING · GETEILTER ZUGRIFF</span>
+			<span class="k-mono kicker">GETEILTER SCORING-ZUGRIFF</span>
 		</div>
 		{#if match?.status === 'live'}
 			<span class="live-badge k-pill"><span class="live-dot k-live-dot"></span>LIVE</span>
@@ -230,7 +230,7 @@
 		</div>
 	{:else}
 		<main class="tool">
-			<p class="k-mono kicker">{match.homeTeamName} VS {match.guestTeamName} · KEIN KONTO NÖTIG</p>
+			<p class="k-mono kicker">{match.homeTeamName} VS {match.guestTeamName}, KEIN KONTO NÖTIG</p>
 
 			<div class="teams">
 				{#each [{ team: 'home', name: match.homeTeamName, points: match.homePoints, sets: match.homeSets }, { team: 'guest', name: match.guestTeamName, points: match.guestPoints, sets: match.guestSets }] as const as t (t.team)}
@@ -262,7 +262,7 @@
 
 			{#if activeTimeout}
 				<div class="timeout-banner k-mono">
-					Auszeit {activeTimeout.teamName} · {activeTimeout.secondsLeft}s
+					Auszeit {activeTimeout.teamName}: {activeTimeout.secondsLeft}s
 					<button onclick={cancelTimeout} class="btn-timeout-cancel">Abbrechen</button>
 				</div>
 			{/if}

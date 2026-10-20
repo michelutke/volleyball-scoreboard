@@ -397,7 +397,7 @@
 </script>
 
 <svelte:head>
-	<title>Scoring Control · Match #{matchId}</title>
+	<title>Match #{matchId} Scoring Control</title>
 </svelte:head>
 
 <div class="control">
@@ -544,7 +544,7 @@
 
 				{#if activeTimeout}
 					<div class="timeout-banner">
-						Auszeit {activeTimeout.teamName} · {activeTimeout.secondsLeft}s
+						Auszeit {activeTimeout.teamName}: {activeTimeout.secondsLeft}s
 						<button onclick={cancelTimeout} class="btn-timeout-cancel">Abbrechen</button>
 					</div>
 				{/if}

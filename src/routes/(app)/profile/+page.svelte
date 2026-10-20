@@ -27,7 +27,7 @@
 
 <div class="page">
 	<div class="wrap">
-		<p class="kicker k-mono">Profil · Profile</p>
+		<p class="kicker k-mono">Konto</p>
 		<h1 class="title k-display">Profil</h1>
 
 		<section class="card">

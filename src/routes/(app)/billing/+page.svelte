@@ -66,7 +66,7 @@
 </script>
 
 <div class="page">
-	<KSection kicker="Konto · Abrechnung" title="Abonnement" subtitle="Plan, Zahlung und Status für deine Organisation.">
+	<KSection kicker="Abrechnung" title="Abonnement" subtitle="Plan, Zahlung und Status für deine Organisation.">
 		{#if showCheckout}
 			<div class="panel checkout-panel">
 				<div id="stripe-checkout"></div>

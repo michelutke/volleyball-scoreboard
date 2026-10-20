@@ -165,8 +165,8 @@
 													</span>
 													<span class="meta k-mono">
 														{formatDate(match.scheduledAt)}
-														{#if match.venue}<span class="dot">·</span>{match.venue}{/if}
-														{#if match.league}<span class="dot">·</span>{match.league}{/if}
+														{#if match.venue}<span>{match.venue}</span>{/if}
+														{#if match.league}<span>{match.league}</span>{/if}
 													</span>
 												</div>
 												<span class="status status-{statusInfo(match.status).cls}">
@@ -322,11 +322,8 @@
 		color: var(--k-text-dim);
 		display: flex;
 		flex-wrap: wrap;
-		gap: 6px;
+		gap: 6px 16px;
 		align-items: center;
-	}
-	.meta .dot {
-		color: var(--k-line);
 	}
 
 	.status {

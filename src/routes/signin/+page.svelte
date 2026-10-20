@@ -24,7 +24,7 @@
 						: ''
 		)
 	);
-	let successMsg = $state(untrack(() => (data.registered ? 'Konto erstellt · bitte melden Sie sich an.' : '')));
+	let successMsg = $state(untrack(() => (data.registered ? 'Konto erstellt. Bitte melden Sie sich an.' : '')));
 
 	async function handleSubmit(e: SubmitEvent) {
 		e.preventDefault();

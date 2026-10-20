@@ -212,7 +212,7 @@
 				<ul class="user-list">
 					{#each pendingInvites as invite (invite.id)}
 						<li class="user-row">
-							<span class="row-num k-mono">··</span>
+							<span class="row-num k-mono">…</span>
 							<div class="row-body">
 								<span class="row-email">{invite.email}</span>
 								<div class="row-tags">

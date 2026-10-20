@@ -22,7 +22,7 @@
 
 	const content = {
 		de: {
-			overline: 'Über uns · About',
+			overline: 'Über uns',
 			title: 'Sport in motion.',
 			lines: ['Ball is in.', 'Linie isch drin.'],
 			vision: {

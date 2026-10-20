@@ -36,7 +36,7 @@ export const SCOREBOARD_LAYOUTS: ScoreboardLayout[] = [
 	{
 		id: 'classic',
 		name: 'Classic',
-		description: 'Traditional broadcast scoreboard · bold, high-contrast, jersey colors.',
+		description: 'Traditional broadcast scoreboard: bold, high-contrast, jersey colors.',
 		component: Classic as unknown as Component<ScoreboardProps>,
 		supportsThemes: ['dark'],
 		customizableOptions: []
@@ -44,7 +44,7 @@ export const SCOREBOARD_LAYOUTS: ScoreboardLayout[] = [
 	{
 		id: 'kinetic',
 		name: 'Kinetic',
-		description: 'Scorely score bug · mark cell, mono numerals, set point and timeout banners.',
+		description: 'Scorely score bug: mark cell, mono numerals, set point and timeout banners.',
 		component: Kinetic as unknown as Component<ScoreboardProps>,
 		supportsThemes: ['light', 'dark'],
 		customizableOptions: [
@@ -60,7 +60,7 @@ export const SCOREBOARD_LAYOUTS: ScoreboardLayout[] = [
 	{
 		id: 'drawer',
 		name: 'Drawer',
-		description: 'Set point and timeout inline with the team · Scorely drawer slides out below only when the game pauses.',
+		description: 'Set point and timeout inline with the team. The Scorely drawer slides out below only when the game pauses.',
 		component: Drawer as unknown as Component<ScoreboardProps>,
 		supportsThemes: ['dark'],
 		customizableOptions: []
@@ -68,7 +68,7 @@ export const SCOREBOARD_LAYOUTS: ScoreboardLayout[] = [
 	{
 		id: 'colon',
 		name: 'Colon',
-		description: 'Mirrored strip around the score colon · in a pause the colon turns into the Scorely mark.',
+		description: 'Mirrored strip around the score colon. In a pause the colon turns into the Scorely mark.',
 		component: Colon as unknown as Component<ScoreboardProps>,
 		supportsThemes: ['dark'],
 		customizableOptions: []

@@ -151,7 +151,7 @@
 <div class="page">
 	<div class="wrap">
 		<a href="/teams" class="back k-mono">← Teams</a>
-		<p class="kicker k-mono">Team · Spielplan</p>
+		<p class="kicker k-mono">Spielplan</p>
 		<h1 class="title k-display">{data.team.name}</h1>
 
 		<div class="tabs" bind:this={tabsWrap}>
@@ -190,8 +190,8 @@
 							</div>
 							<div class="row-meta k-mono">
 								<span>{formatDate(match.scheduledAt)}</span>
-								{#if match.venue}<span>· {match.venue}</span>{/if}
-								{#if match.league}<span>· {match.league}</span>{/if}
+								{#if match.venue}<span>{match.venue}</span>{/if}
+								{#if match.league}<span>{match.league}</span>{/if}
 							</div>
 							{#if match.status === 'finished' && match.homeSets != null && match.guestSets != null}
 								<div class="row-score k-mono">{match.homeSets} : {match.guestSets}</div>
@@ -440,7 +440,7 @@
 		letter-spacing: 0.06em;
 		color: var(--k-text-dim);
 		display: flex;
-		gap: 4px;
+		gap: 4px 16px;
 		flex-wrap: wrap;
 	}
 

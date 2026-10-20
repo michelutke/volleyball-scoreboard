@@ -141,7 +141,7 @@ Surgical restyle of the 1300-line match-control page:
 
 1. About: 4 sections each with a darkened Unsplash stock image, scroll-linked parallax via Motion One `scroll()` helper, values reflowed from 5-card grid to numbered timeline list (no empty cells)
 2. Empty boxes fixed: Features 2×2, About uses timeline list
-3. Em-dashes (—) and en-dashes (–) eliminated everywhere user-facing — replaced with middot (·), period, or restructured prose
+3. Em-dashes (—) and en-dashes (–) eliminated everywhere user-facing — replaced with a period or restructured prose
 4. Pricing SaaS card: pulse red border + CTA + ticks (was cool blue)
 5. Signup + billing: full Kinetic rewrite with KField/KInput/KButton, status panels, mono badges
 
@@ -296,9 +296,9 @@ A second round closing remaining gaps and consolidating the app shell.
   - Mobile drawer keeps Profil + Theme/Motion toggles + Signout.
 - **Profile page**: split Theme + Motion into separate cards (was Theme only) so desktop users access motion controls via Profile.
 - **`/admin/designs`** (admin-only): full Kinetic restyle, restructured into three sections:
-  1. **01 · Scorely Layouts** — Kinetic + Classic preview cards, "Aktiv" badge on the org-default, `KButton` select, customizable options panel for the selected layout (migrated from `/library`).
-  2. **02 · Eigene Designs** — private `designTemplates` rows with swatch + name + Standard/Public k-mono badges; ghost/secondary/danger `KButton` actions.
-  3. **03 · Community-Bibliothek** — published custom overlays grid, install/preview actions.
+  1. **01 / Scorely Layouts** — Kinetic + Classic preview cards, "Aktiv" badge on the org-default, `KButton` select, customizable options panel for the selected layout (migrated from `/library`).
+  2. **02 / Eigene Designs** — private `designTemplates` rows with swatch + name + Standard/Public k-mono badges; ghost/secondary/danger `KButton` actions.
+  3. **03 / Community-Bibliothek** — published custom overlays grid, install/preview actions.
   - Create/edit form moved into a `<dialog>`: centered modal on desktop, slide-up bottom-sheet on mobile (≤600px). Uses `KField`/`KInput`/`KButton` and k-mono color labels.
   - Server load (`+page.server.ts`) now also returns `orgLayoutId` + `orgLayoutOptions` from `settings`.
 - **`/library`** still accessible by URL for logged-in users (with the app shell Nav), just removed from the nav bar. Public unauthenticated visitors still see `LandingNav` + full hero for marketing.
