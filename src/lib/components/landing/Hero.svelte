@@ -2,7 +2,9 @@
 	import { t } from '$lib/i18n/landing.js';
 	import type { Lang } from '$lib/i18n/landing.js';
 	import { land, press } from '$lib/motion.js';
+	import { COLON_SLIDE_MS } from '$lib/brand/reveal.js';
 	import Demo from './Demo.svelte';
+	import HeroMark from './HeroMark.svelte';
 	import { onMount } from 'svelte';
 
 	interface Props {
@@ -26,23 +28,31 @@
 	onMount(() => {
 		if (!headlineEl) return;
 		const parts = Array.from(headlineEl.querySelectorAll<HTMLElement>('.word, .ball'));
-		parts.forEach((el, i) => land(el, { delay: i * STAGGER_MS }));
+		parts.forEach((el, i) => land(el, { delay: COLON_SLIDE_MS + i * STAGGER_MS }));
 	});
 </script>
 
 <section class="hero" id="hero">
 	<div class="content">
-		<p class="kicker k-mono">{t[lang].hero.kicker}</p>
+		<div class="top">
+			<div class="mark">
+				<HeroMark />
+			</div>
 
-		<h1 class="headline k-display" bind:this={headlineEl} aria-label={t[lang].hero.headline.replace('\n', ' ')}>
-			{#each lines as words, lineIdx}
-				<span class="line" class:second={lineIdx === 1} aria-hidden="true">
-					{#each words as word, wordIdx}
-						<span class="word">{word}</span>{#if wordIdx < words.length - 1}{' '}{/if}
-					{/each}{#if lineIdx === lines.length - 1}<span class="ball"></span>{/if}
-				</span>
-			{/each}
-		</h1>
+			<div class="intro">
+			<p class="kicker k-mono">{t[lang].hero.kicker}</p>
+
+			<h1 class="headline k-display" bind:this={headlineEl} aria-label={t[lang].hero.headline.replace('\n', ' ')}>
+				{#each lines as words, lineIdx}
+					<span class="line" class:second={lineIdx === 1} aria-hidden="true">
+						{#each words as word, wordIdx}
+							<span class="word">{word}</span>{#if wordIdx < words.length - 1}{' '}{/if}
+						{/each}{#if lineIdx === lines.length - 1}<span class="ball"></span>{/if}
+					</span>
+				{/each}
+			</h1>
+			</div>
+		</div>
 
 		<div class="lower">
 			<div class="copy">
@@ -69,7 +79,7 @@
 	.hero {
 		background: var(--k-surface);
 		color: var(--k-text);
-		padding: 128px var(--grid-margin) 80px;
+		padding: 96px var(--grid-margin) 80px;
 	}
 
 	.content {
@@ -78,18 +88,30 @@
 		width: 100%;
 	}
 
+	.top {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		margin-bottom: 32px;
+	}
+
+	.mark {
+		line-height: 0;
+		margin-left: -17px;
+	}
+
 	.kicker {
 		font-size: 11px;
 		letter-spacing: 0.18em;
 		text-transform: uppercase;
 		color: var(--k-text-mute);
-		margin: 0 0 32px;
+		margin: 0 0 20px;
 	}
 
 	.headline {
 		font-size: clamp(39px, 7vw, 96px);
 		line-height: 0.95;
-		margin: 0 0 56px;
+		margin: 0;
 		letter-spacing: -0.035em;
 		font-weight: var(--type-wght-display);
 	}
@@ -176,7 +198,32 @@
 		margin: 0;
 	}
 
+	@media (min-width: 1024px) {
+		.top {
+			flex-direction: row;
+			align-items: center;
+			justify-content: space-between;
+			gap: 64px;
+		}
+		.mark {
+			order: 2;
+			flex: none;
+			margin-left: 0;
+			margin-right: -38px;
+		}
+		.intro {
+			flex: 1;
+			min-width: 0;
+		}
+	}
+
 	@media (min-width: 640px) {
+		.hero {
+			padding-top: 128px;
+		}
+		.top {
+			gap: 20px;
+		}
 		.ctas {
 			flex-direction: row;
 			align-items: center;
@@ -190,6 +237,9 @@
 	@media (min-width: 960px) {
 		.hero {
 			padding-top: 160px;
+		}
+		.top {
+			margin-bottom: 56px;
 		}
 		.lower {
 			grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);

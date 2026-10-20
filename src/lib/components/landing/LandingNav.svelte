@@ -32,7 +32,7 @@
 <nav class="landing-nav" class:scrolled>
 	<div class="inner">
 		<a href="/" class="wordmark" aria-label="Scorely">
-			<NavLogo />
+			<NavLogo collapsed={scrolled} />
 		</a>
 
 		<div class="links">
@@ -153,6 +153,7 @@
 	}
 
 	.lang {
+		white-space: nowrap;
 		font-family: var(--font-mono);
 		font-size: 11px;
 		letter-spacing: 0.08em;
@@ -185,6 +186,7 @@
 	}
 
 	.cta {
+		white-space: nowrap;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -230,6 +232,26 @@
 	}
 	.drawer a:last-child {
 		border-bottom: none;
+	}
+
+	@media (max-width: 479px) {
+		.inner {
+			padding-inline: 16px;
+			gap: 12px;
+		}
+		.actions {
+			gap: 6px;
+		}
+		.lang {
+			padding: 5px 6px;
+		}
+		.cta {
+			font-size: 12px;
+			padding: 9px 12px;
+		}
+		.hamburger {
+			padding: 4px;
+		}
 	}
 
 	@media (min-width: 768px) {

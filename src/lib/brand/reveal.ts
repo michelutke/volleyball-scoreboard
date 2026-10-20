@@ -188,3 +188,34 @@ export function heroForward(t: number): RevealFrame {
 		lo: dotState(t, loStart, PATH_LO, F_LO, BALL_LO)
 	};
 }
+
+// ------------------------------------------------------------------ colon to logo (mark units, viewBox 0 0 200 200)
+export const COLON_X = 100;
+export const COLON_SLIDE_MS = 420;
+export const COLON_RIPPLE_MS = 900;
+export const COLON_RIPPLE_R = 196;
+export const COLON_END_MS = COLON_SLIDE_MS + COLON_RIPPLE_MS;
+
+export interface ColonFrame {
+	up: Dot;
+	lo: Dot;
+	squash: [number, number];
+	ripple: number;
+}
+
+/** Colon to logo at time t in ms: balls slide apart (420 snap), squash at contact, block ripples out (900 glide). */
+export function colonForward(t: number): ColonFrame {
+	const k = seg(t, 0, COLON_SLIDE_MS, 'snap');
+	return {
+		up: { x: lerp(COLON_X, BALL_UP[0], k), y: BALL_UP[1], r: BALL_R },
+		lo: { x: lerp(COLON_X, BALL_LO[0], k), y: BALL_LO[1], r: BALL_R },
+		squash: squash(t, COLON_SLIDE_MS),
+		ripple: COLON_RIPPLE_R * seg(t, COLON_SLIDE_MS, COLON_RIPPLE_MS, 'glide')
+	};
+}
+
+/** SVG transform that scales around a contact point; empty when there is no squash. */
+export function squashAbout([px, py]: Pt, [sx, sy]: readonly [number, number]): string {
+	if (sx === 1 && sy === 1) return '';
+	return `translate(${px} ${py}) scale(${sx} ${sy}) translate(${-px} ${-py})`;
+}
