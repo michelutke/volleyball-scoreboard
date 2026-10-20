@@ -8,7 +8,6 @@ import { isDecodableSize, readImageDimensions } from '../image-dimensions';
 import { sniffImageType } from '../image-proxy';
 import inter400 from './fonts/inter_400.ttf?inline';
 import inter780 from './fonts/inter_780.ttf?inline';
-import mono500 from './fonts/jetbrains-mono-500.woff?inline';
 import lockupSvg from './assets/lockup-horizontal-on-ink.svg?raw';
 import { heroCell, logoScrimSvg, turnPatternSvg } from './assets/pattern-turn';
 
@@ -18,7 +17,6 @@ export const THUMBNAIL_QUALITY = 85;
 
 const INK = '#0a0a0a';
 const PAPER = '#f5f3ee';
-const GREY_300 = '#c8c5bd';
 const PATTERN_TONE = '#161616';
 export const PULSE_RED = '#ff3d2e';
 
@@ -35,20 +33,16 @@ const LOGO_SCRIM_OPACITY = 0.75;
 const PATTERN_GONE_FROM = THUMBNAIL_HEIGHT / 2;
 const LOCKUP_HEIGHT = 52;
 const LOCKUP_WIDTH = Math.round((LOCKUP_HEIGHT * 762.39) / 240);
-const DATE_LINE_FONT_SIZE = 34;
-const DATE_LINE_HEIGHT = 40;
-const DATE_LINE_MAX_WIDTH = THUMBNAIL_WIDTH - 2 * MARGIN_X - LOCKUP_WIDTH - 24;
 const TITLE_WIDTH_BESIDE_LOCKUP = CONTENT_WIDTH - LOCKUP_WIDTH - 24;
 const TITLE_MAX_SIZE = 104;
 const TITLE_MIN_SIZE = 56;
 const TITLE_STEP = 4;
-const TITLE_GAP = 20;
 const DESCENDER_ROOM = 12;
+const BASELINE_RATIO = 0.136;
 
 const EMBEDDABLE_TYPES = new Set(['image/jpeg', 'image/png']);
 
 interface ThumbnailSlots {
-	scheduledAt: Date | null;
 	clubColor?: string | null;
 	photo?: Uint8Array | null;
 	logo?: Uint8Array | null;
@@ -57,7 +51,6 @@ interface ThumbnailSlots {
 export interface MatchThumbnailInput extends ThumbnailSlots {
 	homeTeam: string;
 	guestTeam: string;
-	venue: string | null;
 }
 
 export interface HeadlineThumbnailInput extends ThumbnailSlots {
@@ -76,8 +69,7 @@ function inlineAsset(url: string): Buffer {
 
 const FONTS = [
 	{ name: 'Inter', data: inlineAsset(inter400), weight: 400 as const, style: 'normal' as const },
-	{ name: 'Inter', data: inlineAsset(inter780), weight: 800 as const, style: 'normal' as const },
-	{ name: 'Mono', data: inlineAsset(mono500), weight: 400 as const, style: 'normal' as const }
+	{ name: 'Inter', data: inlineAsset(inter780), weight: 800 as const, style: 'normal' as const }
 ];
 
 const LOCKUP_URL = dataUrl('image/svg+xml', Buffer.from(lockupSvg));
@@ -113,39 +105,6 @@ function embeddableImage(bytes: Uint8Array | null | undefined): string | null {
 
 function image(src: string, style: Record<string, unknown>): Element {
 	return { type: 'img', props: { src, width: style.width, height: style.height, style } };
-}
-
-const WEEKDAYS: Record<string, string> = {
-	Mon: 'MO',
-	Tue: 'DI',
-	Wed: 'MI',
-	Thu: 'DO',
-	Fri: 'FR',
-	Sat: 'SA',
-	Sun: 'SO'
-};
-
-const ZURICH_PARTS = new Intl.DateTimeFormat('en-GB', {
-	timeZone: 'Europe/Zurich',
-	weekday: 'short',
-	day: '2-digit',
-	month: '2-digit',
-	year: 'numeric',
-	hour: '2-digit',
-	minute: '2-digit',
-	hourCycle: 'h23'
-});
-
-/** `SA 24.10.2026 · 17:30 · SPIEZ ARENA` in Swiss time; missing parts are skipped. */
-export function formatMatchLine(scheduledAt: Date | null, venue: string | null): string {
-	const parts: string[] = [];
-	if (scheduledAt && !Number.isNaN(scheduledAt.getTime())) {
-		const p = Object.fromEntries(ZURICH_PARTS.formatToParts(scheduledAt).map((x) => [x.type, x.value]));
-		parts.push(`${WEEKDAYS[p.weekday] ?? ''} ${p.day}.${p.month}.${p.year}`.trim(), `${p.hour}:${p.minute}`);
-	}
-	const place = cleanText(venue ?? '');
-	if (place) parts.push(place.toLocaleUpperCase('de-CH'));
-	return parts.join(' · ');
 }
 
 function normalizeColor(color: string | null | undefined): string {
@@ -237,13 +196,9 @@ async function fitTitleSize(row: RowBuilder, maxWidth: number): Promise<{ size: 
 	return { size: TITLE_MIN_SIZE, constrained: true };
 }
 
-function dateLine(input: ThumbnailInput): string {
-	return formatMatchLine(input.scheduledAt, 'venue' in input ? input.venue : null);
-}
-
-/** Without a date line the title shares its band with the lockup and must stay left of it. */
+/** The title shares its band with the lockup and must stay left of it. */
 function titleBuilder(input: ThumbnailInput): { row: RowBuilder; maxWidth: number } {
-	const maxWidth = dateLine(input) ? CONTENT_WIDTH : TITLE_WIDTH_BESIDE_LOCKUP;
+	const maxWidth = TITLE_WIDTH_BESIDE_LOCKUP;
 	if ('headline' in input) {
 		const text = cleanText(input.headline);
 		return { row: (size, constrained) => headlineRow(text, size, constrained, maxWidth), maxWidth };
@@ -268,7 +223,6 @@ function clubLogo(bytes: Uint8Array | null | undefined): Element[] {
 
 async function buildTree(input: ThumbnailInput): Promise<Element> {
 	const photoUrl = embeddableImage(input.photo);
-	const matchLine = dateLine(input);
 	const { row, maxWidth } = titleBuilder(input);
 	const fit = await fitTitleSize(row, maxWidth);
 	const title = row(fit.size, fit.constrained);
@@ -300,32 +254,7 @@ async function buildTree(input: ThumbnailInput): Promise<Element> {
 			backgroundColor: normalizeColor(input.clubColor)
 		}),
 		image(LOCKUP_URL, { position: 'absolute', right: MARGIN_X, bottom: BLOCK_BOTTOM, width: LOCKUP_WIDTH, height: LOCKUP_HEIGHT }),
-		el(
-			'div',
-			{ position: 'absolute', left: MARGIN_X, bottom: BLOCK_BOTTOM, flexDirection: 'column', gap: TITLE_GAP },
-			[
-				title,
-				...(matchLine
-					? [
-							el(
-								'div',
-								{
-									fontFamily: 'Mono',
-									fontSize: DATE_LINE_FONT_SIZE,
-									lineHeight: 1,
-									height: DATE_LINE_HEIGHT,
-									maxWidth: DATE_LINE_MAX_WIDTH,
-									color: GREY_300,
-									whiteSpace: 'nowrap',
-									overflow: 'hidden',
-									textOverflow: 'ellipsis'
-								},
-								matchLine
-							)
-						]
-					: [])
-			]
-		)
+		el('div', { position: 'absolute', left: MARGIN_X, bottom: BLOCK_BOTTOM - Math.round(fit.size * BASELINE_RATIO) }, title)
 	);
 
 	return el(
@@ -363,8 +292,7 @@ function cacheKey(input: ThumbnailInput): string {
 	return createHash('sha256')
 		.update(
 			JSON.stringify([
-				'headline' in input ? ['headline', input.headline] : ['match', input.homeTeam, input.guestTeam, input.venue],
-				input.scheduledAt?.getTime() ?? null,
+				'headline' in input ? ['headline', input.headline] : ['match', input.homeTeam, input.guestTeam],
 				normalizeColor(input.clubColor),
 				sha256(input.photo),
 				sha256(input.logo)
@@ -379,7 +307,7 @@ export async function titleFontSize(input: ThumbnailInput): Promise<number> {
 	return (await fitTitleSize(row, maxWidth)).size;
 }
 
-/** 1280 x 720 JPEG of the Scorely stream thumbnail template. Team names, headline and venue are rendered as text only. */
+/** 1280 x 720 JPEG of the Scorely stream thumbnail template. Team names and headline are rendered as text only. */
 export async function renderThumbnail(input: ThumbnailInput): Promise<Uint8Array<ArrayBuffer>> {
 	const key = cacheKey(input);
 	const hit = cache.get(key);

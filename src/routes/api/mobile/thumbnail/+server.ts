@@ -5,11 +5,9 @@ import { renderTitledThumbnail } from '$lib/server/thumbnail/service';
 
 const MAX_TITLE_LENGTH = 100;
 const FORMAT_CHARACTERS = /\p{Cf}/gu;
-const ISO_DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
 
 interface TitledStream {
 	title: string;
-	scheduledAt: Date | null;
 }
 
 function parseStream(url: URL): TitledStream | Response {
@@ -17,13 +15,7 @@ function parseStream(url: URL): TitledStream | Response {
 	if (Array.from(title).length < 1 || Array.from(title).length > MAX_TITLE_LENGTH) {
 		return mobileJson({ error: `title muss 1 bis ${MAX_TITLE_LENGTH} Zeichen lang sein.` }, 400);
 	}
-	const raw = url.searchParams.get('scheduledAt');
-	if (raw === null) return { title, scheduledAt: null };
-	const scheduledAt = ISO_DATE_TIME.test(raw) ? new Date(raw) : null;
-	if (!scheduledAt || Number.isNaN(scheduledAt.getTime())) {
-		return mobileJson({ error: 'scheduledAt muss ein ISO-8601-Zeitpunkt mit Zeitzone sein.' }, 400);
-	}
-	return { title, scheduledAt };
+	return { title };
 }
 
 export const GET: RequestHandler = async ({ request, url }) => {

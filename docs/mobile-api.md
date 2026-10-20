@@ -65,7 +65,7 @@ POST bodies are empty, except the thumbnail override (see Thumbnail). Do not sen
 
 ### Thumbnail
 
-Branded 1280 x 720 JPEG (quality 85, well under YouTube's 2 MB limit) for the YouTube broadcast of a match. Layout is the fixed Scorely template: the P1 Turn pattern (fully visible at the top, faded out at the vertical middle) whose top-right cell is the Scorely mark, the club photo (if any) below it, the club logo top left (max 240 x 96 px, no box), title and date line bottom left, the Scorely lockup bottom right and the club colour bar. There is no LIVE badge. The club fills three slots in the web settings (`/settings`, section "Stream-Thumbnail"): background photo, club logo and the club colour (`accentColor`). Team names, date, time and venue come from the match (Swiss time).
+Branded 1280 x 720 JPEG (quality 85, well under YouTube's 2 MB limit) for the YouTube broadcast of a match. Layout is the fixed Scorely template: the P1 Turn pattern (fully visible at the top, faded out at the vertical middle) whose top-right cell is the Scorely mark, the club photo (if any) below it, the club logo top left (max 240 x 96 px, no box), the title bottom left (its baseline aligned with the bottom of the lockup), the Scorely lockup bottom right and the club colour bar. There is no date, time or venue line and no LIVE badge. The club fills three slots in the web settings (`/settings`, section "Stream-Thumbnail"): background photo, club logo and the club colour (`accentColor`). Team names come from the match.
 
 - `GET` renders the match with the club's slots. No photo gives the plain ink ground, no logo leaves the top left empty (the Scorely mark is always the pattern cell top right).
 - `POST` takes the raw bytes of one override photo as body (`Content-Type: image/jpeg` or `image/png`, up to 5 MB) and returns the JPEG rendered with that photo instead of the club photo. The photo is not stored. The type is detected from the magic bytes, the header is not trusted.
@@ -75,11 +75,11 @@ Branded 1280 x 720 JPEG (quality 85, well under YouTube's 2 MB limit) for the Yo
 
 #### Thumbnail without a match (planning a stream)
 
-`GET` and `POST /api/mobile/thumbnail` render the same club template for a broadcast that has no Scorely match yet. The stream title replaces `HOME vs GUEST` as the headline, with the same sizes and shrink steps (104 px down to 56 px in 4 px steps), single line, case as typed, ellipsis when even 56 px does not fit. The date line shows the planned date and time in Swiss time (`SA 24.10.2026 · 17:30`), never a venue.
+`GET` and `POST /api/mobile/thumbnail` render the same club template for a broadcast that has no Scorely match yet. The stream title replaces `HOME vs GUEST` as the headline, with the same sizes and shrink steps (104 px down to 56 px in 4 px steps), single line, case as typed, ellipsis when even 56 px does not fit.
 
-- Query `title` (required): zero-width and other format characters are removed, then trimmed, 1 to 100 code points, else 400. The thumbnail typeface covers Latin script only: emoji are dropped from titles, team names and venues when rendering.
-- With no date line (no `scheduledAt`, and for matches no date and venue) the title must stay left of the Scorely lockup, so it fits and ellipsizes against a narrower width (947 px instead of 1136 px).
-- Query `scheduledAt` (optional): ISO 8601 date and time with `Z` or an offset, e.g. `2026-10-24T15:30:00Z`. Invalid (including no time zone or an empty value) gives 400. Without it the date line is omitted.
+- Query `title` (required): zero-width and other format characters are removed, then trimmed, 1 to 100 code points, else 400. The thumbnail typeface covers Latin script only: emoji are dropped from titles and team names when rendering.
+- The title must stay left of the Scorely lockup, so it fits and ellipsizes against a width of 947 px.
+- Query `scheduledAt` (optional): accepted for older app builds but ignored, any value (including an invalid one) is fine. The thumbnail shows no date.
 - `POST` takes the raw bytes of one override photo as body, exactly like the match endpoint (JPEG or PNG, up to 5 MB, 24 MP, not stored): 400 for an invalid image, 413 above 5 MB.
 - Club slots, auth, 401/402, `Cache-Control: no-store` and the render cache are shared with the match endpoint. There is no 404.
 

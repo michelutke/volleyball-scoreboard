@@ -1,11 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import jpeg from 'jpeg-js';
-import { THUMBNAIL_HEIGHT, THUMBNAIL_WIDTH, clearThumbnailCache, formatMatchLine, renderThumbnail, titleFontSize } from './render';
+import { THUMBNAIL_HEIGHT, THUMBNAIL_WIDTH, clearThumbnailCache, renderThumbnail, titleFontSize } from './render';
 import { heroCell, turnPatternSvg } from './assets/pattern-turn';
 import { SVG_BYTES, WEBP_BYTES, jpegBytes, markedJpeg, pngBytes, pngHeader, withJpegDimensions } from './test-images';
 
-const SATURDAY = new Date('2026-10-24T15:30:00Z');
-const BASE = { homeTeam: 'VBC Thun', guestTeam: 'Volley Spiez', scheduledAt: SATURDAY, venue: 'Spiez Arena' };
+const BASE = { homeTeam: 'VBC Thun', guestTeam: 'Volley Spiez' };
 
 function expectThumbnail(bytes: Uint8Array) {
 	expect(bytes[0]).toBe(0xff);
@@ -16,44 +15,21 @@ function expectThumbnail(bytes: Uint8Array) {
 	expect(decoded.height).toBe(THUMBNAIL_HEIGHT);
 }
 
-describe('formatMatchLine', () => {
-	it('formats weekday, Swiss date, time and upper case venue in Swiss time', () => {
-		expect(formatMatchLine(SATURDAY, 'Spiez Arena')).toBe('SA 24.10.2026 · 17:30 · SPIEZ ARENA');
-	});
-
-	it('uses winter time outside daylight saving', () => {
-		expect(formatMatchLine(new Date('2026-12-05T16:30:00Z'), null)).toBe('SA 05.12.2026 · 17:30');
-	});
-
-	it('skips missing parts', () => {
-		expect(formatMatchLine(null, 'Lachen')).toBe('LACHEN');
-		expect(formatMatchLine(SATURDAY, '  ')).toBe('SA 24.10.2026 · 17:30');
-		expect(formatMatchLine(null, null)).toBe('');
-	});
-});
-
 describe('titleFontSize', () => {
 	it('starts at 104 px for a short headline and short team names', async () => {
-		expect(await titleFontSize({ headline: 'Cup-Final VBC Thun', scheduledAt: SATURDAY })).toBe(104);
-		expect(await titleFontSize({ homeTeam: 'VBC', guestTeam: 'Thun', scheduledAt: SATURDAY, venue: null })).toBe(104);
+		expect(await titleFontSize({ headline: 'Cup-Final' })).toBe(104);
+		expect(await titleFontSize({ homeTeam: 'VBC', guestTeam: 'Thun' })).toBe(104);
 	});
 
 	it('shrinks in 4 px steps for a longer headline', async () => {
-		const size = await titleFontSize({ headline: 'Grosses Volleyball Turnier Oberland', scheduledAt: SATURDAY });
+		const size = await titleFontSize({ headline: 'Volleyball Turnier Oberland' });
 		expect(size).toBeLessThan(104);
 		expect(size).toBeGreaterThan(56);
 		expect((104 - size) % 4).toBe(0);
 	});
 
-	it('is smaller without a date line, where the title must stay left of the lockup', async () => {
-		const headline = 'Grosses Volleyball Turnier Oberland';
-		const withDate = await titleFontSize({ headline, scheduledAt: SATURDAY });
-		const withoutDate = await titleFontSize({ headline, scheduledAt: null });
-		expect(withoutDate).toBeLessThan(withDate);
-	});
-
 	it('stops at 56 px for a headline that never fits', async () => {
-		expect(await titleFontSize({ headline: 'x'.repeat(100), scheduledAt: null })).toBe(56);
+		expect(await titleFontSize({ headline: 'x'.repeat(100) })).toBe(56);
 	});
 });
 
@@ -90,22 +66,46 @@ const isPaper = ([r, g, b]: Rgb) => r > 225 && g > 225 && b > 215;
 const isRed = ([r, g, b]: Rgb) => r > 220 && g < 110 && b < 90;
 const brightest = (pixels: Rgb[]) => pixels.reduce((max, p) => Math.max(max, ...p), 0);
 
-describe('lockup clearance without a date line', () => {
+describe('lockup clearance', () => {
 	beforeEach(() => clearThumbnailCache());
 
 	it('keeps a long headline off the lockup', async () => {
-		const short = await pixelsOf({ headline: 'Cup', scheduledAt: null }, LOCKUP_REGION);
-		const long = await pixelsOf({ headline: 'Grosses Volleyball Turnier der Region Oberland', scheduledAt: null }, LOCKUP_REGION);
+		const short = await pixelsOf({ headline: 'Cup' }, LOCKUP_REGION);
+		const long = await pixelsOf({ headline: 'Grosses Volleyball Turnier der Region Oberland' }, LOCKUP_REGION);
 		expect(long).toEqual(short);
 	});
 
 	it('keeps long team names off the lockup', async () => {
-		const short = await pixelsOf({ homeTeam: 'A', guestTeam: 'B', scheduledAt: null, venue: null }, LOCKUP_REGION);
+		const short = await pixelsOf({ homeTeam: 'A', guestTeam: 'B' }, LOCKUP_REGION);
 		const long = await pixelsOf(
-			{ homeTeam: 'Volleyballclub Thun Oberland', guestTeam: 'Volley Smash Spiez Frutigen', scheduledAt: null, venue: null },
+			{ homeTeam: 'Volleyballclub Thun Oberland', guestTeam: 'Volley Smash Spiez Frutigen' },
 			LOCKUP_REGION
 		);
 		expect(long).toEqual(short);
+	});
+});
+
+describe('title baseline', () => {
+	beforeEach(() => clearThumbnailCache());
+
+	async function lowestLightRow(input: Parameters<typeof renderThumbnail>[0], left: number, right: number): Promise<number> {
+		const { data, width } = jpeg.decode(await renderThumbnail(input), { useTArray: true });
+		for (let y = THUMBNAIL_HEIGHT - 14; y > 400; y--) {
+			for (let x = left; x < right; x++) {
+				const i = (y * width + x) * 4;
+				if (data[i] > 150 && data[i + 1] > 150) return y;
+			}
+		}
+		return -1;
+	}
+
+	it.each([
+		['short names', { homeTeam: 'VBC', guestTeam: 'Thun' }],
+		['long names', { homeTeam: 'Volleyballclub Thun Oberland', guestTeam: 'Volley Smash Spiez Frutigen' }]
+	])('sits on the bottom edge of the lockup: %s', async (_name, input) => {
+		const lockupBottom = await lowestLightRow(input, 1000, 1208);
+		const titleBottom = await lowestLightRow(input, 72, 600);
+		expect(Math.abs(titleBottom - lockupBottom)).toBeLessThanOrEqual(2);
 	});
 });
 
@@ -128,9 +128,9 @@ describe('redesigned template', () => {
 	const WHITE_PHOTO = pngBytes('#ffffff', 256);
 	const inputs = {
 		'match without photo': BASE,
-		'headline without photo': { headline: 'Cup-Final VBC Thun', scheduledAt: SATURDAY },
+		'headline without photo': { headline: 'Cup-Final VBC Thun' },
 		'match with photo and logo': { ...BASE, photo: WHITE_PHOTO, logo: pngBytes('#1d4ed8', 64) },
-		'headline with photo': { headline: 'Cup-Final VBC Thun', scheduledAt: SATURDAY, photo: WHITE_PHOTO }
+		'headline with photo': { headline: 'Cup-Final VBC Thun', photo: WHITE_PHOTO }
 	};
 
 	it.each(Object.entries(inputs))('draws the Scorely mark as a pattern cell top right: %s', async (_name, input) => {
@@ -149,7 +149,7 @@ describe('redesigned template', () => {
 
 	it('shows nothing top left without a club logo, not even the Scorely mark', async () => {
 		expect(brightest(await pixelsOf(BASE, LOGO_CORNER))).toBeLessThan(60);
-		expect(brightest(await pixelsOf({ headline: 'Cup', scheduledAt: null, photo: null }, LOGO_CORNER))).toBeLessThan(60);
+		expect(brightest(await pixelsOf({ headline: 'Cup', photo: null }, LOGO_CORNER))).toBeLessThan(60);
 	});
 
 	it('draws the club logo top left without a box', async () => {
@@ -190,16 +190,12 @@ describe('redesigned template', () => {
 describe('emoji', () => {
 	beforeEach(() => clearThumbnailCache());
 
-	it('are dropped from headline, team names and venue instead of rendering as boxes', async () => {
-		const plain = await renderThumbnail({ headline: 'Cup-Final VBC Thun', scheduledAt: SATURDAY });
-		const emoji = await renderThumbnail({ headline: 'Cup-Final \u{1F3D0}\u{1F525} VBC Thun', scheduledAt: SATURDAY });
+	it('are dropped from headline and team names instead of rendering as boxes', async () => {
+		const plain = await renderThumbnail({ headline: 'Cup-Final VBC Thun' });
+		const emoji = await renderThumbnail({ headline: 'Cup-Final \u{1F3D0}\u{1F525} VBC Thun' });
 		expect(Buffer.from(emoji).equals(Buffer.from(plain))).toBe(true);
-		const match = await renderThumbnail({ ...BASE, homeTeam: 'VBC \u{1F3D0} Thun', guestTeam: 'Volley\u200D\uFE0F Spiez', venue: 'Spiez Arena \u{1F525}' });
+		const match = await renderThumbnail({ ...BASE, homeTeam: 'VBC \u{1F3D0} Thun', guestTeam: 'Volley\u200D\uFE0F Spiez' });
 		expect(Buffer.from(match).equals(Buffer.from(await renderThumbnail({ ...BASE, homeTeam: 'VBC Thun' })))).toBe(true);
-	});
-
-	it('leave no date line part for an emoji-only venue', () => {
-		expect(formatMatchLine(null, '\u{1F525}')).toBe('');
 	});
 });
 
@@ -214,18 +210,12 @@ describe('renderThumbnail', () => {
 		expectThumbnail(await renderThumbnail({ ...BASE, photo: jpegBytes(1920, 1080), logo: pngBytes(), clubColor: '#1d4ed8' }));
 	});
 
-	it('renders very long team names and venue', async () => {
+	it('renders very long team names', async () => {
 		const bytes = await renderThumbnail({
 			homeTeam: 'Volleyballclub Thun Oberland Mittelland Nord',
-			guestTeam: 'Volley Smash Spiez Frutigen Interlaken Süd',
-			scheduledAt: SATURDAY,
-			venue: 'Mehrzweckhalle Allmendingen bei Thun am See'
+			guestTeam: 'Volley Smash Spiez Frutigen Interlaken Süd'
 		});
 		expectThumbnail(bytes);
-	});
-
-	it('renders without date and venue', async () => {
-		expectThumbnail(await renderThumbnail({ ...BASE, scheduledAt: null, venue: null }));
 	});
 
 	it('renders markup in team names as plain text', async () => {
@@ -267,16 +257,12 @@ describe('renderThumbnail', () => {
 });
 
 describe('renderThumbnail headline mode', () => {
-	const HEADLINE = { headline: 'Cup-Final VBC Thun', scheduledAt: SATURDAY };
+	const HEADLINE = { headline: 'Cup-Final VBC Thun' };
 
 	beforeEach(() => clearThumbnailCache());
 
-	it('renders the headline with the planned date', async () => {
+	it('renders the headline', async () => {
 		expectThumbnail(await renderThumbnail(HEADLINE));
-	});
-
-	it('renders without a date', async () => {
-		expectThumbnail(await renderThumbnail({ ...HEADLINE, scheduledAt: null }));
 	});
 
 	it('renders a headline of 100 characters with ellipsis', async () => {
@@ -294,8 +280,8 @@ describe('renderThumbnail headline mode', () => {
 	});
 
 	it('does not mix up a headline with a match of the same text', async () => {
-		const headline = await renderThumbnail({ headline: 'VBC Thun', scheduledAt: null });
-		const match = await renderThumbnail({ homeTeam: 'VBC Thun', guestTeam: '', scheduledAt: null, venue: null });
+		const headline = await renderThumbnail({ headline: 'VBC Thun' });
+		const match = await renderThumbnail({ homeTeam: 'VBC Thun', guestTeam: '' });
 		expect(headline).not.toBe(match);
 	});
 });

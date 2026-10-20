@@ -6,24 +6,6 @@ import { renderThumbnail, type ThumbnailInput } from './render';
 
 const SAMPLE_HOME = 'VBC Thun';
 const SAMPLE_GUEST = 'Volley Spiez';
-const SAMPLE_VENUE = 'Spiez Arena';
-const ZURICH_OFFSET = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Zurich', timeZoneName: 'longOffset' });
-
-function zurichOffsetMs(at: Date): number {
-	const name = ZURICH_OFFSET.formatToParts(at).find((part) => part.type === 'timeZoneName')?.value ?? 'GMT';
-	const match = /GMT([+-])(\d{2}):(\d{2})/.exec(name);
-	if (!match) return 0;
-	return (match[1] === '-' ? -1 : 1) * (Number(match[2]) * 60 + Number(match[3])) * 60_000;
-}
-
-/** The next Saturday 17:30 Swiss time after `now`. */
-export function nextSaturdayEvening(now: Date = new Date()): Date {
-	const local = new Date(now.getTime() + zurichOffsetMs(now));
-	const daysAhead = (6 - local.getUTCDay() + 7) % 7 || 7;
-	const wallClock = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + daysAhead, 17, 30);
-	const guess = new Date(wallClock - zurichOffsetMs(new Date(wallClock)));
-	return new Date(wallClock - zurichOffsetMs(guess));
-}
 
 async function loadClubSlots(orgId: string): Promise<Pick<ThumbnailInput, 'clubColor' | 'photo' | 'logo'>> {
 	const [accent, photo, logo] = await Promise.all([
@@ -37,8 +19,6 @@ async function loadClubSlots(orgId: string): Promise<Pick<ThumbnailInput, 'clubC
 export interface ThumbnailMatch {
 	homeTeamName: string;
 	guestTeamName: string;
-	scheduledAt: Date | null;
-	venue: string | null;
 }
 
 /** Renders the club thumbnail for a match; `overridePhoto` replaces the club photo for this render only. */
@@ -51,23 +31,20 @@ export async function renderMatchThumbnail(
 	return renderThumbnail({
 		homeTeam: match.homeTeamName,
 		guestTeam: match.guestTeamName,
-		scheduledAt: match.scheduledAt,
-		venue: match.venue,
 		...slots,
 		photo: overridePhoto ?? slots.photo
 	});
 }
 
-/** Renders the club thumbnail for a stream without a match: the title is the headline, no venue. */
+/** Renders the club thumbnail for a stream without a match: the title is the headline. */
 export async function renderTitledThumbnail(
 	orgId: string,
-	stream: { title: string; scheduledAt: Date | null },
+	stream: { title: string },
 	overridePhoto?: Uint8Array
 ): Promise<Uint8Array<ArrayBuffer>> {
 	const slots = await loadClubSlots(orgId);
 	return renderThumbnail({
 		headline: stream.title,
-		scheduledAt: stream.scheduledAt,
 		...slots,
 		photo: overridePhoto ?? slots.photo
 	});
@@ -81,11 +58,6 @@ export async function renderPreviewThumbnail(orgId: string, now: Date = new Date
 	});
 	return renderMatchThumbnail(
 		orgId,
-		next ?? {
-			homeTeamName: SAMPLE_HOME,
-			guestTeamName: SAMPLE_GUEST,
-			scheduledAt: nextSaturdayEvening(now),
-			venue: SAMPLE_VENUE
-		}
+		next ?? { homeTeamName: SAMPLE_HOME, guestTeamName: SAMPLE_GUEST }
 	);
 }

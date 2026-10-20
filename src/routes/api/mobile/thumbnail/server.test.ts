@@ -86,13 +86,6 @@ describe('mobile titled thumbnail', () => {
 		it.each([['empty', ''], ['blank', '   '], ['zero-width only', '\u200B\u200D\uFEFF'], ['too long', 'x'.repeat(101)]])('returns 400 for a %s title', async (_name, title) => {
 			expect((await handler(event(method, titled(title)))).status).toBe(400);
 		});
-
-		it.each([['garbage', 'tomorrow'], ['empty', ''], ['no timezone', '2026-10-24T17:30:00'], ['impossible date', '2026-13-45T10:00:00Z']])(
-			'returns 400 for an invalid scheduledAt (%s)',
-			async (_name, scheduledAt) => {
-				expect((await handler(event(method, titled('Cup-Final', scheduledAt)))).status).toBe(400);
-			}
-		);
 	});
 
 	describe('GET', () => {
@@ -113,6 +106,16 @@ describe('mobile titled thumbnail', () => {
 			expect(response.status).toBe(200);
 			expect(isJpeg(new Uint8Array(await response.arrayBuffer()))).toBe(true);
 		});
+
+		it.each([['valid', SCHEDULED], ['garbage', 'tomorrow'], ['empty', ''], ['no timezone', '2026-10-24T17:30:00']])(
+			'accepts and ignores a %s scheduledAt',
+			async (_name, scheduledAt) => {
+				const plain = Buffer.from(await (await GET(event('GET', titled('Cup-Final', null)))).arrayBuffer());
+				const response = await GET(event('GET', titled('Cup-Final', scheduledAt)));
+				expect(response.status).toBe(200);
+				expect(Buffer.from(await response.arrayBuffer()).equals(plain)).toBe(true);
+			}
+		);
 
 		it('accepts a title of exactly 100 characters', async () => {
 			expect((await GET(event('GET', titled('x'.repeat(100))))).status).toBe(200);
