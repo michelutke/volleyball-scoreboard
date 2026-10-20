@@ -46,7 +46,7 @@
 		"drizzle-orm": "^0.45.4",
 		"jose": "^6.2.3",
 		"jpeg-js": "0.4.4",
-		"lru-cache": "^11.2.7",
+		"lru-cache": "^11.5.3",
 		"lucide-svelte": "^1.0.1",
 		"motion": "^12.38.0",
 		"postgres": "^3.4.9",
