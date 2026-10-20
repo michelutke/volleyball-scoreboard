@@ -7,6 +7,7 @@ const TILE = 240;
 const CELL = 96;
 const CELL_SCALE = CELL / 200;
 const CELL_OFFSETS = [12, 132];
+const HERO_MARGIN = 72;
 
 export interface TurnPatternColors {
 	tone: string;
@@ -21,22 +22,26 @@ export interface TurnPatternFade {
 	goneFrom: number;
 }
 
-/** Top-left corner of the right-most full upright (0 degree) cell in the top row of the P1 Turn grid; the cells at 12 + k * 240 are unrotated. */
-export function heroCell(width: number): { x: number; y: number } {
-	const column = Math.floor((width - CELL - CELL_OFFSETS[0]) / TILE);
-	if (column < 0) throw new Error('image too narrow for a pattern cell');
-	return { x: column * TILE + CELL_OFFSETS[0], y: CELL_OFFSETS[0] };
+/** The upright mark cell sits `HERO_MARGIN` px from the top and right edges; the pattern origin is shifted so that cell is on the grid. */
+export function heroCell(width: number): { x: number; y: number; size: number } {
+	return { x: width - HERO_MARGIN - CELL, y: HERO_MARGIN, size: CELL };
+}
+
+function patternOrigin(hero: { x: number; y: number }): { x: number; y: number } {
+	const wrap = (value: number) => (((value - CELL_OFFSETS[0]) % TILE) + TILE) % TILE;
+	return { x: wrap(hero.x), y: wrap(hero.y) };
 }
 
 /**
- * Brand pattern P1 Turn (tile 10d, d = 24 px) on a transparent ground in a tone, faded out from `fade.solidUntil` to `fade.goneFrom`
+ * Brand pattern P1 Turn (tile 10d, d = 24 px), shifted so the mark cell lands on the grid, on a transparent ground in a tone, faded out from `fade.solidUntil` to `fade.goneFrom`
  * by a mask on the pattern itself. The top-right-most full upright cell is the real mark in its normal colours and is not faded.
  */
 export function turnPatternSvg(width: number, height: number, colors: TurnPatternColors, fade: TurnPatternFade): string {
 	const hero = heroCell(width);
+	const origin = patternOrigin(hero);
 	return (
 		`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">` +
-		`<defs><pattern id="turn" x="0" y="0" width="${TILE}" height="${TILE}" patternUnits="userSpaceOnUse" fill="${colors.tone}">` +
+		`<defs><pattern id="turn" x="${origin.x}" y="${origin.y}" width="${TILE}" height="${TILE}" patternUnits="userSpaceOnUse" fill="${colors.tone}">` +
 		`<g transform="translate(12 12) scale(${CELL_SCALE})">${BLOCK}</g>` +
 		`<g transform="translate(12 132) scale(${CELL_SCALE}) rotate(90 100 100)">${BLOCK}</g>` +
 		`<g transform="translate(132 12) scale(${CELL_SCALE}) rotate(90 100 100)">${BLOCK}</g>` +

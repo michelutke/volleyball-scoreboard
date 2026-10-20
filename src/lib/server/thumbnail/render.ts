@@ -10,7 +10,7 @@ import inter400 from './fonts/inter_400.ttf?inline';
 import inter780 from './fonts/inter_780.ttf?inline';
 import mono500 from './fonts/jetbrains-mono-500.woff?inline';
 import lockupSvg from './assets/lockup-horizontal-on-ink.svg?raw';
-import { logoScrimSvg, turnPatternSvg } from './assets/pattern-turn';
+import { heroCell, logoScrimSvg, turnPatternSvg } from './assets/pattern-turn';
 
 export const THUMBNAIL_WIDTH = 1280;
 export const THUMBNAIL_HEIGHT = 720;
@@ -26,13 +26,12 @@ const MARGIN_X = 72;
 const CONTENT_WIDTH = THUMBNAIL_WIDTH - 2 * MARGIN_X;
 const BAR_HEIGHT = 12;
 const BLOCK_BOTTOM = BAR_HEIGHT + 40;
-const LOGO_TOP = 56;
+const LOGO_TOP = 72;
 const LOGO_MAX_HEIGHT = 96;
 const LOGO_MAX_WIDTH = 240;
 const LOGO_SCRIM_WIDTH = 420;
 const LOGO_SCRIM_HEIGHT = 300;
 const LOGO_SCRIM_OPACITY = 0.75;
-const PATTERN_SOLID_UNTIL = 108;
 const PATTERN_GONE_FROM = THUMBNAIL_HEIGHT / 2;
 const LOCKUP_HEIGHT = 52;
 const LOCKUP_WIDTH = Math.round((LOCKUP_HEIGHT * 762.39) / 240);
@@ -82,6 +81,7 @@ const FONTS = [
 ];
 
 const LOCKUP_URL = dataUrl('image/svg+xml', Buffer.from(lockupSvg));
+const HERO_CELL = heroCell(THUMBNAIL_WIDTH);
 const PATTERN_URL = dataUrl(
 	'image/svg+xml',
 	Buffer.from(
@@ -89,7 +89,7 @@ const PATTERN_URL = dataUrl(
 			THUMBNAIL_WIDTH,
 			THUMBNAIL_HEIGHT,
 			{ tone: PATTERN_TONE, heroBlock: PAPER, heroBall: PULSE_RED },
-			{ solidUntil: PATTERN_SOLID_UNTIL, goneFrom: PATTERN_GONE_FROM }
+			{ solidUntil: HERO_CELL.y + HERO_CELL.size, goneFrom: PATTERN_GONE_FROM }
 		)
 	)
 );

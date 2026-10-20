@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import jpeg from 'jpeg-js';
 import { THUMBNAIL_HEIGHT, THUMBNAIL_WIDTH, clearThumbnailCache, formatMatchLine, renderThumbnail, titleFontSize } from './render';
+import { heroCell, turnPatternSvg } from './assets/pattern-turn';
 import { SVG_BYTES, WEBP_BYTES, jpegBytes, markedJpeg, pngBytes, pngHeader, withJpegDimensions } from './test-images';
 
 const SATURDAY = new Date('2026-10-24T15:30:00Z');
@@ -78,13 +79,13 @@ async function pixelsOf(input: Parameters<typeof renderThumbnail>[0], region: Re
 }
 
 const LOCKUP_REGION: Region = { left: 1050, right: 1200, top: 620, bottom: 665 };
-const HERO_CELL: Region = { left: 972, right: 1068, top: 12, bottom: 108 };
+const HERO_CELL: Region = { left: 1112, right: 1208, top: 72, bottom: 168 };
 const heroSpot = (cx: number, cy: number): Region => ({ left: HERO_CELL.left + cx - 6, right: HERO_CELL.left + cx + 6, top: HERO_CELL.top + cy - 6, bottom: HERO_CELL.top + cy + 6 });
 const HERO_BALL_UPPER_RIGHT = heroSpot(73, 33);
 const HERO_BALL_LOWER_LEFT = heroSpot(23, 63);
 const HERO_UPPER_LEFT = heroSpot(23, 33);
 const HERO_LOWER_RIGHT = heroSpot(73, 63);
-const LOGO_CORNER: Region = { left: 72, right: 312, top: 56, bottom: 152 };
+const LOGO_CORNER: Region = { left: 72, right: 312, top: 72, bottom: 168 };
 const isPaper = ([r, g, b]: Rgb) => r > 225 && g > 225 && b > 215;
 const isRed = ([r, g, b]: Rgb) => r > 220 && g < 110 && b < 90;
 const brightest = (pixels: Rgb[]) => pixels.reduce((max, p) => Math.max(max, ...p), 0);
@@ -105,6 +106,19 @@ describe('lockup clearance without a date line', () => {
 			LOCKUP_REGION
 		);
 		expect(long).toEqual(short);
+	});
+});
+
+describe('heroCell', () => {
+	it('sits 72 px from the top and right edge', () => {
+		expect(heroCell(THUMBNAIL_WIDTH)).toEqual({ x: 1112, y: 72, size: 96 });
+	});
+
+	it('is an upright cell of the shifted pattern grid', () => {
+		const svg = turnPatternSvg(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, { tone: '#161616', heroBlock: '#f5f3ee', heroBall: '#ff3d2e' }, { solidUntil: 168, goneFrom: 360 });
+		expect(svg).toContain('<pattern id="turn" x="140" y="60"');
+		expect(svg).toContain('translate(1112 72) scale(0.48)">');
+		expect(svg).not.toContain('translate(1112 72) scale(0.48) rotate');
 	});
 });
 
@@ -150,7 +164,7 @@ describe('redesigned template', () => {
 		const wideLight = wide.filter(isPaper).length;
 		expect(wideLight).toBeGreaterThan(240 * 40 * 0.95);
 		expect(wideLight).toBeLessThan(240 * 40 * 1.05);
-		const beside: Region = { left: 72 + 240 + 8, right: 72 + 240 + 100, top: 56, bottom: 152 };
+		const beside: Region = { left: 72 + 240 + 8, right: 72 + 240 + 100, top: 72, bottom: 168 };
 		expect(brightest(await pixelsOf({ ...BASE, logo: pngBytes('#ffffff', 600, 100) }, beside))).toBeLessThan(60);
 		const tall = await pixelsOf({ ...BASE, logo: pngBytes('#ffffff', 100, 600) }, LOGO_CORNER);
 		const tallLight = tall.filter(isPaper).length;
