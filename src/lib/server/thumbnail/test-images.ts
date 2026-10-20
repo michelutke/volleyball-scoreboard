@@ -1,8 +1,8 @@
 import { Resvg } from '@resvg/resvg-js';
 import jpeg from 'jpeg-js';
 
-export function pngBytes(color = '#1d4ed8', size = 64): Uint8Array<ArrayBuffer> {
-	const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"><rect width="${size}" height="${size}" fill="${color}"/></svg>`;
+export function pngBytes(color = '#1d4ed8', size = 64, height = size): Uint8Array<ArrayBuffer> {
+	const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${height}"><rect width="${size}" height="${height}" fill="${color}"/></svg>`;
 	return new Uint8Array(new Resvg(svg).render().asPng());
 }
 

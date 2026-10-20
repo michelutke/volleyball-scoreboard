@@ -9,9 +9,8 @@ import { sniffImageType } from '../image-proxy';
 import inter400 from './fonts/inter_400.ttf?inline';
 import inter780 from './fonts/inter_780.ttf?inline';
 import mono500 from './fonts/jetbrains-mono-500.woff?inline';
-import markSvg from './assets/mark.svg?raw';
 import lockupSvg from './assets/lockup-horizontal-on-ink.svg?raw';
-import { turnPatternSvg } from './assets/pattern-turn';
+import { logoScrimSvg, turnPatternSvg } from './assets/pattern-turn';
 
 export const THUMBNAIL_WIDTH = 1280;
 export const THUMBNAIL_HEIGHT = 720;
@@ -20,15 +19,21 @@ export const THUMBNAIL_QUALITY = 85;
 const INK = '#0a0a0a';
 const PAPER = '#f5f3ee';
 const GREY_300 = '#c8c5bd';
-const GREY_900 = '#161616';
+const PATTERN_TONE = '#161616';
 export const PULSE_RED = '#ff3d2e';
 
 const MARGIN_X = 72;
 const CONTENT_WIDTH = THUMBNAIL_WIDTH - 2 * MARGIN_X;
 const BAR_HEIGHT = 12;
 const BLOCK_BOTTOM = BAR_HEIGHT + 40;
-const LOGO_BOX = 96;
-const LOGO_PADDING = 16;
+const LOGO_TOP = 56;
+const LOGO_MAX_HEIGHT = 96;
+const LOGO_MAX_WIDTH = 240;
+const LOGO_SCRIM_WIDTH = 420;
+const LOGO_SCRIM_HEIGHT = 300;
+const LOGO_SCRIM_OPACITY = 0.75;
+const PATTERN_SOLID_UNTIL = 108;
+const PATTERN_GONE_FROM = THUMBNAIL_HEIGHT / 2;
 const LOCKUP_HEIGHT = 52;
 const LOCKUP_WIDTH = Math.round((LOCKUP_HEIGHT * 762.39) / 240);
 const DATE_LINE_FONT_SIZE = 34;
@@ -76,9 +81,22 @@ const FONTS = [
 	{ name: 'Mono', data: inlineAsset(mono500), weight: 400 as const, style: 'normal' as const }
 ];
 
-const MARK_URL = dataUrl('image/svg+xml', Buffer.from(markSvg));
 const LOCKUP_URL = dataUrl('image/svg+xml', Buffer.from(lockupSvg));
-const PATTERN_URL = dataUrl('image/svg+xml', Buffer.from(turnPatternSvg(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, GREY_900, INK)));
+const PATTERN_URL = dataUrl(
+	'image/svg+xml',
+	Buffer.from(
+		turnPatternSvg(
+			THUMBNAIL_WIDTH,
+			THUMBNAIL_HEIGHT,
+			{ tone: PATTERN_TONE, heroBlock: PAPER, heroBall: PULSE_RED },
+			{ solidUntil: PATTERN_SOLID_UNTIL, goneFrom: PATTERN_GONE_FROM }
+		)
+	)
+);
+const LOGO_SCRIM_URL = dataUrl(
+	'image/svg+xml',
+	Buffer.from(logoScrimSvg(LOGO_SCRIM_WIDTH, LOGO_SCRIM_HEIGHT, INK, LOGO_SCRIM_OPACITY))
+);
 
 type Element = { type: string; props: Record<string, unknown> };
 
@@ -235,39 +253,21 @@ function titleBuilder(input: ThumbnailInput): { row: RowBuilder; maxWidth: numbe
 	return { row: (size, constrained) => titleRow(home, guest, size, constrained, maxWidth), maxWidth };
 }
 
-function livePill(): Element {
-	return el(
-		'div',
-		{
-			position: 'absolute',
-			right: MARGIN_X,
-			top: 56,
-			height: 56,
-			padding: '0 28px',
-			borderRadius: 28,
-			backgroundColor: PULSE_RED,
-			alignItems: 'center',
-			gap: 12
-		},
-		[
-			el('div', { width: 14, height: 14, borderRadius: 7, backgroundColor: PAPER }),
-			el('div', { fontFamily: 'Inter', fontWeight: 800, fontSize: 28, letterSpacing: 2.24, color: INK, lineHeight: 1 }, 'LIVE')
-		]
-	);
-}
-
-function logoSquare(logoUrl: string | null): Element {
-	const size = LOGO_BOX + 2 * LOGO_PADDING;
-	return el(
-		'div',
-		{ position: 'absolute', left: MARGIN_X, top: 56, width: size, height: size, padding: LOGO_PADDING, backgroundColor: PAPER },
-		[image(logoUrl ?? MARK_URL, { width: LOGO_BOX, height: LOGO_BOX, objectFit: 'contain' })]
-	);
+function clubLogo(bytes: Uint8Array | null | undefined): Element[] {
+	const url = embeddableImage(bytes);
+	const dimensions = bytes ? readImageDimensions(bytes) : null;
+	if (!url || !dimensions) return [];
+	const scale = Math.min(LOGO_MAX_WIDTH / dimensions.width, LOGO_MAX_HEIGHT / dimensions.height);
+	const width = Math.max(1, Math.round(dimensions.width * scale));
+	const height = Math.max(1, Math.round(dimensions.height * scale));
+	return [
+		image(LOGO_SCRIM_URL, { position: 'absolute', left: 0, top: 0, width: LOGO_SCRIM_WIDTH, height: LOGO_SCRIM_HEIGHT }),
+		image(url, { position: 'absolute', left: MARGIN_X, top: LOGO_TOP, width, height, objectFit: 'contain' })
+	];
 }
 
 async function buildTree(input: ThumbnailInput): Promise<Element> {
 	const photoUrl = embeddableImage(input.photo);
-	const logoUrl = embeddableImage(input.logo);
 	const matchLine = dateLine(input);
 	const { row, maxWidth } = titleBuilder(input);
 	const fit = await fitTitleSize(row, maxWidth);
@@ -288,12 +288,9 @@ async function buildTree(input: ThumbnailInput): Promise<Element> {
 			})
 		);
 	}
-	if (!photoUrl) {
-		children.push(
-			image(PATTERN_URL, { position: 'absolute', left: 0, top: 0, width: THUMBNAIL_WIDTH, height: THUMBNAIL_HEIGHT })
-		);
-	}
 	children.push(
+		image(PATTERN_URL, { position: 'absolute', left: 0, top: 0, width: THUMBNAIL_WIDTH, height: THUMBNAIL_HEIGHT }),
+		...clubLogo(input.logo),
 		el('div', {
 			position: 'absolute',
 			left: 0,
@@ -302,8 +299,6 @@ async function buildTree(input: ThumbnailInput): Promise<Element> {
 			height: BAR_HEIGHT,
 			backgroundColor: normalizeColor(input.clubColor)
 		}),
-		logoSquare(logoUrl),
-		livePill(),
 		image(LOCKUP_URL, { position: 'absolute', right: MARGIN_X, bottom: BLOCK_BOTTOM, width: LOCKUP_WIDTH, height: LOCKUP_HEIGHT }),
 		el(
 			'div',

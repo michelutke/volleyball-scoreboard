@@ -65,9 +65,9 @@ POST bodies are empty, except the thumbnail override (see Thumbnail). Do not sen
 
 ### Thumbnail
 
-Branded 1280 x 720 JPEG (quality 85, well under YouTube's 2 MB limit) for the YouTube broadcast of a match. Layout is the fixed Scorely template. The club fills three slots in the web settings (`/settings`, section "Stream-Thumbnail"): background photo, club logo and the club colour (`accentColor`). Team names, date, time and venue come from the match (Swiss time).
+Branded 1280 x 720 JPEG (quality 85, well under YouTube's 2 MB limit) for the YouTube broadcast of a match. Layout is the fixed Scorely template: the P1 Turn pattern (fully visible at the top, faded out at the vertical middle) whose top-right cell is the Scorely mark, the club photo (if any) below it, the club logo top left (max 240 x 96 px, no box), title and date line bottom left, the Scorely lockup bottom right and the club colour bar. There is no LIVE badge. The club fills three slots in the web settings (`/settings`, section "Stream-Thumbnail"): background photo, club logo and the club colour (`accentColor`). Team names, date, time and venue come from the match (Swiss time).
 
-- `GET` renders the match with the club's slots. No photo and no logo gives the plain ink template with the Scorely mark.
+- `GET` renders the match with the club's slots. No photo gives the plain ink ground, no logo leaves the top left empty (the Scorely mark is always the pattern cell top right).
 - `POST` takes the raw bytes of one override photo as body (`Content-Type: image/jpeg` or `image/png`, up to 5 MB) and returns the JPEG rendered with that photo instead of the club photo. The photo is not stored. The type is detected from the magic bytes, the header is not trusted.
 - 400 `{ "error": ... }`: empty body or not a JPEG or PNG (SVG and WebP are rejected). 413: larger than 5 MB.
 - 404 `{ "error": "Match not found" }`: unknown or malformed id, or a match of another org. 402: subscription inactive (same as every mobile route).

@@ -56,32 +56,120 @@ describe('titleFontSize', () => {
 	});
 });
 
-const LOCKUP_REGION = { left: 1050, right: 1200, top: 620, bottom: 665 };
+interface Region {
+	left: number;
+	right: number;
+	top: number;
+	bottom: number;
+}
 
-function lockupPixels(bytes: Uint8Array): number[] {
-	const { data, width } = jpeg.decode(bytes, { useTArray: true });
-	const pixels: number[] = [];
-	for (let y = LOCKUP_REGION.top; y < LOCKUP_REGION.bottom; y++) {
-		for (let x = LOCKUP_REGION.left; x < LOCKUP_REGION.right; x++) pixels.push(data[(y * width + x) * 4]);
+type Rgb = [number, number, number];
+
+async function pixelsOf(input: Parameters<typeof renderThumbnail>[0], region: Region): Promise<Rgb[]> {
+	const { data, width } = jpeg.decode(await renderThumbnail(input), { useTArray: true });
+	const pixels: Rgb[] = [];
+	for (let y = region.top; y < region.bottom; y++) {
+		for (let x = region.left; x < region.right; x++) {
+			const i = (y * width + x) * 4;
+			pixels.push([data[i], data[i + 1], data[i + 2]]);
+		}
 	}
 	return pixels;
 }
+
+const LOCKUP_REGION: Region = { left: 1050, right: 1200, top: 620, bottom: 665 };
+const HERO_CELL: Region = { left: 972, right: 1068, top: 12, bottom: 108 };
+const heroSpot = (cx: number, cy: number): Region => ({ left: HERO_CELL.left + cx - 6, right: HERO_CELL.left + cx + 6, top: HERO_CELL.top + cy - 6, bottom: HERO_CELL.top + cy + 6 });
+const HERO_BALL_UPPER_RIGHT = heroSpot(73, 33);
+const HERO_BALL_LOWER_LEFT = heroSpot(23, 63);
+const HERO_UPPER_LEFT = heroSpot(23, 33);
+const HERO_LOWER_RIGHT = heroSpot(73, 63);
+const LOGO_CORNER: Region = { left: 72, right: 312, top: 56, bottom: 152 };
+const isPaper = ([r, g, b]: Rgb) => r > 225 && g > 225 && b > 215;
+const isRed = ([r, g, b]: Rgb) => r > 220 && g < 110 && b < 90;
+const brightest = (pixels: Rgb[]) => pixels.reduce((max, p) => Math.max(max, ...p), 0);
 
 describe('lockup clearance without a date line', () => {
 	beforeEach(() => clearThumbnailCache());
 
 	it('keeps a long headline off the lockup', async () => {
-		const short = lockupPixels(await renderThumbnail({ headline: 'Cup', scheduledAt: null }));
-		const long = lockupPixels(await renderThumbnail({ headline: 'Grosses Volleyball Turnier der Region Oberland', scheduledAt: null }));
+		const short = await pixelsOf({ headline: 'Cup', scheduledAt: null }, LOCKUP_REGION);
+		const long = await pixelsOf({ headline: 'Grosses Volleyball Turnier der Region Oberland', scheduledAt: null }, LOCKUP_REGION);
 		expect(long).toEqual(short);
 	});
 
 	it('keeps long team names off the lockup', async () => {
-		const short = lockupPixels(await renderThumbnail({ homeTeam: 'A', guestTeam: 'B', scheduledAt: null, venue: null }));
-		const long = lockupPixels(
-			await renderThumbnail({ homeTeam: 'Volleyballclub Thun Oberland', guestTeam: 'Volley Smash Spiez Frutigen', scheduledAt: null, venue: null })
+		const short = await pixelsOf({ homeTeam: 'A', guestTeam: 'B', scheduledAt: null, venue: null }, LOCKUP_REGION);
+		const long = await pixelsOf(
+			{ homeTeam: 'Volleyballclub Thun Oberland', guestTeam: 'Volley Smash Spiez Frutigen', scheduledAt: null, venue: null },
+			LOCKUP_REGION
 		);
 		expect(long).toEqual(short);
+	});
+});
+
+describe('redesigned template', () => {
+	beforeEach(() => clearThumbnailCache());
+
+	const WHITE_PHOTO = pngBytes('#ffffff', 256);
+	const inputs = {
+		'match without photo': BASE,
+		'headline without photo': { headline: 'Cup-Final VBC Thun', scheduledAt: SATURDAY },
+		'match with photo and logo': { ...BASE, photo: WHITE_PHOTO, logo: pngBytes('#1d4ed8', 64) },
+		'headline with photo': { headline: 'Cup-Final VBC Thun', scheduledAt: SATURDAY, photo: WHITE_PHOTO }
+	};
+
+	it.each(Object.entries(inputs))('draws the Scorely mark as a pattern cell top right: %s', async (_name, input) => {
+		const pixels = await pixelsOf(input, HERO_CELL);
+		expect(pixels.filter(isPaper).length).toBeGreaterThan(2500);
+		expect(pixels.filter(isRed).length).toBeGreaterThan(500);
+	});
+
+	it.each(Object.entries(inputs))('draws the mark upright, balls at the upper right and lower left: %s', async (_name, input) => {
+		const redShare = async (region: Region) => (await pixelsOf(input, region)).filter(isRed).length;
+		expect(await redShare(HERO_BALL_UPPER_RIGHT)).toBeGreaterThan(100);
+		expect(await redShare(HERO_BALL_LOWER_LEFT)).toBeGreaterThan(100);
+		expect(await redShare(HERO_UPPER_LEFT)).toBe(0);
+		expect(await redShare(HERO_LOWER_RIGHT)).toBe(0);
+	});
+
+	it('shows nothing top left without a club logo, not even the Scorely mark', async () => {
+		expect(brightest(await pixelsOf(BASE, LOGO_CORNER))).toBeLessThan(60);
+		expect(brightest(await pixelsOf({ headline: 'Cup', scheduledAt: null, photo: null }, LOGO_CORNER))).toBeLessThan(60);
+	});
+
+	it('draws the club logo top left without a box', async () => {
+		const pixels = await pixelsOf({ ...BASE, logo: pngBytes('#ffffff', 64) }, LOGO_CORNER);
+		const light = pixels.filter(isPaper).length;
+		expect(light).toBeGreaterThan(8000);
+		expect(light).toBeLessThan(10000);
+	});
+
+	it('scales a wide club logo to 240 px wide and a tall one to 96 px high', async () => {
+		const wide = await pixelsOf({ ...BASE, logo: pngBytes('#ffffff', 600, 100) }, LOGO_CORNER);
+		const wideLight = wide.filter(isPaper).length;
+		expect(wideLight).toBeGreaterThan(240 * 40 * 0.95);
+		expect(wideLight).toBeLessThan(240 * 40 * 1.05);
+		const beside: Region = { left: 72 + 240 + 8, right: 72 + 240 + 100, top: 56, bottom: 152 };
+		expect(brightest(await pixelsOf({ ...BASE, logo: pngBytes('#ffffff', 600, 100) }, beside))).toBeLessThan(60);
+		const tall = await pixelsOf({ ...BASE, logo: pngBytes('#ffffff', 100, 600) }, LOGO_CORNER);
+		const tallLight = tall.filter(isPaper).length;
+		expect(tallLight).toBeGreaterThan(16 * 96 * 0.9);
+		expect(tallLight).toBeLessThan(16 * 96 * 1.1);
+	});
+
+	it('shows the pattern over a photo in the top half and the plain photo below', async () => {
+		const top = await pixelsOf({ ...BASE, photo: WHITE_PHOTO }, { left: 300, right: 900, top: 20, bottom: 100 });
+		expect(top.reduce((min, p) => Math.min(min, p[0]), 255)).toBeLessThan(40);
+		const lower = await pixelsOf({ ...BASE, photo: WHITE_PHOTO }, { left: 700, right: 1000, top: 380, bottom: 440 });
+		expect(lower.reduce((min, p) => Math.min(min, p[0]), 255)).toBeGreaterThan(60);
+	});
+
+	it('fades the pattern out by the vertical middle without a photo', async () => {
+		const below = await pixelsOf(BASE, { left: 0, right: 1280, top: 380, bottom: 480 });
+		expect(brightest(below)).toBeLessThan(16);
+		const above = await pixelsOf(BASE, { left: 0, right: 1000, top: 20, bottom: 100 });
+		expect(brightest(above)).toBeGreaterThan(18);
 	});
 });
 
