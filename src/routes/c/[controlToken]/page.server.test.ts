@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const matchesFindFirstMock = vi.hoisted(() => vi.fn());
 const scoresFindFirstMock = vi.hoisted(() => vi.fn());
+const settingsFindManyMock = vi.hoisted(() => vi.fn());
+const designTemplatesFindFirstMock = vi.hoisted(() => vi.fn());
 const updateSetMock = vi.hoisted(() => vi.fn());
 
 vi.mock('$lib/server/db/index.js', () => ({
@@ -9,7 +11,9 @@ vi.mock('$lib/server/db/index.js', () => ({
 		query: {
 			matches: { findFirst: matchesFindFirstMock },
 			scores: { findFirst: scoresFindFirstMock, findMany: vi.fn().mockResolvedValue([]) },
-			timeouts: { findMany: vi.fn().mockResolvedValue([]) }
+			timeouts: { findMany: vi.fn().mockResolvedValue([]) },
+			settings: { findMany: settingsFindManyMock },
+			designTemplates: { findFirst: designTemplatesFindFirstMock }
 		},
 		update: () => ({ set: updateSetMock })
 	}
@@ -29,6 +33,9 @@ describe('/c/[controlToken] load', () => {
 		matchesFindFirstMock.mockReset();
 		scoresFindFirstMock.mockReset();
 		updateSetMock.mockReset();
+		settingsFindManyMock.mockReset();
+		settingsFindManyMock.mockResolvedValue([]);
+		designTemplatesFindFirstMock.mockReset();
 		updateSetMock.mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) });
 	});
 
@@ -57,5 +64,27 @@ describe('/c/[controlToken] load', () => {
 		scoresFindFirstMock.mockResolvedValue({ id: 2, matchId: 7, homePoints: 0, guestPoints: 0, homeSets: 3, guestSets: 0, currentSet: 3, setScores: [], serviceTeam: 'home' });
 		expect(await load(event())).toMatchObject({ controlToken: 'tok-1', activeMatch: { status: 'finished' } });
 		expect(updateSetMock).not.toHaveBeenCalled();
+	});
+
+	it('returns the overlay design resolved with org defaults for a match without override', async () => {
+		matchesFindFirstMock.mockResolvedValue({ id: 7, orgId: 'org-1', status: 'live', finishedAt: null, controlToken: 'tok-1', designTemplateId: null, scoreboardLayout: null, scoreboardOptions: null });
+		scoresFindFirstMock.mockResolvedValue({ id: 2, matchId: 7, homePoints: 0, guestPoints: 0, homeSets: 0, guestSets: 0, currentSet: 1, setScores: [], serviceTeam: 'home' });
+		settingsFindManyMock.mockResolvedValue([
+			{ key: 'defaultScoreboardLayout', value: 'drawer' },
+			{ key: 'defaultScoreboardOptions', value: '{"showLogos":true}' }
+		]);
+		expect(await load(event())).toMatchObject({
+			overlayDesign: { customCode: null, templateId: null, scoreboardLayout: 'drawer', scoreboardOptions: { showLogos: true } }
+		});
+	});
+
+	it('returns the match override and template over org defaults', async () => {
+		matchesFindFirstMock.mockResolvedValue({ id: 7, orgId: 'org-1', status: 'live', finishedAt: null, controlToken: 'tok-1', designTemplateId: 3, scoreboardLayout: 'colon', scoreboardOptions: { showLogos: false } });
+		scoresFindFirstMock.mockResolvedValue({ id: 2, matchId: 7, homePoints: 0, guestPoints: 0, homeSets: 0, guestSets: 0, currentSet: 1, setScores: [], serviceTeam: 'home' });
+		settingsFindManyMock.mockResolvedValue([{ key: 'defaultScoreboardLayout', value: 'drawer' }]);
+		designTemplatesFindFirstMock.mockResolvedValue({ id: 3, orgId: 'org-1', isPublic: false, customCode: '.x{}' });
+		expect(await load(event())).toMatchObject({
+			overlayDesign: { customCode: '.x{}', templateId: 3, scoreboardLayout: 'colon', scoreboardOptions: { showLogos: false } }
+		});
 	});
 });

@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import Logo from '$lib/components/brand/Logo.svelte';
 	import Pattern from '$lib/components/brand/Pattern.svelte';
+	import ScoreboardPreview from '$lib/components/ScoreboardPreview.svelte';
 	import type { MatchState, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
 
 	let { data } = $props();
@@ -231,6 +232,17 @@
 	{:else}
 		<main class="tool">
 			<p class="k-mono kicker">{match.homeTeamName} VS {match.guestTeamName}, KEIN KONTO NÖTIG</p>
+
+			<ScoreboardPreview
+				{match}
+				homeTimeoutsUsed={matchTimeouts.home}
+				guestTimeoutsUsed={matchTimeouts.guest}
+				timeoutTeam={activeTimeout?.team ?? null}
+				customCode={data.overlayDesign.customCode}
+				templateId={data.overlayDesign.templateId}
+				layoutId={data.overlayDesign.scoreboardLayout}
+				options={data.overlayDesign.scoreboardOptions}
+			/>
 
 			<div class="teams">
 				{#each [{ team: 'home', name: match.homeTeamName, points: match.homePoints, sets: match.homeSets }, { team: 'guest', name: match.guestTeamName, points: match.guestPoints, sets: match.guestSets }] as const as t (t.team)}

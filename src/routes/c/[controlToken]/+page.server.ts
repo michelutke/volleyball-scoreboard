@@ -4,6 +4,7 @@ import { scores, timeouts } from '$lib/server/db/schema.js';
 import { toMatchState } from '$lib/server/match-state.js';
 import { eq, desc, asc, and } from 'drizzle-orm';
 import { getGuestMatch } from '$lib/server/match-service';
+import { loadMatchOverlayDesign } from '$lib/server/overlay-data.js';
 import type { PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -19,7 +20,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	});
 	if (!score) error(409, 'Spiel hat noch nicht begonnen');
 
-	const [homeTimeouts, guestTimeouts, scoreHistory, timeoutHistory] = await Promise.all([
+	const [homeTimeouts, guestTimeouts, scoreHistory, timeoutHistory, overlayDesign] = await Promise.all([
 		db.query.timeouts.findMany({
 			where: and(eq(timeouts.matchId, match.id), eq(timeouts.team, 'home'), eq(timeouts.set, score.currentSet))
 		}),
@@ -33,7 +34,8 @@ export const load: PageServerLoad = async ({ params }) => {
 		db.query.timeouts.findMany({
 			where: eq(timeouts.matchId, match.id),
 			orderBy: asc(timeouts.createdAt)
-		})
+		}),
+		loadMatchOverlayDesign(match)
 	]);
 
 	return {
@@ -41,6 +43,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		activeMatch: toMatchState(match, score),
 		timeouts: { home: homeTimeouts.length, guest: guestTimeouts.length },
 		scoreHistory,
-		timeoutHistory
+		timeoutHistory,
+		overlayDesign
 	};
 };

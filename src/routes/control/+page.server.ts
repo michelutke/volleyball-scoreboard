@@ -1,6 +1,7 @@
 import { db } from '$lib/server/db/index.js';
 import { matches, scores, timeouts } from '$lib/server/db/schema.js';
 import { toMatchState } from '$lib/server/match-state.js';
+import { loadMatchOverlayDesign } from '$lib/server/overlay-data.js';
 import { eq, desc, asc, and } from 'drizzle-orm';
 import type { MatchState } from '$lib/types.js';
 import type { PageServerLoad } from './$types.js';
@@ -62,11 +63,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 			})
 		: [];
 
+	const overlayDesign = liveMatch ? await loadMatchOverlayDesign(liveMatch) : null;
+
 	return {
 		matches: allMatches,
 		activeMatch,
 		timeouts: matchTimeouts,
 		scoreHistory,
-		timeoutHistory
+		timeoutHistory,
+		overlayDesign
 	};
 };

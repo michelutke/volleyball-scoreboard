@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import Logo from '$lib/components/brand/Logo.svelte';
+	import ScoreboardPreview from '$lib/components/ScoreboardPreview.svelte';
 	import type { MatchState, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
 
 	let { data } = $props();
@@ -136,7 +137,6 @@
 
 	let homeNameInput = $derived(match?.homeTeamName ?? '');
 	let guestNameInput = $derived(match?.guestTeamName ?? '');
-	let setScoresExpanded = $derived(match?.showSetScores || match?.status === 'finished' || !!activeTimeout);
 
 	let setTimelines = $derived.by((): SetTimeline[] => {
 		const history = data.scoreHistory;
@@ -261,52 +261,18 @@
 					</label>
 				</div>
 				<div class="card-body flex items-center justify-center">
-					<div class="scoreboard-preview">
-						<!-- Home Row -->
-						<div class="preview-row">
-							{#if match.showJerseyColors}
-								<div class="preview-jersey" style:background-color={match.homeJerseyColor}></div>
-							{/if}
-							<div class="preview-name preview-name-dark">
-								{match.homeTeamName.toUpperCase()}
-								<img
-									src="/vbcthun-ball.svg"
-									alt=""
-									class="preview-service"
-									class:preview-service-hidden={match.serviceTeam !== 'home'}
-								/>
-							</div>
-							<div class="preview-sets">{match.homeSets}</div>
-							<div class="preview-set-scores" class:expanded={setScoresExpanded}>
-								{#each match.setScores as s}
-									<div class="preview-set-cell" class:preview-set-cell-winner={s.home > s.guest} style:--winner-color={match.homeJerseyColor}>{s.home}</div>
-								{/each}
-							</div>
-							<div class="preview-points" style:background-color={match.homeJerseyColor}>{match.homePoints}</div>
-						</div>
-						<!-- Guest Row -->
-						<div class="preview-row">
-							{#if match.showJerseyColors}
-								<div class="preview-jersey" style:background-color={match.guestJerseyColor}></div>
-							{/if}
-							<div class="preview-name">
-								{match.guestTeamName.toUpperCase()}
-								<img
-									src="/vbcthun-ball.svg"
-									alt=""
-									class="preview-service"
-									class:preview-service-hidden={match.serviceTeam !== 'guest'}
-								/>
-							</div>
-							<div class="preview-sets">{match.guestSets}</div>
-							<div class="preview-set-scores" class:expanded={setScoresExpanded}>
-								{#each match.setScores as s}
-									<div class="preview-set-cell" class:preview-set-cell-winner={s.guest > s.home} style:--winner-color={match.guestJerseyColor}>{s.guest}</div>
-								{/each}
-							</div>
-							<div class="preview-points" style:background-color={match.guestJerseyColor}>{match.guestPoints}</div>
-						</div>
-					</div>
+					{#if data.overlayDesign}
+						<ScoreboardPreview
+							{match}
+							homeTimeoutsUsed={matchTimeouts.home}
+							guestTimeoutsUsed={matchTimeouts.guest}
+							timeoutTeam={activeTimeout?.team ?? null}
+							customCode={data.overlayDesign.customCode}
+							templateId={data.overlayDesign.templateId}
+							layoutId={data.overlayDesign.scoreboardLayout}
+							options={data.overlayDesign.scoreboardOptions}
+						/>
+					{/if}
 				</div>
 
 				{#if match.setScores.length > 0}
@@ -774,85 +740,6 @@
 	.color-row { display: flex; align-items: center; gap: 10px; }
 	.color-picker { width: 40px; height: 40px; border: none; border-radius: 0; cursor: pointer; padding: 0; }
 	.color-hex { font-family: var(--font-mono); font-size: 13px; color: var(--k-text-mute); }
-
-	/* Scoreboard preview: a mock of the overlay, always dark */
-	.scoreboard-preview {
-		display: flex;
-		flex-direction: column;
-		gap: 3px;
-		padding: 20px;
-		border: 1px solid var(--k-line);
-	}
-
-	.preview-row { display: flex; align-items: stretch; height: 48px; }
-	.preview-jersey { width: 8px; flex-shrink: 0; }
-
-	.preview-name {
-		background: var(--grey-800);
-		color: var(--paper);
-		padding: 0 16px;
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		min-width: 160px;
-		font-size: 18px;
-		font-weight: var(--type-wght-display);
-	}
-
-	.preview-name-dark { background: var(--ink); }
-	.preview-service { width: 20px; height: 20px; opacity: 0.85; margin-left: auto; }
-	.preview-service-hidden { visibility: hidden; }
-
-	.preview-sets {
-		background: var(--grey-800);
-		color: var(--paper);
-		width: 44px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 22px;
-		font-weight: var(--type-wght-display);
-		border-left: 2px solid var(--grey-700);
-		font-variant-numeric: tabular-nums;
-	}
-
-	.preview-points {
-		color: var(--paper);
-		width: 52px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 26px;
-		font-weight: var(--type-wght-display);
-		font-variant-numeric: tabular-nums;
-	}
-
-	.preview-set-scores {
-		display: flex;
-		align-items: stretch;
-		max-width: 0;
-		overflow: hidden;
-		opacity: 0;
-		transition: max-width var(--dur-mid) var(--ease-snap), opacity var(--dur-mid) var(--ease-snap);
-	}
-
-	.preview-set-scores.expanded { max-width: 300px; opacity: 1; }
-
-	.preview-set-cell {
-		background: var(--grey-800);
-		color: var(--grey-300);
-		width: 38px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 18px;
-		font-weight: var(--type-wght-display);
-		font-variant-numeric: tabular-nums;
-		border-left: 1px solid var(--grey-700);
-		border-bottom: 2px solid transparent;
-	}
-
-	.preview-set-cell-winner { border-bottom-color: var(--winner-color); color: var(--paper); }
 
 	.set-scores { display: flex; justify-content: center; gap: 8px; padding: 0 20px 16px; }
 
