@@ -5,7 +5,7 @@
 	import type { MatchState, DesignTemplate, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
 	import QRCode from 'qrcode';
 	import MatchLayoutOverride from '$lib/components/MatchLayoutOverride.svelte';
-	import OverlayRenderer from '$lib/components/OverlayRenderer.svelte';
+	import ScoreboardPreview from '$lib/components/ScoreboardPreview.svelte';
 	import Logo from '$lib/components/brand/Logo.svelte';
 	import Trophy from 'lucide-svelte/icons/trophy';
 
@@ -320,15 +320,12 @@
 
 	let setScoresExpanded = $derived(match?.showSetScores || match?.status === 'finished' || !!activeTimeout);
 
-	// Natural size of the rendered scoreboard (CSS px); scale it to the card width.
-	const PREVIEW_NATURAL_WIDTH = 820;
-	const PREVIEW_NATURAL_HEIGHT = 150;
-	let previewWrapWidth = $state(0);
-	let previewScale = $derived(
-		previewWrapWidth > 0 ? Math.min(1, previewWrapWidth / PREVIEW_NATURAL_WIDTH) : 0.35
-	);
+	let templateEdited = $derived(settingsOpen && selectedTemplateId !== (match?.designTemplateId ?? null));
+	let previewTemplateId = $derived(templateEdited ? selectedTemplateId : data.overlayDesign.templateId);
 	let previewCustomCode = $derived(
-		designTemplates.find((t) => t.id === selectedTemplateId)?.customCode ?? null
+		templateEdited
+			? (designTemplates.find((t) => t.id === selectedTemplateId)?.customCode ?? null)
+			: data.overlayDesign.customCode
 	);
 
 	let setTimelines = $derived.by((): SetTimeline[] => {
@@ -442,24 +439,16 @@
 					</label>
 				</div>
 				<div class="card-body flex items-center justify-center">
-					<div
-						class="scoreboard-preview-wrap"
-						bind:clientWidth={previewWrapWidth}
-						style:height="{Math.ceil(PREVIEW_NATURAL_HEIGHT * previewScale)}px"
-					>
-						<div class="scoreboard-preview-scale" style:transform="scale({previewScale})">
-							<OverlayRenderer
-								{match}
-								homeTimeoutsUsed={matchTimeouts.home}
-								guestTimeoutsUsed={matchTimeouts.guest}
-								timeoutTeam={activeTimeout?.team ?? null}
-								customCode={previewCustomCode}
-								templateId={selectedTemplateId}
-								layoutId={data.scoreboardLayout ?? null}
-								options={(data.scoreboardOptions ?? {}) as Record<string, string | number | boolean>}
-							/>
-						</div>
-					</div>
+					<ScoreboardPreview
+						{match}
+						homeTimeoutsUsed={matchTimeouts.home}
+						guestTimeoutsUsed={matchTimeouts.guest}
+						timeoutTeam={activeTimeout?.team ?? null}
+						customCode={previewCustomCode}
+						templateId={previewTemplateId}
+						layoutId={data.overlayDesign.scoreboardLayout}
+						options={data.overlayDesign.scoreboardOptions}
+					/>
 				</div>
 
 				{#if match.setScores.length > 0}
@@ -757,6 +746,7 @@
 						current={data.scoreboardLayout ?? null}
 						currentOptions={data.scoreboardOptions ?? null}
 						orgDefault={data.orgDefaultLayout ?? null}
+						onSaved={() => invalidateAll()}
 					/>
 				</div>
 			</div>
@@ -967,19 +957,6 @@
 
 	/* Scoreboard preview */
 	.logo-preview { height: 40px; margin: 4px 0; object-fit: contain; border-radius: 0; background: var(--grey-900); }
-
-	.scoreboard-preview-wrap {
-		width: 100%;
-		display: flex;
-		justify-content: center;
-		overflow: hidden;
-		pointer-events: none;
-	}
-
-	.scoreboard-preview-scale {
-		flex: none;
-		transform-origin: top center;
-	}
 
 	.set-scores { display: flex; justify-content: center; gap: 8px; padding: 0 20px 16px; }
 
