@@ -2,12 +2,15 @@
 	import { invalidateAll } from '$app/navigation';
 	import Logo from '$lib/components/brand/Logo.svelte';
 	import ScoreboardPreview from '$lib/components/ScoreboardPreview.svelte';
+	import { applyScoreAction, type ScoreHistoryRow } from '$lib/score-history.js';
 	import type { MatchState, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
 
 	let { data } = $props();
 
 	let match = $state<MatchState | null>(null);
 	let matchTimeouts = $state({ home: 0, guest: 0 });
+	// Kept locally after score actions so a point redraws only what changed, see applyScoreAction.
+	let scoreHistory = $state<ScoreHistoryRow[]>([]);
 	let loading = $state(false);
 	let activeTimeout = $state<{ team: Team; teamName: string; secondsLeft: number } | null>(null);
 	let timeoutInterval: ReturnType<typeof setInterval> | null = null;
@@ -15,9 +18,11 @@
 	$effect(() => {
 		match = data.activeMatch;
 		matchTimeouts = data.timeouts;
+		scoreHistory = data.scoreHistory;
 	});
 
 	async function api(body: Record<string, unknown>) {
+		if (loading) return;
 		loading = true;
 		try {
 			const res = await fetch('/api/match', {
@@ -27,8 +32,14 @@
 			});
 			const updated = await res.json();
 			if (res.ok) {
+				const previous = match;
 				match = updated;
-				invalidateAll();
+				const history =
+					typeof body.action === 'string' && previous
+						? applyScoreAction(scoreHistory, data.timeoutHistory, body.action, previous, updated)
+						: null;
+				if (history) scoreHistory = history;
+				else invalidateAll();
 			}
 		} finally {
 			loading = false;
@@ -139,7 +150,7 @@
 	let guestNameInput = $derived(match?.guestTeamName ?? '');
 
 	let setTimelines = $derived.by((): SetTimeline[] => {
-		const history = data.scoreHistory;
+		const history = scoreHistory;
 		const tHistory = data.timeoutHistory;
 		if (!history.length) return [];
 
@@ -314,10 +325,10 @@
 						<div class="scoring-section">
 							<span class="scoring-label">Punkte</span>
 							<div class="scoring-buttons">
-								<button onclick={() => removePoint('home')} disabled={loading || !!activeTimeout} class="btn-score">
+								<button onclick={() => removePoint('home')} disabled={!!activeTimeout} class="btn-score">
 									&minus;
 								</button>
-								<button onclick={() => addPoint('home')} disabled={loading || !!activeTimeout} class="btn-score btn-score-plus">
+								<button onclick={() => addPoint('home')} disabled={!!activeTimeout} class="btn-score btn-score-plus">
 									+
 								</button>
 							</div>
@@ -326,10 +337,10 @@
 						<div class="scoring-section">
 							<span class="scoring-label">Sätze</span>
 							<div class="scoring-buttons">
-								<button onclick={() => removeSet('home')} disabled={loading || !!activeTimeout} class="btn-score btn-score-sm">
+								<button onclick={() => removeSet('home')} disabled={!!activeTimeout} class="btn-score btn-score-sm">
 									&minus;
 								</button>
-								<button onclick={() => addSet('home')} disabled={loading || !!activeTimeout} class="btn-score btn-score-sm btn-score-plus">
+								<button onclick={() => addSet('home')} disabled={!!activeTimeout} class="btn-score btn-score-sm btn-score-plus">
 									+
 								</button>
 							</div>
@@ -354,10 +365,10 @@
 						<div class="scoring-section">
 							<span class="scoring-label">Punkte</span>
 							<div class="scoring-buttons">
-								<button onclick={() => addPoint('guest')} disabled={loading || !!activeTimeout} class="btn-score btn-score-plus">
+								<button onclick={() => addPoint('guest')} disabled={!!activeTimeout} class="btn-score btn-score-plus">
 									+
 								</button>
-								<button onclick={() => removePoint('guest')} disabled={loading || !!activeTimeout} class="btn-score">
+								<button onclick={() => removePoint('guest')} disabled={!!activeTimeout} class="btn-score">
 									&minus;
 								</button>
 							</div>
@@ -366,10 +377,10 @@
 						<div class="scoring-section">
 							<span class="scoring-label">Sätze</span>
 							<div class="scoring-buttons">
-								<button onclick={() => addSet('guest')} disabled={loading || !!activeTimeout} class="btn-score btn-score-sm btn-score-plus">
+								<button onclick={() => addSet('guest')} disabled={!!activeTimeout} class="btn-score btn-score-sm btn-score-plus">
 									+
 								</button>
-								<button onclick={() => removeSet('guest')} disabled={loading || !!activeTimeout} class="btn-score btn-score-sm">
+								<button onclick={() => removeSet('guest')} disabled={!!activeTimeout} class="btn-score btn-score-sm">
 									&minus;
 								</button>
 							</div>
@@ -401,7 +412,7 @@
 					>
 						Timeout
 					</button>
-					<button onclick={undo} disabled={loading} class="btn-action">
+					<button onclick={undo} class="btn-action">
 						Rückgängig
 					</button>
 					<button onclick={resetMatch} class="btn-action btn-action-danger">
@@ -510,7 +521,7 @@
 					</div>
 					<div class="card-body">
 						{#each setTimelines.toReversed() as timeline (timeline.set)}
-							{#each timeline.events.toReversed() as evt}
+							{#each timeline.events.toReversed() as evt, i (timeline.events.length - 1 - i)}
 								<div class="history-row k-mono">
 									<span class="history-set">S{timeline.set}</span>
 									<span class="history-score">{evt.type === 'point' ? `${evt.homePoints}:${evt.guestPoints}` : 'TO'}</span>

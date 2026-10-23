@@ -4,6 +4,7 @@
 	import Logo from '$lib/components/brand/Logo.svelte';
 	import Pattern from '$lib/components/brand/Pattern.svelte';
 	import ScoreboardPreview from '$lib/components/ScoreboardPreview.svelte';
+	import { applyScoreAction, type ScoreHistoryRow } from '$lib/score-history.js';
 	import type { MatchState, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
 
 	let { data } = $props();
@@ -12,6 +13,8 @@
 	const shareUrl = $derived(`${page.url.host}/c/${data.controlToken}`);
 	let match = $state<MatchState | null>(null);
 	let matchTimeouts = $state({ home: 0, guest: 0 });
+	// Kept locally after score actions so a point redraws only what changed, see applyScoreAction.
+	let scoreHistory = $state<ScoreHistoryRow[]>([]);
 	let loading = $state(false);
 	let activeTimeout = $state<{ team: Team; teamName: string; secondsLeft: number } | null>(null);
 	let timeoutInterval: ReturnType<typeof setInterval> | null = null;
@@ -23,6 +26,7 @@
 	$effect(() => {
 		match = data.activeMatch;
 		matchTimeouts = data.timeouts;
+		scoreHistory = data.scoreHistory;
 	});
 
 	$effect(() => {
@@ -38,6 +42,7 @@
 	}
 
 	async function api(body: Record<string, unknown>) {
+		if (loading) return;
 		loading = true;
 		try {
 			const res = await fetch(`/api/c/${controlToken}`, {
@@ -47,8 +52,14 @@
 			});
 			const updated = await res.json();
 			if (res.ok) {
+				const previous = match;
 				match = updated;
-				invalidateAll();
+				const history =
+					typeof body.action === 'string' && previous
+						? applyScoreAction(scoreHistory, data.timeoutHistory, body.action, previous, updated)
+						: null;
+				if (history) scoreHistory = history;
+				else invalidateAll();
 			} else {
 				await reloadIfUnavailable(res);
 			}
@@ -146,7 +157,7 @@
 	}
 
 	let setTimelines = $derived.by((): SetTimeline[] => {
-		const history = data.scoreHistory;
+		const history = scoreHistory;
 		const tHistory = data.timeoutHistory;
 		if (!history.length) return [];
 
@@ -259,12 +270,12 @@
 								<span class="to-dot" class:used={matchTimeouts[t.team] >= 2}></span>
 							</span>
 						</div>
-						<button onclick={() => addPoint(t.team)} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
-						<button onclick={() => removePoint(t.team)} disabled={loading || !!activeTimeout} class="btn-action">&minus; Punkt</button>
+						<button onclick={() => addPoint(t.team)} disabled={!!activeTimeout} class="btn-point">+ Punkt</button>
+						<button onclick={() => removePoint(t.team)} disabled={!!activeTimeout} class="btn-action">&minus; Punkt</button>
 						<button onclick={() => callTimeout(t.team)} disabled={matchTimeouts[t.team] >= 2 || !!activeTimeout} class="btn-action">Timeout</button>
 						<button onclick={() => { if (match?.serviceTeam !== t.team) switchService(); }} disabled={match?.serviceTeam === t.team} class="btn-action" aria-pressed={match?.serviceTeam === t.team}>Aufschlag</button>
 						{#if t.team === 'home'}
-							<button onclick={undo} disabled={loading} class="btn-action">Rückgängig</button>
+							<button onclick={undo} class="btn-action">Rückgängig</button>
 						{:else}
 							<button onclick={() => advancedOpen = true} class="btn-action">Erweitert</button>
 						{/if}
@@ -292,7 +303,7 @@
 				<section class="history">
 					<p class="k-mono kicker">SPIELVERLAUF</p>
 					{#each setTimelines.toReversed() as timeline (timeline.set)}
-					{#each timeline.events.toReversed() as evt}
+					{#each timeline.events.toReversed() as evt, i (timeline.events.length - 1 - i)}
 						<div class="history-row k-mono">
 							<span class="history-set">S{timeline.set}</span>
 							<span class="history-score">{evt.type === 'point' ? `${evt.homePoints}:${evt.guestPoints}` : 'TO'}</span>
@@ -326,8 +337,8 @@
 					{#each [{ team: 'home', name: match.homeTeamName }, { team: 'guest', name: match.guestTeamName }] as const as t (t.team)}
 						<div class="advanced-team">
 							<div class="advanced-team-header">{t.name}</div>
-							<button onclick={() => addSet(t.team)} disabled={loading} class="btn-action">+ Satz</button>
-							<button onclick={() => removeSet(t.team)} disabled={loading} class="btn-action">&minus; Satz</button>
+							<button onclick={() => addSet(t.team)} class="btn-action">+ Satz</button>
+							<button onclick={() => removeSet(t.team)} class="btn-action">&minus; Satz</button>
 						</div>
 					{/each}
 				</div>
