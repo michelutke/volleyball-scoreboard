@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import type { MatchState, SSEEvent, Team } from '$lib/types.js';
 	import OverlayRenderer from '$lib/components/OverlayRenderer.svelte';
+	import { openMatchStream } from '$lib/match-stream.js';
 
 	let { data } = $props();
 
@@ -51,11 +52,9 @@
 	}
 
 	onMount(() => {
-		const es = new EventSource(`/api/matches/${matchId}/stream`);
+		const closeStream = openMatchStream(matchId, { onEvent: handleEvent });
 
-		es.onmessage = (event) => {
-			const parsed: SSEEvent = JSON.parse(event.data);
-
+		function handleEvent(parsed: SSEEvent) {
 			if (parsed.type === 'design') {
 				invalidateAll();
 			}
@@ -86,10 +85,10 @@
 					else guestTimeoutsUsed++;
 				}
 			}
-		};
+		}
 
 		return () => {
-			es.close();
+			closeStream();
 			if (timeoutTimer) clearTimeout(timeoutTimer);
 		};
 	});
