@@ -2,6 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
+	import { applyScoreAction, type ScoreHistoryRow } from '$lib/score-history.js';
 	import type { MatchState, DesignTemplate, Team, SetTimeline, TimelineEvent } from '$lib/types.js';
 	import QRCode from 'qrcode';
 	import MatchLayoutOverride from '$lib/components/MatchLayoutOverride.svelte';
@@ -14,6 +15,8 @@
 	const matchId = $derived(parseInt(page.params.matchId ?? '0'));
 	let match = $state<MatchState | null>(null);
 	let matchTimeouts = $state({ home: 0, guest: 0 });
+	// Kept locally after score actions so a point redraws only what changed, see applyScoreAction.
+	let scoreHistory = $state<ScoreHistoryRow[]>([]);
 	let loading = $state(false);
 	let activeTimeout = $state<{ team: Team; teamName: string; secondsLeft: number } | null>(null);
 	let timeoutInterval: ReturnType<typeof setInterval> | null = null;
@@ -51,6 +54,7 @@
 	$effect(() => {
 		match = data.activeMatch;
 		matchTimeouts = data.timeouts;
+		scoreHistory = data.scoreHistory;
 	});
 
 	$effect(() => {
@@ -68,6 +72,7 @@
 	});
 
 	async function api(body: Record<string, unknown>) {
+		if (loading) return;
 		loading = true;
 		try {
 			const res = await fetch(`/api/matches/${matchId}`, {
@@ -77,8 +82,14 @@
 			});
 			const updated = await res.json();
 			if (res.ok) {
+				const previous = match;
 				match = updated;
-				invalidateAll();
+				const history =
+					typeof body.action === 'string' && previous
+						? applyScoreAction(scoreHistory, data.timeoutHistory, body.action, previous, updated)
+						: null;
+				if (history) scoreHistory = history;
+				else invalidateAll();
 			}
 		} finally {
 			loading = false;
@@ -329,7 +340,7 @@
 	);
 
 	let setTimelines = $derived.by((): SetTimeline[] => {
-		const history = data.scoreHistory;
+		const history = scoreHistory;
 		const tHistory = data.timeoutHistory;
 		if (!history.length) return [];
 
@@ -486,8 +497,8 @@
 							</div>
 						{:else}
 							<div class="scoring-team-btns">
-								<button onclick={() => addPoint('home')} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
-								<button onclick={() => removePoint('home')} disabled={loading || !!activeTimeout} class="btn-action btn-minus">&minus; Punkt</button>
+								<button onclick={() => addPoint('home')} disabled={!!activeTimeout} class="btn-point">+ Punkt</button>
+								<button onclick={() => removePoint('home')} disabled={!!activeTimeout} class="btn-action btn-minus">&minus; Punkt</button>
 								<div class="scoring-secondary">
 									<button onclick={() => callTimeout('home')} disabled={matchTimeouts.home >= 2 || !!activeTimeout} class="btn-action">Timeout</button>
 									<button onclick={() => { if (match?.serviceTeam !== 'home') switchService(); }} class="btn-service" class:btn-service-active={match?.serviceTeam === 'home'} disabled={match?.serviceTeam === 'home'}>
@@ -518,8 +529,8 @@
 							</div>
 						{:else}
 							<div class="scoring-team-btns">
-								<button onclick={() => addPoint('guest')} disabled={loading || !!activeTimeout} class="btn-point">+ Punkt</button>
-								<button onclick={() => removePoint('guest')} disabled={loading || !!activeTimeout} class="btn-action btn-minus">&minus; Punkt</button>
+								<button onclick={() => addPoint('guest')} disabled={!!activeTimeout} class="btn-point">+ Punkt</button>
+								<button onclick={() => removePoint('guest')} disabled={!!activeTimeout} class="btn-action btn-minus">&minus; Punkt</button>
 								<div class="scoring-secondary">
 									<button onclick={() => callTimeout('guest')} disabled={matchTimeouts.guest >= 2 || !!activeTimeout} class="btn-action">Timeout</button>
 									<button onclick={() => { if (match?.serviceTeam !== 'guest') switchService(); }} class="btn-service" class:btn-service-active={match?.serviceTeam === 'guest'} disabled={match?.serviceTeam === 'guest'}>
@@ -540,7 +551,7 @@
 
 				<div class="scoring-actions">
 					<button onclick={() => advancedOpen = true} class="btn-action">Erweitert</button>
-					<button onclick={undo} disabled={loading} class="btn-action">Rückgängig</button>
+					<button onclick={undo} class="btn-action">Rückgängig</button>
 				</div>
 			</div>
 
@@ -552,7 +563,7 @@
 					</div>
 					<div class="card-body">
 						{#each setTimelines.toReversed() as timeline (timeline.set)}
-							{#each timeline.events.toReversed() as evt}
+							{#each timeline.events.toReversed() as evt, i (timeline.events.length - 1 - i)}
 								<div class="history-row k-mono">
 									<span class="history-set">S{timeline.set}</span>
 									<span class="history-score">{evt.type === 'point' ? `${evt.homePoints}:${evt.guestPoints}` : 'TO'}</span>
@@ -652,15 +663,15 @@
 				<div class="advanced-grid">
 					<div class="advanced-team">
 						<div class="advanced-team-header">{match?.homeTeamName}</div>
-						<button onclick={() => removePoint('home')} disabled={loading} class="btn-action">&minus; Punkt</button>
-						<button onclick={() => addSet('home')} disabled={loading} class="btn-action">+ Satz</button>
-						<button onclick={() => removeSet('home')} disabled={loading} class="btn-action">&minus; Satz</button>
+						<button onclick={() => removePoint('home')} class="btn-action">&minus; Punkt</button>
+						<button onclick={() => addSet('home')} class="btn-action">+ Satz</button>
+						<button onclick={() => removeSet('home')} class="btn-action">&minus; Satz</button>
 					</div>
 					<div class="advanced-team">
 						<div class="advanced-team-header">{match?.guestTeamName}</div>
-						<button onclick={() => removePoint('guest')} disabled={loading} class="btn-action">&minus; Punkt</button>
-						<button onclick={() => addSet('guest')} disabled={loading} class="btn-action">+ Satz</button>
-						<button onclick={() => removeSet('guest')} disabled={loading} class="btn-action">&minus; Satz</button>
+						<button onclick={() => removePoint('guest')} class="btn-action">&minus; Punkt</button>
+						<button onclick={() => addSet('guest')} class="btn-action">+ Satz</button>
+						<button onclick={() => removeSet('guest')} class="btn-action">&minus; Satz</button>
 					</div>
 				</div>
 			</div>
