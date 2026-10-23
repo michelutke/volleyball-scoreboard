@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const matchesFindFirst = vi.hoisted(() => vi.fn());
-vi.mock('$lib/server/db/index.js', () => ({ db: { query: { matches: { findFirst: matchesFindFirst } } } }));
+const scoresFindFirst = vi.hoisted(() => vi.fn());
+vi.mock('$lib/server/db/index.js', () => ({
+	db: { query: { matches: { findFirst: matchesFindFirst }, scores: { findFirst: scoresFindFirst } } }
+}));
 const env = vi.hoisted(() => ({ ADDRESS_HEADER: 'X-Forwarded-For' as string | undefined }));
 vi.mock('$env/dynamic/private', () => ({ env }));
 
@@ -16,6 +19,35 @@ function call(matchId: string, ip = '1.2.3.4') {
 describe('match stream GET', () => {
 	beforeEach(() => {
 		matchesFindFirst.mockReset();
+		scoresFindFirst.mockReset();
+	});
+
+	async function readChunks(res: Response, count: number): Promise<string> {
+		const reader = res.body!.getReader();
+		const decoder = new TextDecoder();
+		let text = '';
+		for (let i = 0; i < count; i++) text += decoder.decode((await reader.read()).value);
+		await reader.cancel();
+		return text;
+	}
+
+	it('starts with a ping and the current match state', async () => {
+		matchesFindFirst.mockResolvedValue({ id: 3, homeTeamName: 'VBC Thun', status: 'live' });
+		scoresFindFirst.mockResolvedValue({ homePoints: 12, guestPoints: 9, homeSets: 1, guestSets: 0, currentSet: 2, setScores: [], serviceTeam: 'home' });
+		const text = await readChunks(await call('3', '5.5.5.5'), 2);
+		expect(text.startsWith('event: ping\ndata: \n\n')).toBe(true);
+		const snapshot = JSON.parse(text.split('\n\n')[1].replace(/^data: /, ''));
+		expect(snapshot.type).toBe('match');
+		expect(snapshot.data).toMatchObject({ matchId: 3, homePoints: 12, guestPoints: 9, currentSet: 2 });
+	});
+
+	it('sends only the ping when the match has no score yet', async () => {
+		matchesFindFirst.mockResolvedValue({ id: 4 });
+		scoresFindFirst.mockResolvedValue(undefined);
+		const res = await call('4', '6.6.6.6');
+		const reader = res.body!.getReader();
+		expect(new TextDecoder().decode((await reader.read()).value)).toBe('event: ping\ndata: \n\n');
+		await reader.cancel();
 	});
 
 	it('returns 404 for an unknown match', async () => {
