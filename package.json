@@ -48,7 +48,7 @@
 		"jpeg-js": "0.4.4",
 		"lru-cache": "^11.5.3",
 		"lucide-svelte": "^1.0.1",
-		"motion": "^12.38.0",
+		"motion": "^14.6.0",
 		"postgres": "^3.4.9",
 		"qrcode": "^1.5.4",
 		"satori": "0.62.0",
